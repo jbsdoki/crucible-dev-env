@@ -38,15 +38,15 @@
 ## Start the Backend FastAPI server
 ```bash
 micromamba activate <your environment>
-cd backend
+cd React-Hyperspy-Crucible/backend
 uvicorn main:app --reload
 ```
 
 ## Start the Frontend Server (in a new terminal):
 ```bash
 micromamba activate <your environment>
-cd frontend
-npm install  # This should install all required dependencies including axios, recharts, and Material-UI, if not:
+cd React-Hyperspy-Crucible/frontend
+npm install  # This should install all required dependencies from package.json in the same directory if it fails for whatever reason run this:
 npm install axios react-plotly.js plotly.js
 npm run dev
 ```
@@ -99,7 +99,7 @@ General calling flow
     4. These call Hyperspy logic in `file_service.py`.
 
     5. A response (e.g. file list or spectrum array) is returned to the frontend.
-    
+
     6. React receives and renders the result.
 
 Example Request: File Listing
