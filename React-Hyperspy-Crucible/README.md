@@ -1,65 +1,6 @@
-# React-Hyperspy-Crucible
+## React-Hyperspy-Crucible
 
-## Environment Details
-
-- Python Environment: micromamba
-- Python Version: 3.10
-- Key Packages: 
-   - fastapi==0.109.2
-   - uvicorn==0.27.1
-   - hyperspy==1.7.5
-   - python-multipart==0.0.9
-   - numpy==1.23.5
-   - scikit-image==0.19.3
-   - scipy==1.10.1
-   - matplotlib==3.5.1
-
-   
-(Specific build type should not matter)
-(These package names are stored in backend/requirements.txt for easy install)
-
-## Development Workflow
-
-1. Always activate the micromamba environment before working on the backend:
-```bash
-micromamba activate hyperspy-env
-```
-
-2. The frontend and backend run on different ports:
-   - Frontend: http://localhost:5173
-   - Backend: http://localhost:8000
-
-
-## Backend Setup (Python)
-
-1. Activate the micromamba environment in bash:
-```bash
-micromamba activate <Your environment name>
-```
-
-2. Start the FastAPI server:
-```bash
-cd backend
-uvicorn main:app --reload
-```
-
-## Frontend Setup (Node.js) v22.16.0
-
-1. Navigate to the frontend directory and install dependencies:
-```bash
-cd frontend
-npm install
-npm install axios react-plotly.js plotly.js
-```
-
-2. Start the development server:
-```bash
-npm run dev
-```
-
-
-
-## Required Software
+# Required Software
 
 1. Node.js (includes npm) — used to install and run the React frontend
     - Download and install from: https://nodejs.org/en
@@ -75,9 +16,25 @@ npm run dev
     - Used for the FastAPI backend and Hyperspy
     - Install micromamba from: https://mamba.readthedocs.io/en/latest/installation.html
 
+
+- Python Version: 3.10
+- Key Packages: 
+   - fastapi==0.109.2
+   - uvicorn==0.27.1
+   - hyperspy==1.7.5
+   - python-multipart==0.0.9
+   - numpy==1.23.5
+   - scikit-image==0.19.3
+   - scipy==1.10.1
+   - matplotlib==3.5.1
+
+   
+(Specific build type should not matter)
+(These package names are stored in backend/requirements.txt for easy install)
+
 ## Setup Steps
 
-# Start the FastAPI server
+# Start the Backend FastAPI server
 cd backend
 ```bash
 uvicorn main:app --reload
@@ -86,24 +43,14 @@ uvicorn main:app --reload
 # Start the Frontend Server (in a new terminal):
 ```bash
 cd frontend
-npm install  # This installs all required dependencies including axios, recharts, and Material-UI
+npm install  # This should install all required dependencies including axios, recharts, and Material-UI, if not:
+npm install axios react-plotly.js plotly.js
 npm run dev
 ```
 
 The application will be available at:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
-
-## Architecture
-
-Frontend: React (Javascript)
-    - Interactive UI for selecting and visualizing microscopy data
-    - Code lives in: `frontend/src/`
-
-Backend: FastAPI + Hyperspy
-    - Serves `.emd` files from disk (temporary: replace with SQL later)
-    - Code lives in: `backend/main.py` and `backend/file_service.py`
-    - Uses Hyperspy to extract metadata and spectral data## Frontend-Backend Interaction Details
 
 ### Frontend Components
 The React frontend (running on http://localhost:5173) consists of several key components:
