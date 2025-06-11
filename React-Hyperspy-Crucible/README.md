@@ -5,14 +5,14 @@
 - Python Environment: micromamba
 - Python Version: 3.10
 - Key Packages: 
-   -fastapi==0.109.2
-   -uvicorn==0.27.1
-   -hyperspy==1.7.5
-   -python-multipart==0.0.9
-   -numpy==1.23.5
-   -scikit-image==0.19.3
-   -scipy==1.10.1
-   -matplotlib==3.5.1
+   - fastapi==0.109.2
+   - uvicorn==0.27.1
+   - hyperspy==1.7.5
+   - python-multipart==0.0.9
+   - numpy==1.23.5
+   - scikit-image==0.19.3
+   - scipy==1.10.1
+   - matplotlib==3.5.1
 (Specific build type should not matter)
 
 ## Backend Setup (Python)
