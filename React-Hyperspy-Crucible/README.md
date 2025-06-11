@@ -35,6 +35,11 @@
 
 # Setup Steps
 
+## FOR NOW, TO BE REMOVED LATER
+## Place files in local folder:
+Place .edm or other files in directory:
+React-Hyperspy-Crucible/backend/sample_data/
+
 ## Start the Backend FastAPI server
 ```bash
 micromamba activate <your environment>
