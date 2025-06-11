@@ -73,6 +73,7 @@ Disply hyperspy filetypes command:
 
 Node.js (npm + npx) — used to install and run the React frontend
     https://nodejs.org/en
+
 Axios — makes HTTP requests from the React frontend to the FastAPI backend
 
     ---
@@ -80,26 +81,26 @@ Axios — makes HTTP requests from the React frontend to the FastAPI backend
 
 ## Architecture
 
-**Frontend:** React
+Frontend: React
     - Interactive UI for selecting and visualizing microscopy data
     - Code lives in: `frontend/src/`
 
-**Backend:** FastAPI + Hyperspy
+Backend: FastAPI + Hyperspy
     - Serves `.emd` files from disk (temporary: replace with SQL later)
     - Code lives in: `backend/main.py` and `backend/file_service.py`
     - Uses Hyperspy to extract metadata and spectral data
 
 ## Data Flow (Frontend ↔ Backend)
 
-**General calling flow**
-    1. **React frontend** uses functions in `frontend/src/services/api.ts` to make API calls.
-    2. These send **HTTP requests** to the FastAPI backend.
-    3. **FastAPI** routes the request to matching functions defined in `main.py`.
-    4. Those call **Hyperspy logic** in `file_service.py`.
+General calling flow
+    1. React frontend uses functions in `frontend/src/services/api.ts` to make API calls.
+    2. These send HTTP requests to the FastAPI backend.
+    3. FastAPI routes the request to matching functions defined in `main.py`.
+    4. Those call Hyperspy logic in `file_service.py`.
     5. A response (e.g. file list or spectrum array) is returned to the frontend.
-    6. **React** receives and renders the result.
+    6. React receives and renders the result.
 
-**Example Request: File Listing**
+Example Request: File Listing
 
     When the frontend calls `getFiles()`:
     1. It sends a `GET` request to: `http://localhost:8000/files`
