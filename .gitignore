@@ -1,2 +1,4 @@
 React-Hyperspy-Crucible/backend/sample_data/*.emd
 *.emd
+*.h5
+.cursor/
