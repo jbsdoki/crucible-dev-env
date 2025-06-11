@@ -38,7 +38,9 @@
 ## FOR NOW FILES PLACED IN DIRECTORY, TO BE REMOVED LATER/REPLACED WITH SQL SERVER CALLS
 ## Place files in local folder:
 Place .edm or other files in directory:
+```bash
 React-Hyperspy-Crucible/backend/sample_data/
+```
 
 ## Start the Backend FastAPI server
 ```bash
