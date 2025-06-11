@@ -1,6 +1,6 @@
-## React-Hyperspy-Crucible
+# React-Hyperspy-Crucible
 
-# Required Software
+## Required Software
 
 1. Node.js (includes npm) — used to install and run the React frontend
     - Download and install from: https://nodejs.org/en
@@ -32,16 +32,18 @@
 (Specific build type should not matter)
 (These package names are stored in backend/requirements.txt for easy install)
 
-## Setup Steps
+# Setup Steps
 
-# Start the Backend FastAPI server
-cd backend
+## Start the Backend FastAPI server
 ```bash
+micromamba activate <your environment>
+cd backend
 uvicorn main:app --reload
 ```
 
-# Start the Frontend Server (in a new terminal):
+## Start the Frontend Server (in a new terminal):
 ```bash
+micromamba activate <your environment>
 cd frontend
 npm install  # This should install all required dependencies including axios, recharts, and Material-UI, if not:
 npm install axios react-plotly.js plotly.js
