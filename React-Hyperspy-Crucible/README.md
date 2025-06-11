@@ -90,17 +90,12 @@ The FastAPI backend (running on http://localhost:8000) is organized into two mai
 
 General calling flow
 
-    1. React frontend uses functions in `frontend/src/services/api.ts` to make API calls.
-
-    2. These send HTTP requests to FastAPI server on port 8000
-
-    3. FastAPI routes the request to matching functions defined in `main.py`.
-
-    4. These call Hyperspy logic in `file_service.py`.
-
-    5. A response (e.g. file list or spectrum array) is returned to the frontend.
-
-    6. React receives and renders the result.
+1. React frontend uses functions in `frontend/src/services/api.ts` to make API calls.
+2. These send HTTP requests to FastAPI server on port 8000
+3. FastAPI routes the request to matching functions defined in `main.py`.
+4. These call Hyperspy logic in `file_service.py`.
+5. A response (e.g. file list or spectrum array) is returned to the frontend.
+6. React receives and renders the result.
 
 Example Request: File Listing
 
