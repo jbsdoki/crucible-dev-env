@@ -1,0 +1,26 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [-c, 'docker pull gcr.io/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}:latest || exit 0']
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: [-c, 'docker build --build-arg orcid_client_secret=$$ORCID_CLIENT_SECRET --build-arg propdb_apikey=$$PROPDB_APIKEY --build-arg pyoidc_secret=$$PYOIDC_SECRET --build-arg gpat=$$GPAT -t gcr.io/${PROJECT_ID}/${REPO_NAME}-${BRANCH_NAME}:latest --cache-from gcr.io/${PROJECT_ID}/${REPO_NAME}-${BRANCH_NAME}:latest .']
+    secretEnv: [ORCID_CLIENT_SECRET, PROPDB_APIKEY, PYOIDC_SECRET, GPAT]
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/${PROJECT_ID}/${REPO_NAME}-${BRANCH_NAME}:latest' ]
+
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/776258882599/secrets/orcid_client_secret/versions/2
+    env: 'ORCID_CLIENT_SECRET'
+  - versionName: projects/776258882599/secrets/propdb-apikey/versions/1
+    env: 'PROPDB_APIKEY'
+  - versionName: projects/776258882599/secrets/pyoidc_secret_key/versions/1
+    env: 'PYOIDC_SECRET' 
+  - versionName: projects/776258882599/secrets/git_pat_cloud_schedulers/versions/1
+    env: 'GPAT'
+
+timeout: 700s
+#options:
+#  machineType: 'e2-standard-2' # default

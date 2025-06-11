@@ -1,0 +1,4 @@
+redirect_uri: "https://esbstudio.dhcp.lbl.gov:5000/dash/auth"
+port: 5000
+gcs_client_id: 776258882599-v17f82atu67g16na3oiq6ga3bnudoqrh.apps.googleusercontent.com
+gcs_project_number: mf-crucible
