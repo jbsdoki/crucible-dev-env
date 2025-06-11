@@ -45,8 +45,8 @@ uvicorn main:app --reload
 
 ## Frontend Setup (Node.js) v22.16.0
 
-1. Install dependencies in bash:
-```npm create vite@latest frontend --template react
+1. Navigate to the frontend directory and install dependencies:
+```bash
 cd frontend
 npm install
 npm install axios react-plotly.js plotly.js
@@ -61,12 +61,38 @@ npm run dev
 
 ## Required Software
 
-Node.js (npm + npx) — used to install and run the React frontend
-    https://nodejs.org/en
+1. Node.js (includes npm) — used to install and run the React frontend
+    - Download and install from: https://nodejs.org/en
+    - The installer includes npm automatically
+    - After installation, verify by opening a terminal and running:
+      ```bash
+      node --version
+      npm --version
+      ```
+      
 
-Axios — makes HTTP requests from the React frontend to the FastAPI backend
+2. Python Environment (micromamba)
+    - Used for the FastAPI backend and Hyperspy
+    - Install micromamba from: https://mamba.readthedocs.io/en/latest/installation.html
 
-    ---
+## Setup Steps
+
+# Start the FastAPI server
+cd backend
+```bash
+uvicorn main:app --reload
+```
+
+# Start the Frontend Server (in a new terminal):
+```bash
+cd frontend
+npm install  # This installs all required dependencies including axios, recharts, and Material-UI
+npm run dev
+```
+
+The application will be available at:
+- Frontend: http://localhost:5173
+- Backend: http://localhost:8000
 
 ## Architecture
 
