@@ -30,6 +30,7 @@
 
    
 (Specific build type should not matter)
+
 (These package names are stored in backend/requirements.txt for easy install)
 
 # Setup Steps
@@ -114,6 +115,8 @@ If you get
 "Trying to load with signal_type: EDS_TEM
 WARNING | Hyperspy | `signal_type='EDS_TEM'` not understood. See `hs.print_known_signal_types()` for a list of installed signal types or https://github.com/hyperspy/hyperspy-extensions-list for the list of all hyperspy extensions providing signals. (hyperspy.io:745)" errors, or something similair, hyperspy does not have the installed ability to view that file type.
 Disply hyperspy filetypes command:
-    python
-    import hyperspy.api as hs
-    print(hs.print_known_file_formats())
+```bash
+python
+import hyperspy.api as hs
+print(hs.print_known_file_formats())
+```
