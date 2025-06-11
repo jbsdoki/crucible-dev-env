@@ -1,9 +1,0 @@
----
-description: 
-globs: 
-alwaysApply: false
----
-This project is going to use a React coded front end accessing a FastAPI backend, for visualizing and interacting with microscopy datasets.
-
-
-This project will eventually be hosted on a docker image in google cloud, and will access a SQL database for the images. During this development phase the app will be local, with a frontend and backend. Once that works it will be migrated to the google cloud. 
