@@ -1,10 +1,25 @@
 # React-Hyperspy-Crucible
 
+## Environment Details
+
+- Python Environment: micromamba
+- Python Version: 3.10
+- Key Packages: 
+    fastapi==0.109.2
+    uvicorn==0.27.1
+    hyperspy==1.7.5
+    python-multipart==0.0.9
+    numpy==1.23.5
+    scikit-image==0.19.3
+    scipy==1.10.1
+    matplotlib==3.5.1
+(Specific build type should not matter)
+
 ## Backend Setup (Python)
 
-1. Activate the micromamba environment:
-```bash
-micromamba activate hyperspy-env
+1. Activate the micromamba environment in bash:
+```
+micromamba activate <Your environment name>
 ```
 
 2. Start the FastAPI server:
@@ -13,12 +28,13 @@ cd backend
 uvicorn main:app --reload
 ```
 
-## Frontend Setup (Node.js)
+## Frontend Setup (Node.js) v22.16.0
 
-1. Install dependencies:
-```bash
+1. Install dependencies in bash:
+```npm create vite@latest frontend --template react
 cd frontend
 npm install
+npm install axios react-plotly.js plotly.js
 ```
 
 2. Start the development server:
@@ -37,15 +53,7 @@ micromamba activate hyperspy-env
    - Frontend: http://localhost:5173
    - Backend: http://localhost:8000
 
-## Environment Details
 
-- Python Environment: `hyperspy-env`
-- Python Version: 3.10
-- Key Packages:
-  - fastapi
-  - uvicorn
-  - hyperspy
-  - python-multipart
 
 ## Troubleshooting
 
@@ -63,25 +71,27 @@ Disply hyperspy filetypes command:
 
 ## Required Software
 
-    - **Node.js (npm + npx)** — used to install and run the React frontend
-    - **Axios** — makes HTTP requests from the React frontend to the FastAPI backend
+Node.js (npm + npx) — used to install and run the React frontend
+    https://nodejs.org/en
+Axios — makes HTTP requests from the React frontend to the FastAPI backend
 
     ---
 
 
 ## Architecture
 
-    ### Frontend: React
+**Frontend:** React
     - Interactive UI for selecting and visualizing microscopy data
     - Code lives in: `frontend/src/`
 
-    ### Backend: FastAPI + Hyperspy
+**Backend:** FastAPI + Hyperspy
     - Serves `.emd` files from disk (temporary: replace with SQL later)
     - Code lives in: `backend/main.py` and `backend/file_service.py`
     - Uses Hyperspy to extract metadata and spectral data
 
 ## Data Flow (Frontend ↔ Backend)
 
+**General calling flow**
     1. **React frontend** uses functions in `frontend/src/services/api.ts` to make API calls.
     2. These send **HTTP requests** to the FastAPI backend.
     3. **FastAPI** routes the request to matching functions defined in `main.py`.
@@ -89,7 +99,7 @@ Disply hyperspy filetypes command:
     5. A response (e.g. file list or spectrum array) is returned to the frontend.
     6. **React** receives and renders the result.
 
-    Example Request: File Listing
+**Example Request: File Listing**
 
     When the frontend calls `getFiles()`:
     1. It sends a `GET` request to: `http://localhost:8000/files`
