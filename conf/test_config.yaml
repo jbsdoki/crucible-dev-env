@@ -1,5 +1,0 @@
-redirect_uri: "https://35.232.137.214:7777/dash/auth"
-port: 7777
-gcs_client_id: 776258882599-v17f82atu67g16na3oiq6ga3bnudoqrh.apps.googleusercontent.com
-gcs_project_number: mf-crucible
-
