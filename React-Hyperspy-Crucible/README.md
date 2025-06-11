@@ -16,6 +16,7 @@
 
    
 (Specific build type should not matter)
+(These package names are stored in backend/requirements.txt for easy install)
 
 ## Development Workflow
 
@@ -32,7 +33,8 @@ micromamba activate hyperspy-env
 ## Backend Setup (Python)
 
 1. Activate the micromamba environment in bash:
-```micromamba activate <Your environment name>
+```bash
+micromamba activate <Your environment name>
 ```
 
 2. Start the FastAPI server:
