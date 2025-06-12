@@ -10,7 +10,10 @@ const api = axios.create({
   baseURL: 'http://localhost:8000',  // FastAPI default port
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // Ensure we're not sending credentials
+  withCredentials: false
 });
 
 /****************** API Endpoint Functions ******************/
@@ -23,8 +26,13 @@ const api = axios.create({
  * Returns: Array of filenames
  */
 export const getFiles = async () => {
-  const response = await api.get('/files');
-  return response.data;
+  try {
+    const response = await api.get('/files');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    throw error;
+  }
 };
 
 /**
@@ -34,25 +42,34 @@ export const getFiles = async () => {
  * Returns: Object containing axes, shape, and metadata keys
  */
 export const getMetadata = async (filename: string) => {
-  const response = await api.get('/metadata', {
-    params: { filename }
-  });
-  return response.data;
+  try {
+    const response = await api.get('/metadata', {
+      params: { filename }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching metadata:', error);
+    throw error;
+  }
 };
 
 /**
  * Fetches spectrum data at specific coordinates from a .emd file
- * Calls: GET http://localhost:8000/spectrum?filename=<filename>&x=<x>&y=<y>
+ * Calls: GET http://localhost:8000/spectrum?filename=<filename>&x=<x>
  * @param filename - Name of the .emd file
  * @param x - X coordinate (default: 0)
- * @param y - Y coordinate (default: 0)
  * Returns: Array of spectrum data points
  */
-export const getSpectrum = async (filename: string, x: number = 0, y: number = 0) => {
-  const response = await api.get('/spectrum', {
-    params: { filename, x, y }
-  });
-  return response.data;
+export const getSpectrum = async (filename: string, x: number = 0) => {
+  try {
+    const response = await api.get('/spectrum', {
+      params: { filename, x }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching spectrum:', error);
+    throw error;
+  }
 };
 
 export default api; 

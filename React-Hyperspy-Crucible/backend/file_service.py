@@ -13,15 +13,33 @@ def list_files():
         print(f"Error accessing directory {DATA_DIR}: {str(e)}")
         return []
 
+"""
+Direct data retrieval function that loads EMD files using HyperSpy.
+This is the core function that actually reads the raw EMD file data from disk.
+
+How it works:
+1. Attempts to load the EMD file using different signal types (EMD, EDS_TEM, EDS_SEM, EELS)
+2. Uses HyperSpy's hs.load() function which directly reads the binary EMD file
+3. Returns the loaded signal object containing the raw spectrum data
+
+Args:
+    filepath (str): Full path to the EMD file to load
+    
+Returns:
+    hyperspy.signals.Signal: A HyperSpy signal object containing the loaded data
+    
+Raises:
+    ValueError: If the file cannot be loaded with any of the supported signal types
+"""
 def try_load_signal(filepath):
-    """Try loading the signal with different signal types"""
-    signal_types = ['EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
+
+    signal_types = ['EMD', 'EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
     
     for signal_type in signal_types:
         try:
             print(f"Trying to load with signal_type: {signal_type}")
             if signal_type:
-                signal = hs.load(filepath, signal_type=signal_type)
+                signal = hs.load(filepath, reader=signal_type)
             else:
                 signal = hs.load(filepath)
             return signal
@@ -46,23 +64,28 @@ def load_metadata(filename):
         print(f"Error loading metadata for {filename}: {str(e)}")
         raise
 
-# Extract spectrum data from x, y coordinate
-def extract_spectrum(filename, x=0, y=0):
+# Extract spectrum data from x coordinate
+def extract_spectrum(filename, x=0):
     try:
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
         sig = signal[0] if isinstance(signal, list) else signal
         
-        # Print some debug information
+        # Print basic debug info
         print(f"Signal shape: {sig.data.shape}")
         print(f"Signal type: {type(sig)}")
-        print(f"Requested coordinates: x={x}, y={y}")
+        print(f"Requested coordinates: x={x}")
         
-        # Ensure coordinates are within bounds
-        if x >= sig.data.shape[0] or y >= sig.data.shape[1]:
-            raise ValueError(f"Coordinates ({x}, {y}) out of bounds. Shape is {sig.data.shape}")
+        # Handle different dimensionalities
+        if len(sig.data.shape) == 1:
+            return sig.data.tolist()
+        elif len(sig.data.shape) == 2:
+            if x >= sig.data.shape[0]:
+                raise ValueError(f"Coordinates ({x}) out of bounds. Shape is {sig.data.shape}")
+            return sig.data[x].tolist()
+        else:
+            raise ValueError(f"Unexpected data dimensionality: {len(sig.data.shape)}D")
             
-        return sig.data[x][y].tolist()
     except Exception as e:
         print(f"Error extracting spectrum from {filename}: {str(e)}")
         raise
