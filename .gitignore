@@ -1,3 +1,7 @@
 *.emd
 *.h5
+*.ser
+*.emi
+*.dm3
+*.dm4
 .cursor/
