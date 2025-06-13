@@ -1,0 +1,123 @@
+import { useState, useEffect } from 'react';
+import { Box, Paper, Typography, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { getMetadata } from '../services/api';
+
+interface MetadataViewerProps {
+  selectedFile: string;
+}
+
+type MetadataValue = string | number | boolean | object | null;
+type MetadataDict = Record<string, Record<string, MetadataValue>>;
+
+/**
+ * Renders a metadata value, handling different types appropriately
+ */
+const MetadataValue = ({ value }: { value: MetadataValue }) => {
+  if (value === null) return <Typography>null</Typography>;
+  if (typeof value === 'object') {
+    return (
+      <Box sx={{ pl: 2 }}>
+        {Object.entries(value).map(([key, val]) => (
+          <Box key={key}>
+            <Typography>
+              {key}: <MetadataValue value={val} />
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+  return <Typography component="span">{String(value)}</Typography>;
+};
+
+/**
+ * MetadataViewer Component
+ * 
+ * Displays metadata categories from the microscopy file, such as:
+ * - Acquisition instrument settings
+ * - Sample information
+ * - General file information
+ * - Signal properties
+ * 
+ * @param selectedFile - Name of the currently selected file
+ */
+function MetadataViewer({ selectedFile }: MetadataViewerProps) {
+  const [metadata, setMetadata] = useState<MetadataDict | null>(null);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      if (!selectedFile) {
+        setMetadata(null);
+        return;
+      }
+
+      setLoading(true);
+      setError('');
+
+      try {
+        const data = await getMetadata(selectedFile);
+        setMetadata(data);
+      } catch (err) {
+        setError(`Error loading metadata: ${(err as Error).message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetadata();
+  }, [selectedFile]);
+
+  if (!selectedFile) {
+    return (
+      <Paper sx={{ p: 2, mt: 2 }}>
+        <Typography>Select a file to view metadata</Typography>
+      </Paper>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Paper sx={{ p: 2, mt: 2, bgcolor: 'error.light' }}>
+        <Typography color="error">{error}</Typography>
+      </Paper>
+    );
+  }
+
+  if (!metadata) {
+    return null;
+  }
+
+  return (
+    <Paper sx={{ p: 2, mt: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        File Metadata: {selectedFile}
+      </Typography>
+
+      <Box sx={{ mt: 2 }}>
+        {Object.entries(metadata).map(([category, data]) => (
+          <Accordion key={category}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography fontWeight="bold">{category}</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <MetadataValue value={data} />
+            </AccordionDetails>
+          </Accordion>
+        ))}
+      </Box>
+    </Paper>
+  );
+}
+
+export default MetadataViewer; 
