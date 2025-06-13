@@ -72,4 +72,27 @@ export const getSpectrum = async (filename: string, x: number = 0) => {
   }
 };
 
+/**
+ * Fetches image data from a .emd file
+ * Calls: GET http://localhost:8000/image-data?filename=<filename>
+ * @param filename - Name of the .emd file
+ * Returns: Object containing:
+ *  - spectrum_idx: Index of the 3D spectrum signal
+ *  - spectrum_shape: Shape of the spectrum signal
+ *  - haadf_idx: Index of the HAADF image
+ *  - haadf_shape: Shape of the HAADF image
+ *  - haadf_data: 2D array of the HAADF image if found
+ */
+export const getImageData = async (filename: string) => {
+  try {
+    const response = await api.get('/image-data', {
+      params: { filename }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching image data:', error);
+    throw error;
+  }
+};
+
 export default api; 

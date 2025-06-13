@@ -1,17 +1,145 @@
 import os
 import hyperspy.api as hs
+import numpy as np
+from hyperspy.signals import Signal1D
+try:
+    from exspy.signals import EDSTEMSpectrum
+except ImportError:
+    print("Warning: exspy package not found. EDSTEMSpectrum will not be available.")
+    EDSTEMSpectrum = None
 
 # Get the absolute path to the sample_data directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "backend", "sample_data")
 
-# List all .emd files
+"""
+Lists all supported microscopy files in the sample_data directory.
+
+Supported formats:
+- .emd (EMD files)
+- .tif (TIFF files)
+- .dm3 (Digital Micrograph 3)
+- .dm4 (Digital Micrograph 4)
+- .ser (TIA Series)
+- .emi (FEI EMI)
+
+Returns:
+    list: List of filenames with supported extensions
+"""
 def list_files():
     try:
-        return [f for f in os.listdir(DATA_DIR) if f.endswith('.emd')]
+        supported_extensions = ('.emd', '.tif', '.dm3', '.dm4', '.ser', '.emi')
+        return [f for f in os.listdir(DATA_DIR) if f.lower().endswith(supported_extensions)]
     except Exception as e:
         print(f"Error accessing directory {DATA_DIR}: {str(e)}")
         return []
+
+"""
+Find a signal with 3D data representing a 2D image and spectrum.
+The first two dimensions should be spatial (image) and the third dimension is the spectrum length.
+
+Args:
+    signal_list (list): List of hyperspy signals
+    
+Returns:
+    tuple: (index, signal) of the first found 3D signal, or (None, None) if not found
+"""
+def find_3d_signal(signal_list):
+    print("\nSearching for 3D signals...")
+    for idx, sig in enumerate(signal_list):
+        print(f"\nChecking signal {idx}:")
+        print(f"Type: {type(sig)}")
+        if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
+            print(f"Title: {sig.metadata.General.title}")
+        
+        # Check if signal has 3D data
+        if hasattr(sig, 'data'):
+            shape = sig.data.shape
+            print(f"Data shape: {shape}")
+            
+            # Look for 3D array with first two dims being spatial
+            if len(shape) == 3:
+                print(f"Found 3D signal at index {idx} with shape {shape}")
+                print(f"Data type: {sig.data.dtype}")
+                print(f"Data range: min={sig.data.min()}, max={sig.data.max()}")
+                return idx, sig
+            
+    print("No suitable 3D signal found")
+    return None, None
+
+"""
+Extract image and spectrum data from a hyperspy file.
+Looks for a 3D signal where the first two dimensions represent
+the image and the third dimension is the spectrum length.
+
+Args:
+    filename (str): Name of the file to load
+    
+Returns:
+    dict: Dictionary containing:
+        - signal_idx: Index of the 3D signal
+        - data_shape: Shape of the 3D data (height, width, spectrum_length)
+        - image_data: 2D array representing the sum of all spectrum channels
+"""
+def extract_image_data(filename):
+    try:
+        print(f"\nExtracting data from {filename}")
+        filepath = os.path.join(DATA_DIR, filename)
+        signal = hs.load(filepath)
+        
+        if not isinstance(signal, list):
+            signal = [signal]
+            
+        print(f"\nLoaded {len(signal)} signals from file")
+        
+        # Find 3D signal
+        signal_idx, signal_data = find_3d_signal(signal)
+        
+        if signal_data is None:
+            print("No 3D signal found in file")
+            return None
+            
+        # Get the shape of the data
+        data_shape = signal_data.data.shape
+        print(f"Signal shape: {data_shape}")
+        
+        # Create 2D image by summing across the spectrum dimension
+        print("\nProcessing image data:")
+        print(f"Initial data type: {signal_data.data.dtype}")
+        print(f"Initial data range: min={signal_data.data.min()}, max={signal_data.data.max()}")
+        
+        # Sum across spectrum dimension
+        image_data = np.sum(signal_data.data, axis=2)
+        print(f"After summing - shape: {image_data.shape}")
+        print(f"After summing - range: min={image_data.min()}, max={image_data.max()}")
+        
+        # Normalize the image data for display
+        if image_data.size > 0:
+            image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
+            image_data = (image_data * 255).astype(np.uint8)
+            print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
+            print(f"Final data type: {image_data.dtype}")
+        
+        result = {
+            "signal_idx": signal_idx,
+            "data_shape": data_shape,
+            "image_data": image_data.tolist()
+        }
+        
+        print("\nExtracted data successfully")
+        print(f"Signal index: {signal_idx}")
+        print(f"Data shape: {data_shape}")
+        print(f"Image shape: {image_data.shape}")
+        print(f"Image data sample (5x5 corner):")
+        print(image_data[:5, :5])
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error extracting data from {filename}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 """
 Direct data retrieval function that loads EMD files using HyperSpy.
@@ -32,7 +160,7 @@ Raises:
     ValueError: If the file cannot be loaded with any of the supported signal types
 """
 def try_load_signal(filepath):
-
+    """Try loading the signal with different signal types"""
     signal_types = ['EMD', 'EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
     
     for signal_type in signal_types:
@@ -49,32 +177,60 @@ def try_load_signal(filepath):
     
     raise ValueError("Could not load file with any signal type")
 
-# Load metadata like shape and axis labels
+"""
+Loads only the metadata categories from a microscopy file.
+
+Args:
+    filename: Name of the file to load metadata from
+    
+Returns:
+    dict: Dictionary containing metadata categories and their values
+"""
 def load_metadata(filename):
     try:
+        print(f"\n=== Loading metadata for {filename} ===")
+        
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
         sig = signal[0] if isinstance(signal, list) else signal
-        return {
-            "axes": [axis.name for axis in sig.axes],
-            "shape": sig.data.shape,
-            "original_metadata_keys": list(sig.original_metadata.keys())
-        }
+        
+        metadata_dict = {}
+        
+        # Access metadata categories
+        if hasattr(sig, 'metadata'):
+            print("\nExtracting metadata categories...")
+            
+            # Get all top-level metadata categories
+            for category in sig.metadata.as_dictionary().keys():
+                category_data = getattr(sig.metadata, category, None)
+                if category_data is not None:
+                    try:
+                        metadata_dict[category] = category_data.as_dictionary()
+                        print(f"Found category: {category}")
+                    except Exception as e:
+                        print(f"Error extracting {category}: {str(e)}")
+                        metadata_dict[category] = str(category_data)
+        
+        print("\nMetadata categories found:", list(metadata_dict.keys()))
+        return metadata_dict
+        
     except Exception as e:
-        print(f"Error loading metadata for {filename}: {str(e)}")
+        print(f"\n!!! Error loading metadata for {filename} !!!")
+        print(f"Error type: {type(e)}")
+        print(f"Error message: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise
 
 # Extract spectrum data from x coordinate
+# Spectrum data is a 1D array of intensity values
+# The x coordinate is the index of the array
+# The entry at index x is the intensity value
 def extract_spectrum(filename, x=0):
     try:
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
         sig = signal[0] if isinstance(signal, list) else signal
-        
-        # Print basic debug info
-        print(f"Signal shape: {sig.data.shape}")
-        print(f"Signal type: {type(sig)}")
-        print(f"Requested coordinates: x={x}")
         
         # Handle different dimensionalities
         if len(sig.data.shape) == 1:
@@ -89,3 +245,20 @@ def extract_spectrum(filename, x=0):
     except Exception as e:
         print(f"Error extracting spectrum from {filename}: {str(e)}")
         raise
+
+"""
+Find the HAADF image from a list of hyperspy signals.
+
+Args:
+    signal_list (list): List of hyperspy signals
+    
+Returns:
+    tuple: (index, signal) of the HAADF image, or (None, None) if not found
+"""
+def find_haadf_image(signal_list):
+    for idx, sig in enumerate(signal_list):
+        if hasattr(sig, 'metadata'):
+            title = sig.metadata.General.title if hasattr(sig.metadata, 'General') else ''
+            if 'HAADF' in title and len(sig.data.shape) == 2:
+                return idx, sig
+    return None, None

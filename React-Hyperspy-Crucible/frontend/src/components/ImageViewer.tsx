@@ -1,12 +1,119 @@
-import { Box } from '@mui/material';
+import { useEffect, useState, useRef } from 'react';
+import { Box, CircularProgress, Typography } from '@mui/material';
+import { getImageData } from '../services/api';
+
+interface ImageViewerProps {
+  selectedFile: string;
+}
 
 /**
  * ImageViewer Component
  * 
- * This component will display the image data from the EMD file.
- * Currently a placeholder until we implement the image data endpoint.
+ * Displays a 2D image created by summing across the spectrum dimension of a 3D signal.
+ * The image represents the total intensity at each spatial point.
  */
-function ImageViewer() {
+function ImageViewer({ selectedFile }: ImageViewerProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [imageData, setImageData] = useState<{
+    data: number[][],
+    width: number,
+    height: number
+  } | null>(null);
+
+  // Effect to fetch image data
+  useEffect(() => {
+    const fetchImageData = async () => {
+      if (!selectedFile) {
+        setError(null);
+        setImageData(null);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('Fetching image data for:', selectedFile);
+        const data = await getImageData(selectedFile);
+        console.log('Received data:', data);
+        
+        if (!data || !data.image_data || !data.data_shape) {
+          console.error('Invalid data received:', data);
+          setError('No 3D signal found in this file');
+          return;
+        }
+
+        const [height, width] = data.data_shape;
+        console.log('Image dimensions:', width, 'x', height);
+        
+        setImageData({
+          data: data.image_data,
+          width: width,
+          height: height
+        });
+      } catch (err) {
+        console.error('Error fetching image data:', err);
+        setError(`Error loading image: ${(err as Error).message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchImageData();
+  }, [selectedFile]);
+
+  // Effect to draw image when canvas and image data are both ready
+  useEffect(() => {
+    if (!imageData) return;
+
+    const drawImage = () => {
+      console.log('Attempting to draw image...');
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        console.log('Canvas not ready yet, waiting...');
+        return;
+      }
+
+      console.log('Canvas found, dimensions:', canvas.width, 'x', canvas.height);
+      
+      // Set canvas dimensions to match image dimensions
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      console.log('Set canvas dimensions to:', canvas.width, 'x', canvas.height);
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('Could not get canvas context');
+        return;
+      }
+
+      // Create ImageData object
+      const data = new Uint8ClampedArray(imageData.width * imageData.height * 4);
+      for (let y = 0; y < imageData.height; y++) {
+        for (let x = 0; x < imageData.width; x++) {
+          const value = imageData.data[y][x];
+          const index = (y * imageData.width + x) * 4;
+          // Set RGB values to the same value for grayscale
+          data[index] = value;     // R
+          data[index + 1] = value; // G
+          data[index + 2] = value; // B
+          data[index + 3] = 255;   // A
+        }
+      }
+      
+      const imageDataObj = new ImageData(data, imageData.width, imageData.height);
+      ctx.putImageData(imageDataObj, 0, 0);
+      console.log('Image drawn to canvas successfully');
+    };
+
+    // Try to draw immediately
+    drawImage();
+
+    // Also try again in the next frame in case the canvas wasn't ready
+    requestAnimationFrame(drawImage);
+  }, [imageData]);
+
   return (
     <Box 
       sx={{ 
@@ -15,12 +122,30 @@ function ImageViewer() {
         border: '1px solid #ccc',
         borderRadius: '4px',
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5'
+        backgroundColor: '#f5f5f5',
+        overflow: 'hidden',
+        padding: 2
       }}
     >
-      <p>Image Viewer - Coming Soon</p>
+      {loading ? (
+        <CircularProgress />
+      ) : error ? (
+        <Typography color="error">{error}</Typography>
+      ) : !selectedFile ? (
+        <Typography>Select a file to view image</Typography>
+      ) : (
+        <canvas
+          ref={canvasRef}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain'
+          }}
+        />
+      )}
     </Box>
   );
 }

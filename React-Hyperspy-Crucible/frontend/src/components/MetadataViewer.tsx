@@ -19,10 +19,11 @@ const MetadataValue = ({ value }: { value: MetadataValue }) => {
     return (
       <Box sx={{ pl: 2 }}>
         {Object.entries(value).map(([key, val]) => (
-          <Box key={key}>
-            <Typography>
-              {key}: <MetadataValue value={val} />
-            </Typography>
+          <Box key={key} sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Typography component="span" sx={{ mr: 1 }}>{key}:</Typography>
+            <Box component="span">
+              <MetadataValue value={val} />
+            </Box>
           </Box>
         ))}
       </Box>

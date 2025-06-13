@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
-from file_service import list_files, load_metadata, extract_spectrum
+from file_service import list_files, load_metadata, extract_spectrum, extract_image_data
 
 # Create FastAPI instance
 app = FastAPI()
@@ -68,6 +68,34 @@ Called by: Frontend getSpectrum() function
 async def get_spectrum(filename: str = Query(...), x: int = Query(0)):
     try:
         data = extract_spectrum(filename, x)
+        return JSONResponse(content=data)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+"""
+Gets image data from a .emd file, including both 3D spectrum and HAADF images
+Args:
+    filename: Name of the .emd file (required query parameter)
+Returns: Dictionary containing:
+    - spectrum_idx: Index of the 3D spectrum signal
+    - spectrum_shape: Shape of the spectrum signal
+    - haadf_idx: Index of the HAADF image
+    - haadf_shape: Shape of the HAADF image
+    - haadf_data: 2D numpy array of the HAADF image if found
+Called by: Frontend getImageData() function
+"""
+@app.get("/image-data")
+async def get_image_data(filename: str = Query(...)):
+    try:
+        data = extract_image_data(filename)
+        if data is None:
+            return JSONResponse(
+                status_code=404,
+                content={"error": f"No image data found in file {filename}"}
+            )
         return JSONResponse(content=data)
     except Exception as e:
         return JSONResponse(

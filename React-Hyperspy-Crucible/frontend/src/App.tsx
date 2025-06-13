@@ -43,7 +43,16 @@ function App() {
   return (
     <Box className="App">
       {/* File Selector */}
-      <Box sx={{ maxWidth: '800px', margin: '0 auto', mb: 4 }}>
+      <Box sx={{ maxWidth: '800px', margin: '0 auto', mt: 4, mb: 4 }}>
+        <Box sx={{ 
+          typography: 'h5', 
+          mb: 2, 
+          textAlign: 'center',
+          color: 'text.primary',
+          fontWeight: 'medium'
+        }}>
+          Select File
+        </Box>
         <FileSelector 
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
@@ -63,13 +72,13 @@ function App() {
       >
         {/* Left Column: Image and Metadata */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <ImageViewer />
+          <ImageViewer selectedFile={selectedFile} />
           <MetadataViewer selectedFile={selectedFile} />
         </Box>
 
         {/* Right Column: Spectrum Viewer */}
         <Box>
-          <SpectrumViewer />
+          <SpectrumViewer selectedFile={selectedFile} />
         </Box>
       </Box>
     </Box>
