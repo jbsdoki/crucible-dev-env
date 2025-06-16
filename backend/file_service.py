@@ -230,7 +230,7 @@ def extract_spectrum(filename, x=0):
     try:
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
-        sig = signal[0] if isinstance(signal, list) else signal
+        sig = signal[x] if isinstance(signal, list) else signal
         
         # Handle different dimensionalities
         if len(sig.data.shape) == 1:

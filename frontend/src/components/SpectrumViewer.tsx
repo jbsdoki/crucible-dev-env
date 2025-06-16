@@ -44,6 +44,15 @@ function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
         console.log('Fetching spectrum data for:', selectedFile);
         const data = await getSpectrum(selectedFile);
         
+        // Add detailed logging about the received data
+        console.log('Raw spectrum data:', {
+          type: typeof data,
+          isArray: Array.isArray(data),
+          length: data.length,
+          sampleValue: data[0],
+          sampleValueType: typeof data[0]
+        });
+        
         // Check if data is valid before processing
         if (!Array.isArray(data)) {
           throw new Error(`Expected array but received ${typeof data}`);
@@ -54,6 +63,13 @@ function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
           energy: index,
           intensity: value
         }));
+        
+        // Log the formatted data structure
+        console.log('Formatted spectrum data:', {
+          length: formattedData.length,
+          firstPoint: formattedData[0],
+          lastPoint: formattedData[formattedData.length - 1]
+        });
         
         setSpectrumData(formattedData);
       } catch (err) {

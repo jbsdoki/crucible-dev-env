@@ -36,7 +36,15 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
         setError(null);
         console.log('Fetching image data for:', selectedFile);
         const data = await getImageData(selectedFile);
-        console.log('Received data:', data);
+        console.log('Received raw data:', {
+          type: typeof data,
+          keys: Object.keys(data),
+          dataShape: data.data_shape,
+          imageDataType: typeof data.image_data,
+          imageDataIsArray: Array.isArray(data.image_data),
+          imageDataLength: data.image_data?.length,
+          sampleRow: data.image_data?.[0]?.slice(0, 5),  // First 5 pixels of first row
+        });
         
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
@@ -51,6 +59,17 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
           data: data.image_data,
           width: width,
           height: height
+        });
+
+        console.log('Processed image data:', {
+          dimensions: `${width} x ${height}`,
+          totalPixels: width * height,
+          samplePixelValues: {
+            topLeft: data.image_data[0][0],
+            topRight: data.image_data[0][width-1],
+            bottomLeft: data.image_data[height-1][0],
+            bottomRight: data.image_data[height-1][width-1],
+          }
         });
       } catch (err) {
         console.error('Error fetching image data:', err);
@@ -104,6 +123,12 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
       
       const imageDataObj = new ImageData(data, imageData.width, imageData.height);
       ctx.putImageData(imageDataObj, 0, 0);
+      console.log('Canvas rendering details:', {
+        canvasDimensions: `${canvas.width} x ${canvas.height}`,
+        dataBufferSize: data.length,
+        firstFewPixels: Array.from(data.slice(0, 20)),  // Show first 5 RGBA values
+        imageDataSize: `${imageDataObj.width} x ${imageDataObj.height}`
+      });
       console.log('Image drawn to canvas successfully');
     };
 
