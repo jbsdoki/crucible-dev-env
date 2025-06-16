@@ -28,6 +28,7 @@ import SpectrumViewer from './components/SpectrumViewer'
 import ImageViewer from './components/ImageViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
+import SignalSelector from './components/SignalSelector'
 import { Box } from '@mui/material'
 import './App.css'
 
@@ -57,6 +58,7 @@ function App() {
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
         />
+        {selectedFile && <SignalSelector selectedFile={selectedFile} />}
       </Box>
 
       {/* Main Content Grid */}

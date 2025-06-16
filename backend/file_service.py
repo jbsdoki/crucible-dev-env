@@ -2,6 +2,7 @@ import os
 import hyperspy.api as hs
 import numpy as np
 from hyperspy.signals import Signal1D
+import time  # Add import for timing, recording load times
 try:
     from exspy.signals import EDSTEMSpectrum
 except ImportError:
@@ -11,6 +12,39 @@ except ImportError:
 # Get the absolute path to the sample_data directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "backend", "sample_data")
+
+CURRENT_FILE = {
+    "filename": None,
+    "signals": None
+}
+
+CURRENT_SIGNAL = {
+    "idx": None,
+    "name": None
+}
+
+def update_current_file(filepath, signals):
+    """Helper function to update CURRENT_FILE with logging"""
+    print("\n=== Updating CURRENT_FILE ===")
+    print(f"Previous file: {CURRENT_FILE['filename']}")
+    print(f"New file: {filepath}")
+    
+    CURRENT_FILE["filename"] = filepath
+    CURRENT_FILE["signals"] = signals
+    
+    if isinstance(signals, list):
+        print(f"Number of signals: {len(signals)}")
+        for i, sig in enumerate(signals):
+            if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
+                print(f"Signal {i}: {sig.metadata.General.title}")
+            if hasattr(sig, 'data'):
+                print(f"Signal {i} shape: {sig.data.shape}")
+    else:
+        print("Single signal loaded")
+        if hasattr(signals, 'data'):
+            print(f"Signal shape: {signals.data.shape}")
+    
+    print("=== CURRENT_FILE updated ===\n")
 
 """
 Lists all supported microscopy files in the sample_data directory.
@@ -33,6 +67,80 @@ def list_files():
     except Exception as e:
         print(f"Error accessing directory {DATA_DIR}: {str(e)}")
         return []
+
+"""
+Direct data retrieval function that loads EMD files using HyperSpy.
+This is the core function that actually reads the raw EMD file data from disk.
+
+How it works:
+1. Attempts to load the EMD file using different signal types (EMD, EDS_TEM, EDS_SEM, EELS)
+2. Uses HyperSpy's hs.load() function which directly reads the binary EMD file
+3. Returns the loaded signal object containing the raw spectrum data
+
+Args:
+    filepath (str): Full path to the EMD file to load
+    
+Returns:
+    hyperspy.signals.Signal: A HyperSpy signal object containing the loaded data
+    
+Raises:
+    ValueError: If the file cannot be loaded with any of the supported signal types
+"""
+def try_load_file(filepath):
+    signal_types = [None, 'EMD', 'EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
+    
+    for signal_type in signal_types:
+        try:
+            print(f"\n=== Attempting to load file: {os.path.basename(filepath)} ===")
+            print(f"Using signal type: {signal_type if signal_type else 'auto-detect'}")
+            
+            # Start timer
+            start_time = time.time()
+            
+            # Load the file
+            if signal_type:
+                signal = hs.load(filepath, reader=signal_type)
+            else:
+                signal = hs.load(filepath)
+            
+            # End timer
+            load_time = time.time() - start_time
+            print(f"File loaded successfully in {load_time:.2f} seconds")
+            
+            # Store in CURRENT_FILE
+            CURRENT_FILE["filename"] = filepath
+            CURRENT_FILE["signals"] = signal
+            
+            # Log what was loaded
+            if isinstance(signal, list):
+                print(f"Loaded {len(signal)} signals:")
+                for i, sig in enumerate(signal):
+                    print(f"\nSignal {i}:")
+                    print(f"  Type: {type(sig)}")
+                    print(f"  Shape: {sig.data.shape if hasattr(sig, 'data') else 'No data'}")
+                    if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
+                        print(f"  Title: {sig.metadata.General.title}")
+            else:
+                print("\nLoaded single signal:")
+                print(f"  Type: {type(signal)}")
+                print(f"  Shape: {signal.data.shape if hasattr(signal, 'data') else 'No data'}")
+                if hasattr(signal, 'metadata') and hasattr(signal.metadata, 'General'):
+                    print(f"  Title: {signal.metadata.General.title}")
+            
+            print("=== File loading complete ===\n")
+            return signal
+            
+        except Exception as e:
+            print(f"Failed with signal_type {signal_type}: {str(e)}")
+            continue
+    
+    raise ValueError("Could not load file with any signal type")
+
+
+def try_load_signal():
+    if CURRENT_FILE["signals"] is None:
+        raise ValueError("No file loaded")
+    return CURRENT_FILE["signals"][0]
 
 """
 Find a signal with 3D data representing a 2D image and spectrum.
@@ -123,7 +231,7 @@ def extract_image_data(filename):
         result = {
             "signal_idx": signal_idx,
             "data_shape": data_shape,
-            "image_data": image_data.tolist()
+            "image_data": image_data.tolist() 
         }
         
         print("\nExtracted data successfully")
@@ -262,3 +370,45 @@ def find_haadf_image(signal_list):
             if 'HAADF' in title and len(sig.data.shape) == 2:
                 return idx, sig
     return None, None
+
+def get_signals_from_file(filename):
+    """Get all signals from a file.
+    
+    Args:
+        filename (str): Name of the file to get signals from
+        
+    Returns:
+        list: List of signal information dictionaries containing:
+            - index: Signal index in the file
+            - title: Signal title if available
+            - type: Signal type
+            - shape: Data shape
+    """
+    try:
+        filepath = os.path.join(DATA_DIR, filename)
+        signal = try_load_file(filepath)
+        
+        signals_info = []
+        
+        # Handle single signal case
+        if not isinstance(signal, list):
+            signal = [signal]
+            
+        # Extract info from each signal
+        for idx, sig in enumerate(signal):
+            title = sig.metadata.General.title if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General') else f"Signal {idx}"
+            shape = sig.data.shape if hasattr(sig, 'data') else None
+            sig_type = type(sig).__name__
+            
+            signals_info.append({
+                "index": idx,
+                "title": title,
+                "type": sig_type,
+                "shape": shape
+            })
+            
+        return signals_info
+        
+    except Exception as e:
+        print(f"Error getting signals from {filename}: {str(e)}")
+        return []

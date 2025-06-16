@@ -95,4 +95,22 @@ export const getImageData = async (filename: string) => {
   }
 };
 
+/**
+ * Fetches all signals from a specific file
+ * Calls: GET http://localhost:8000/signals?filename=<filename>
+ * @param filename - Name of the file to get signals from
+ * Returns: Object containing array of signal information
+ */
+export const getSignals = async (filename: string) => {
+  try {
+    const response = await api.get('/signals', {
+      params: { filename }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching signals:', error);
+    throw error;
+  }
+};
+
 export default api; 

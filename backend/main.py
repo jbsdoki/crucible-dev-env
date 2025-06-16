@@ -2,7 +2,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
-from file_service import list_files, load_metadata, extract_spectrum, extract_image_data
+from file_service import list_files, load_metadata, extract_spectrum, extract_image_data, get_signals_from_file
 
 # Create FastAPI instance
 app = FastAPI()
@@ -97,6 +97,22 @@ async def get_image_data(filename: str = Query(...)):
                 content={"error": f"No image data found in file {filename}"}
             )
         return JSONResponse(content=data)
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+@app.get("/signals")
+async def get_signals(filename: str = Query(...)):
+    """Gets all signals from a file
+    Args:
+        filename: Name of the file (required query parameter)
+    Returns: List of signal information dictionaries
+    """
+    try:
+        signals = get_signals_from_file(filename)
+        return JSONResponse(content={"signals": signals})
     except Exception as e:
         return JSONResponse(
             status_code=500,
