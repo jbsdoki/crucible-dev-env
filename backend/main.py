@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 from file_service import list_files, load_metadata, extract_spectrum, extract_image_data, get_signals_from_file
+import time
 
 # Create FastAPI instance
 app = FastAPI()
@@ -18,6 +19,32 @@ app.add_middleware(
     max_age=3600,
 )
 
+# Track last call times to detect React StrictMode double-invocations
+last_calls = {}
+
+def log_call(endpoint: str, params: dict = None) -> None:
+    """Helper to log endpoint calls and detect React StrictMode double-invocations"""
+    current_time = time.time()
+    call_key = f"{endpoint}:{str(params)}"
+    
+    if call_key in last_calls:
+        time_diff = current_time - last_calls[call_key]
+        if time_diff < 0.1:  # If calls are within 100ms, likely StrictMode
+            print(f"\n[React StrictMode] Duplicate call to {endpoint}")
+            if params:
+                print(f"Parameters: {params}")
+            print(f"Time since last call: {time_diff*1000:.2f}ms")
+        else:
+            print(f"\n[New Request] {endpoint}")
+            if params:
+                print(f"Parameters: {params}")
+    else:
+        print(f"\n[First Request] {endpoint}")
+        if params:
+            print(f"Parameters: {params}")
+    
+    last_calls[call_key] = current_time
+
 # API Endpoints
 """
 Lists all .emd files in the sample_data directory
@@ -26,6 +53,7 @@ Called by: Frontend getFiles() function
 """
 @app.get("/files")
 async def get_file_list():
+    log_call("/files")
     try:
         files = list_files()
         return JSONResponse(content=files)
@@ -47,6 +75,7 @@ Called by: Frontend getMetadata() function
 """
 @app.get("/metadata")
 async def get_metadata(filename: str = Query(...)):
+    print(f"\nmain.py get_metadata() from: {filename}")
     try:
         metadata = load_metadata(filename)
         return JSONResponse(content=metadata)
@@ -66,6 +95,7 @@ Called by: Frontend getSpectrum() function
 """
 @app.get("/spectrum")
 async def get_spectrum(filename: str = Query(...), x: int = Query(0)):
+    print(f"\nmain.py get_spectrum() from: {filename}, x: {x}")
     try:
         data = extract_spectrum(filename, x)
         return JSONResponse(content=data)
@@ -89,6 +119,7 @@ Called by: Frontend getImageData() function
 """
 @app.get("/image-data")
 async def get_image_data(filename: str = Query(...)):
+    print(f"\nmain.py get_image_data() from: {filename}")
     try:
         data = extract_image_data(filename)
         if data is None:
@@ -110,10 +141,54 @@ async def get_signals(filename: str = Query(...)):
         filename: Name of the file (required query parameter)
     Returns: List of signal information dictionaries
     """
+    log_call("/signals", {"filename": filename})
     try:
         signals = get_signals_from_file(filename)
         return JSONResponse(content={"signals": signals})
     except Exception as e:
+        print(f"Error in main.py get_signals(): {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+@app.get("/signal/spectrum")
+async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
+    """Gets spectrum data from a specific signal
+    Args:
+        signal_name: Name of the signal (required)
+        x: X coordinate for spectrum extraction (default: 0)
+    Returns: List of spectrum data points
+    """
+    log_call("/signal/spectrum", {"signal_name": signal_name, "x": x})
+    try:
+        data = extract_spectrum_from_signal(signal_name, x)
+        return JSONResponse(content=data)
+    except Exception as e:
+        print(f"Error in main.py get_signal_spectrum(): {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
+@app.get("/signal/image")
+async def get_signal_image(signal_name: str = Query(...)):
+    """Gets image data from a specific signal
+    Args:
+        signal_name: Name of the signal (required)
+    Returns: Dictionary containing image data and metadata
+    """
+    log_call("/signal/image", {"signal_name": signal_name})
+    try:
+        data = extract_image_from_signal(signal_name)
+        if data is None:
+            return JSONResponse(
+                status_code=404,
+                content={"error": f"No image data found in signal {signal_name}"}
+            )
+        return JSONResponse(content=data)
+    except Exception as e:
+        print(f"Error in main.py get_signal_image(): {str(e)}")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}

@@ -9,24 +9,17 @@
  *   ├─ FileSelector (./components/FileSelector.tsx)
  *   │   - Handles file selection
  *   │   - Shared between components
- *   ├─ ImageViewer (./components/ImageViewer.tsx)
- *   │   - Displays the image from the file
- *   ├─ MetadataViewer (./components/MetadataViewer.tsx)
- *   │   - Shows metadata for selected file
- *   └─ SpectrumViewer (./components/SpectrumViewer.tsx)
- *        - Handles spectrum visualization
- *        - Makes API calls to the FastAPI backend
+ *   └─ SignalSelector (./components/SignalSelector.tsx)
+ *        - Handles signal selection from files
  * 
  * Layout:
- * - Uses CSS Grid for a responsive layout
- * - Left column: Image and Metadata
- * - Right column: Spectrum
+ * - Simple vertical layout focusing on file and signal selection
  */
 
 import { useState } from 'react'
-import SpectrumViewer from './components/SpectrumViewer'
-import ImageViewer from './components/ImageViewer'
-import MetadataViewer from './components/MetadataViewer'
+// import SpectrumViewer from './components/SpectrumViewer'
+// import ImageViewer from './components/ImageViewer'
+// import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
 import { Box } from '@mui/material'
@@ -36,14 +29,14 @@ import './App.css'
  * App Component
  * 
  * Manages the main application state and layout.
- * Handles file selection and distributes the selected file to child components.
+ * Handles file selection and signal selection.
  */
 function App() {
   const [selectedFile, setSelectedFile] = useState<string>('');
 
   return (
     <Box className="App">
-      {/* File Selector */}
+      {/* File and Signal Selection */}
       <Box sx={{ maxWidth: '800px', margin: '0 auto', mt: 4, mb: 4 }}>
         <Box sx={{ 
           typography: 'h5', 
@@ -61,8 +54,8 @@ function App() {
         {selectedFile && <SignalSelector selectedFile={selectedFile} />}
       </Box>
 
-      {/* Main Content Grid */}
-      <Box
+      {/* Commented out main content grid for now */}
+      {/* <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: '1fr 2fr',
@@ -72,17 +65,15 @@ function App() {
           margin: '0 auto',
         }}
       >
-        {/* Left Column: Image and Metadata */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <ImageViewer selectedFile={selectedFile} />
           <MetadataViewer selectedFile={selectedFile} />
         </Box>
 
-        {/* Right Column: Spectrum Viewer */}
         <Box>
           <SpectrumViewer selectedFile={selectedFile} />
         </Box>
-      </Box>
+      </Box> */}
     </Box>
   )
 }

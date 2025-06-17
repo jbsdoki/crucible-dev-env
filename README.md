@@ -128,3 +128,6 @@ python
 import hyperspy.api as hs
 print(hs.print_known_file_formats())
 ```
+
+This code is currently in development, which means React is in <StrictMode>, causing every function to run twice.
+This is development only, deactivate StrictMode in main.tsx while if in production.
