@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { getSpectrum } from '../services/api';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 
 /**
  * Interface defining the structure of a single data point in the spectrum
@@ -12,37 +12,72 @@ interface SpectrumDataPoint {
   intensity: number;
 }
 
+interface SignalCapabilities {
+  hasSpectrum: boolean;
+  hasImage: boolean;
+}
+
+interface SignalInfo {
+  index: number;
+  title: string;
+  type: string;
+  shape: number[];
+  capabilities: SignalCapabilities;
+}
+
 interface SpectrumViewerProps {
   selectedFile: string;
+  selectedSignal: SignalInfo;
 }
 
 /**
  * SpectrumViewer Component
  * 
  * This component handles the visualization of spectrum data from .emd files.
- * It receives the selected file as a prop and fetches the corresponding spectrum data.
+ * It can display:
+ * - 1D signals directly as spectra
+ * - Extracted spectra from 3D signals
+ * 
+ * The component checks the signal's capabilities before attempting to display.
  * 
  * Props:
  * @param selectedFile - Name of the currently selected file
+ * @param selectedSignal - Information about the selected signal
  */
-function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
+function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
   const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);  // Processed spectrum data
   const [error, setError] = useState<string>('');  // Error messages
   const [loading, setLoading] = useState<boolean>(false);  // Loading state
 
   /**
-   * Fetch spectrum data when selectedFile changes
+   * Fetch spectrum data when selectedFile or selectedSignal changes
    */
   useEffect(() => {
     const fetchSpectrum = async () => {
-      if (!selectedFile) return;
+      if (!selectedFile || !selectedSignal) {
+        setSpectrumData([]);
+        setError('');
+        return;
+      }
+
+      if (!selectedSignal.capabilities.hasSpectrum) {
+        setError('Selected signal cannot be displayed as a spectrum');
+        setSpectrumData([]);
+        return;
+      }
       
       try {
         setLoading(true);
         setError('');
         
-        console.log('Fetching spectrum data for:', selectedFile);
-        const data = await getSpectrum(selectedFile);
+        console.log('Fetching spectrum data for:', {
+          file: selectedFile,
+          signal: selectedSignal.title,
+          type: selectedSignal.type,
+          shape: selectedSignal.shape
+        });
+        
+        const data = await getSpectrum(selectedFile, selectedSignal.index);
         
         // Add detailed logging about the received data
         console.log('Raw spectrum data:', {
@@ -82,16 +117,18 @@ function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
     };
 
     fetchSpectrum();
-  }, [selectedFile]);
+  }, [selectedFile, selectedSignal]);
 
   return (
     <Box sx={{ p: 3 }}>
-      <h2>Spectrum Viewer</h2>
+      <Typography variant="h6" gutterBottom>
+        {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
+      </Typography>
       
       {/* Error message display */}
       {error && (
         <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-          {error}
+          <Typography>{error}</Typography>
         </Box>
       )}
 
@@ -102,8 +139,13 @@ function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
         </Box>
       )}
 
+      {/* No selection message */}
+      {!loading && !error && (!selectedFile || !selectedSignal) && (
+        <Typography>Select a file and signal to view spectrum</Typography>
+      )}
+
       {/* Spectrum plot */}
-      {!loading && spectrumData.length > 0 && (
+      {!loading && !error && spectrumData.length > 0 && (
         <LineChart
           width={800}
           height={400}
@@ -115,7 +157,7 @@ function SpectrumViewer({ selectedFile }: SpectrumViewerProps) {
           <YAxis label={{ value: 'Intensity', angle: -90, position: 'insideLeft' }} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="intensity" stroke="#8884d8" />
+          <Line type="monotone" dataKey="intensity" stroke="#8884d8" name={selectedSignal.title} />
         </LineChart>
       )}
     </Box>

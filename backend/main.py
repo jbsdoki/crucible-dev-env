@@ -2,7 +2,18 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
-from file_service import list_files, load_metadata, extract_spectrum, extract_image_data, get_signals_from_file
+import os
+from file_service import (
+    list_files, 
+    load_metadata, 
+    extract_spectrum, 
+    extract_image_data, 
+    get_signals_from_file,
+    try_load_file,
+    extract_spectrum_data_from_signal,
+    extract_image_data_from_signal,
+    DATA_DIR
+)
 import time
 
 # Create FastAPI instance
@@ -24,6 +35,7 @@ last_calls = {}
 
 def log_call(endpoint: str, params: dict = None) -> None:
     """Helper to log endpoint calls and detect React StrictMode double-invocations"""
+    print("\n=== Starting log_call() ===")
     current_time = time.time()
     call_key = f"{endpoint}:{str(params)}"
     
@@ -44,6 +56,7 @@ def log_call(endpoint: str, params: dict = None) -> None:
             print(f"Parameters: {params}")
     
     last_calls[call_key] = current_time
+    print("=== Ending log_call() ===\n")
 
 # API Endpoints
 """
@@ -53,11 +66,15 @@ Called by: Frontend getFiles() function
 """
 @app.get("/files")
 async def get_file_list():
+    print("\n=== Starting get_file_list() ===")
     log_call("/files")
     try:
         files = list_files()
+        print("=== Ending get_file_list() ===\n")
         return JSONResponse(content=files)
     except Exception as e:
+        print(f"ERROR in get_file_list(): {str(e)}")
+        print("=== Ending get_file_list() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
@@ -75,60 +92,115 @@ Called by: Frontend getMetadata() function
 """
 @app.get("/metadata")
 async def get_metadata(filename: str = Query(...)):
-    print(f"\nmain.py get_metadata() from: {filename}")
+    print("\n=== Starting get_metadata() ===")
+    print(f"Filename: {filename}")
     try:
         metadata = load_metadata(filename)
+        print("=== Ending get_metadata() ===\n")
         return JSONResponse(content=metadata)
     except Exception as e:
+        print(f"ERROR in get_metadata(): {str(e)}")
+        print("=== Ending get_metadata() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
 
 """
-Gets spectrum data at specific coordinates from a .emd file
+Gets spectrum data from a specific signal in a file
 Args:
-    filename: Name of the .emd file (required query parameter)
-    x: X coordinate (default: 0)
+    filename: Name of the file (required)
+    signal_idx: Index of the signal in the file (required)
+    x: X coordinate for spectrum extraction (default: 0)
+    y: Y coordinate for spectrum extraction (default: 0)
 Returns: List of spectrum data points
 Called by: Frontend getSpectrum() function
 """
 @app.get("/spectrum")
-async def get_spectrum(filename: str = Query(...), x: int = Query(0)):
-    print(f"\nmain.py get_spectrum() from: {filename}, x: {x}")
+async def get_spectrum(
+    filename: str = Query(...), 
+    signal_idx: int = Query(...),
+    x: int = Query(0),
+    y: int = Query(0)
+):
+    print("\n=== Starting get_spectrum() ===")
+    print(f"Filename: {filename}, Signal Index: {signal_idx}, X: {x}, Y: {y}")
+    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
     try:
-        data = extract_spectrum(filename, x)
+        # Get the full file path
+        filepath = os.path.join(DATA_DIR, filename)
+        print(f"Loading file from: {filepath}")
+        
+        # Load the signals from the file
+        print("Loading signals list...")
+        signals = get_signals_from_file(filename)
+        if signal_idx >= len(signals):
+            raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
+            
+        # Load the file again to get the actual signal data
+        print("Loading signal data...")
+        signal = try_load_file(filepath)
+        if isinstance(signal, list):
+            signal = signal[signal_idx]
+        elif signal_idx != 0:
+            raise ValueError("File contains only one signal, index must be 0")
+            
+        # Extract spectrum data
+        print("Extracting spectrum data...")
+        data = extract_spectrum_data_from_signal(signal, x, y)
+        print("=== Ending get_spectrum() ===\n")
         return JSONResponse(content=data)
     except Exception as e:
+        print(f"ERROR in get_spectrum(): {str(e)}")
+        print("=== Ending get_spectrum() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
 
 """
-Gets image data from a .emd file, including both 3D spectrum and HAADF images
+Gets image data from a specific signal in a file
 Args:
-    filename: Name of the .emd file (required query parameter)
-Returns: Dictionary containing:
-    - spectrum_idx: Index of the 3D spectrum signal
-    - spectrum_shape: Shape of the spectrum signal
-    - haadf_idx: Index of the HAADF image
-    - haadf_shape: Shape of the HAADF image
-    - haadf_data: 2D numpy array of the HAADF image if found
+    filename: Name of the file (required)
+    signal_idx: Index of the signal in the file (required)
+Returns: Dictionary containing image data and shape
 Called by: Frontend getImageData() function
 """
 @app.get("/image-data")
-async def get_image_data(filename: str = Query(...)):
-    print(f"\nmain.py get_image_data() from: {filename}")
+async def get_image_data(
+    filename: str = Query(...),
+    signal_idx: int = Query(...)
+):
+    print("\n=== Starting get_image_data() ===")
+    print(f"Filename: {filename}, Signal Index: {signal_idx}")
+    log_call("/image-data", {"filename": filename, "signal_idx": signal_idx})
     try:
-        data = extract_image_data(filename)
-        if data is None:
-            return JSONResponse(
-                status_code=404,
-                content={"error": f"No image data found in file {filename}"}
-            )
+        # Get the full file path
+        filepath = os.path.join(DATA_DIR, filename)
+        print(f"Loading file from: {filepath}")
+        
+        # Load the signals from the file
+        print("Loading signals list...")
+        signals = get_signals_from_file(filename)
+        if signal_idx >= len(signals):
+            raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
+            
+        # Load the file again to get the actual signal data
+        print("Loading signal data...")
+        signal = try_load_file(filepath)
+        if isinstance(signal, list):
+            signal = signal[signal_idx]
+        elif signal_idx != 0:
+            raise ValueError("File contains only one signal, index must be 0")
+            
+        # Extract image data
+        print("Extracting image data...")
+        data = extract_image_data_from_signal(signal)
+        print("=== Ending get_image_data() ===\n")
         return JSONResponse(content=data)
     except Exception as e:
+        print(f"ERROR in get_image_data(): {str(e)}")
+        print("=== Ending get_image_data() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
@@ -141,12 +213,16 @@ async def get_signals(filename: str = Query(...)):
         filename: Name of the file (required query parameter)
     Returns: List of signal information dictionaries
     """
+    print("\n=== Starting get_signals() ===")
+    print(f"Filename: {filename}")
     log_call("/signals", {"filename": filename})
     try:
         signals = get_signals_from_file(filename)
+        print("=== Ending get_signals() ===\n")
         return JSONResponse(content={"signals": signals})
     except Exception as e:
-        print(f"Error in main.py get_signals(): {str(e)}")
+        print(f"ERROR in get_signals(): {str(e)}")
+        print("=== Ending get_signals() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}

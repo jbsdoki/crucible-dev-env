@@ -2,17 +2,34 @@ import { useEffect, useState, useRef } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { getImageData } from '../services/api';
 
+interface SignalCapabilities {
+  hasSpectrum: boolean;
+  hasImage: boolean;
+}
+
+interface SignalInfo {
+  index: number;
+  title: string;
+  type: string;
+  shape: number[];
+  capabilities: SignalCapabilities;
+}
+
 interface ImageViewerProps {
   selectedFile: string;
+  selectedSignal: SignalInfo;
 }
 
 /**
  * ImageViewer Component
  * 
- * Displays a 2D image created by summing across the spectrum dimension of a 3D signal.
- * The image represents the total intensity at each spatial point.
+ * Displays a 2D image from a signal. Can handle:
+ * - 2D signals directly as images
+ * - 3D signals by summing across the spectrum dimension
+ * 
+ * The component checks the signal's capabilities before attempting to display.
  */
-function ImageViewer({ selectedFile }: ImageViewerProps) {
+function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -22,11 +39,17 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
     height: number
   } | null>(null);
 
-  // Effect to fetch image data
+  // Effect to fetch image data when file or signal changes
   useEffect(() => {
     const fetchImageData = async () => {
-      if (!selectedFile) {
+      if (!selectedFile || !selectedSignal) {
         setError(null);
+        setImageData(null);
+        return;
+      }
+
+      if (!selectedSignal.capabilities.hasImage) {
+        setError('Selected signal cannot be displayed as an image');
         setImageData(null);
         return;
       }
@@ -34,8 +57,14 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching image data for:', selectedFile);
-        const data = await getImageData(selectedFile);
+        console.log('Fetching image data for:', {
+          file: selectedFile,
+          signal: selectedSignal.title,
+          type: selectedSignal.type,
+          shape: selectedSignal.shape
+        });
+        
+        const data = await getImageData(selectedFile, selectedSignal.index);
         console.log('Received raw data:', {
           type: typeof data,
           keys: Object.keys(data),
@@ -48,7 +77,7 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
         
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
-          setError('No 3D signal found in this file');
+          setError('Could not load image data from signal');
           return;
         }
 
@@ -80,7 +109,7 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
     };
 
     fetchImageData();
-  }, [selectedFile]);
+  }, [selectedFile, selectedSignal]);
 
   // Effect to draw image when canvas and image data are both ready
   useEffect(() => {
@@ -159,8 +188,8 @@ function ImageViewer({ selectedFile }: ImageViewerProps) {
         <CircularProgress />
       ) : error ? (
         <Typography color="error">{error}</Typography>
-      ) : !selectedFile ? (
-        <Typography>Select a file to view image</Typography>
+      ) : !selectedFile || !selectedSignal ? (
+        <Typography>Select a file and signal to view image</Typography>
       ) : (
         <canvas
           ref={canvasRef}

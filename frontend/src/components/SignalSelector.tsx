@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, Stack } from '@mui/material';
 import { getSignals } from '../services/api';
+
+interface SignalCapabilities {
+  hasSpectrum: boolean;
+  hasImage: boolean;
+}
 
 interface SignalInfo {
   index: number;    // Position in the file's signal list
   title: string;    // Signal title from metadata or default
   type: string;     // HyperSpy signal class name
   shape: number[];  // Data dimensions
+  capabilities: SignalCapabilities;  // What the signal can be used for
 }
 
 interface SignalSelectorProps {
   selectedFile: string;
+  onSignalSelect: (signal: SignalInfo | null) => void;  // Callback when signal is selected
 }
 
 /**
@@ -24,10 +31,12 @@ interface SignalSelectorProps {
  * - Title (from metadata or "Signal X")
  * - Type (Signal1D, Signal2D, etc.)
  * - Shape (dimensions of the data)
+ * - Capabilities (Spectrum and/or Image)
  * 
  * @param selectedFile - Currently selected file path
+ * @param onSignalSelect - Callback when a signal is selected
  */
-function SignalSelector({ selectedFile }: SignalSelectorProps) {
+function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
   // State for list of available signals
   const [signals, setSignals] = useState<SignalInfo[]>([]);
   // State for currently selected signal index (-1 means none selected)
@@ -48,6 +57,7 @@ function SignalSelector({ selectedFile }: SignalSelectorProps) {
         console.log('No file selected, resetting states');
         setSignals([]);
         setSelectedSignal(-1);
+        onSignalSelect(null);
         return;
       }
 
@@ -66,17 +76,20 @@ function SignalSelector({ selectedFile }: SignalSelectorProps) {
           data.signals.map((s: SignalInfo) => ({
             title: s.title,
             type: s.type,
-            shape: s.shape
+            shape: s.shape,
+            capabilities: s.capabilities
           }))
         );
 
         // Reset signal selection
         setSelectedSignal(-1);
+        onSignalSelect(null);
         
       } catch (err) {
         console.error('Error fetching signals:', err);
         setError(`Error fetching signals: ${(err as Error).message}`);
         setSignals([]);
+        onSignalSelect(null);
       } finally {
         setLoading(false);
         console.log('=== Signal fetching complete ===\n');
@@ -84,7 +97,27 @@ function SignalSelector({ selectedFile }: SignalSelectorProps) {
     };
 
     fetchSignals();
-  }, [selectedFile]);
+  }, [selectedFile, onSignalSelect]);
+
+  const handleSignalChange = (event: any) => {
+    const index = event.target.value as number;
+    setSelectedSignal(index);
+    
+    if (index === -1) {
+      console.log('No signal selected');
+      onSignalSelect(null);
+    } else {
+      const signal = signals.find(s => s.index === index);
+      if (signal) {
+        console.log('Signal selected:', {
+          index: signal.index,
+          title: signal.title,
+          capabilities: signal.capabilities
+        });
+        onSignalSelect(signal);
+      }
+    }
+  };
 
   return (
     <Box sx={{ width: '100%', mb: 2 }}>
@@ -102,18 +135,34 @@ function SignalSelector({ selectedFile }: SignalSelectorProps) {
         <Select
           value={selectedSignal}
           label="Select Signal"
-          onChange={(e) => {
-            console.log('Signal selected:', {
-              index: e.target.value,
-              signal: signals.find(s => s.index === e.target.value)
-            });
-            setSelectedSignal(e.target.value as number);
-          }}
+          onChange={handleSignalChange}
         >
           <MenuItem value={-1}>None</MenuItem>
           {signals.map((signal) => (
             <MenuItem key={signal.index} value={signal.index}>
-              {signal.title} ({signal.type}, Shape: {signal.shape ? signal.shape.join('×') : 'unknown'})
+              <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                <Typography>
+                  {signal.title} ({signal.type}, Shape: {signal.shape ? signal.shape.join('×') : 'unknown'})
+                </Typography>
+                <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+                  {signal.capabilities.hasSpectrum && (
+                    <Chip 
+                      label="Spectrum" 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined"
+                    />
+                  )}
+                  {signal.capabilities.hasImage && (
+                    <Chip 
+                      label="Image" 
+                      size="small" 
+                      color="secondary" 
+                      variant="outlined"
+                    />
+                  )}
+                </Stack>
+              </Box>
             </MenuItem>
           ))}
         </Select>
