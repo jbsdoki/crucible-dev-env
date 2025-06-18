@@ -17,31 +17,41 @@ interface FileSelectorProps {
  * @param onFileSelect - Callback function when a file is selected
  */
 function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
+  console.log('=== Starting FileSelector component from FileSelector.tsx ===');
   const [files, setFiles] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchFiles = async () => {
+      console.log('=== Starting fetchFiles ===');
       try {
-        const fileList = await getFiles();
+        //Calls getFiles in frontend/src/services/api.ts 
+        // which calls get_file_list() in backend/main.py
+        const fileList = await getFiles();  
         setFiles(fileList);
         setError('');
+        console.log('=== Ending fetchFiles successfully from FileSelector.tsx ===');
       } catch (err) {
         setError(`Error fetching files: ${(err as Error).message}`);
+        console.log('=== Ending fetchFiles with error from FileSelector.tsx ===');
       }
     };
 
     fetchFiles();
   }, []);
 
-  return (
+  const result = (
     <Box sx={{ width: '100%', mb: 2 }}>
       <FormControl fullWidth error={!!error}>
         <InputLabel>Select File</InputLabel>
         <Select
           value={selectedFile}
           label="Select File"
-          onChange={(e) => onFileSelect(e.target.value)}
+          onChange={(e) => {
+            console.log('=== Starting file selection change handler ===');
+            onFileSelect(e.target.value);
+            console.log('=== Ending file selection change handler ===');
+          }}
         >
           {files.map((file) => (
             <MenuItem key={file} value={file}>
@@ -52,6 +62,9 @@ function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
       </FormControl>
     </Box>
   );
+  
+  console.log('=== Ending FileSelector component from FileSelector.tsx ===');
+  return result;
 }
 
 export default FileSelector; 

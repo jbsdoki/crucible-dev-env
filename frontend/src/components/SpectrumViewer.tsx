@@ -45,6 +45,7 @@ interface SpectrumViewerProps {
  * @param selectedSignal - Information about the selected signal
  */
 function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
+  console.log('=== Starting SpectrumViewer component ===');
   const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);  // Processed spectrum data
   const [error, setError] = useState<string>('');  // Error messages
   const [loading, setLoading] = useState<boolean>(false);  // Loading state
@@ -54,15 +55,18 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
    */
   useEffect(() => {
     const fetchSpectrum = async () => {
+      console.log('=== Starting fetchSpectrum ===');
       if (!selectedFile || !selectedSignal) {
         setSpectrumData([]);
         setError('');
+        console.log('=== Ending fetchSpectrum - no file or signal selected ===');
         return;
       }
 
       if (!selectedSignal.capabilities.hasSpectrum) {
         setError('Selected signal cannot be displayed as a spectrum');
         setSpectrumData([]);
+        console.log('=== Ending fetchSpectrum - signal cannot be displayed as spectrum ===');
         return;
       }
       
@@ -90,6 +94,7 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
         
         // Check if data is valid before processing
         if (!Array.isArray(data)) {
+          console.log('=== Ending fetchSpectrum - invalid data format ===');
           throw new Error(`Expected array but received ${typeof data}`);
         }
         
@@ -107,10 +112,12 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
         });
         
         setSpectrumData(formattedData);
+        console.log('=== Ending fetchSpectrum successfully ===');
       } catch (err) {
         console.error('Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
         setSpectrumData([]);
+        console.log('=== Ending fetchSpectrum with error ===');
       } finally {
         setLoading(false);
       }
@@ -119,7 +126,7 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
     fetchSpectrum();
   }, [selectedFile, selectedSignal]);
 
-  return (
+  const result = (
     <Box sx={{ p: 3 }}>
       <Typography variant="h6" gutterBottom>
         {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
@@ -162,6 +169,9 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
       )}
     </Box>
   );
+
+  console.log('=== Ending SpectrumViewer component ===');
+  return result;
 }
 
 export default SpectrumViewer; 

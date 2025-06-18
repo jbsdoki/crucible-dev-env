@@ -129,5 +129,9 @@ import hyperspy.api as hs
 print(hs.print_known_file_formats())
 ```
 
-This code is currently in development, which means React is in <StrictMode>, causing every function to run twice.
+## Development Mode Only Settings, Change for Production
+
+This code is currently in development, which means React is in <StrictMode> (frontend/src/main.tsx), causing every function to run twice. (This has been temporarily removed)
 This is development only, deactivate StrictMode in main.tsx while if in production.
+
+In backend/main.py any source or credential is allowed to connect. This is a development only setting, remove for production. 

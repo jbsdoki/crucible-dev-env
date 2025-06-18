@@ -37,6 +37,7 @@ interface SignalSelectorProps {
  * @param onSignalSelect - Callback when a signal is selected
  */
 function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
+  console.log('=== Starting SignalSelector component in SignalSelector.tsx ===');
   // State for list of available signals
   const [signals, setSignals] = useState<SignalInfo[]>([]);
   // State for currently selected signal index (-1 means none selected)
@@ -49,7 +50,8 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
   // Effect to fetch signals when selectedFile changes
   useEffect(() => {
     const fetchSignals = async () => {
-      console.log('\n=== Signal Selector: File Selection Changed ===');
+      console.log('=== Starting fetchSignals in SignalSelector.tsx ===');
+      console.log('\n=== Signal Selector: File Selection Changed in SignalSelector.tsx ===');
       console.log('Selected file:', selectedFile);
 
       // Reset states if no file selected
@@ -58,6 +60,7 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
         setSignals([]);
         setSelectedSignal(-1);
         onSignalSelect(null);
+        console.log('=== Ending fetchSignals - no file selected in SignalSelector.tsx SignalSelector.tsx ===');
         return;
       }
 
@@ -84,12 +87,14 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
         // Reset signal selection
         setSelectedSignal(-1);
         onSignalSelect(null);
+        console.log('=== Ending fetchSignals successfully in SignalSelector.tsx ===');
         
       } catch (err) {
         console.error('Error fetching signals:', err);
         setError(`Error fetching signals: ${(err as Error).message}`);
         setSignals([]);
         onSignalSelect(null);
+        console.log('=== Ending fetchSignals with error ===');
       } finally {
         setLoading(false);
         console.log('=== Signal fetching complete ===\n');
@@ -100,6 +105,7 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
   }, [selectedFile, onSignalSelect]);
 
   const handleSignalChange = (event: any) => {
+    console.log('=== Starting handleSignalChange ===');
     const index = event.target.value as number;
     setSelectedSignal(index);
     
@@ -117,9 +123,10 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
         onSignalSelect(signal);
       }
     }
+    console.log('=== Ending handleSignalChange ===');
   };
 
-  return (
+  const result = (
     <Box sx={{ width: '100%', mb: 2 }}>
       <Box sx={{ 
         typography: 'h5', 
@@ -179,6 +186,9 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
       )}
     </Box>
   );
+
+  console.log('=== Ending SignalSelector component ===');
+  return result;
 }
 
 export default SignalSelector; 

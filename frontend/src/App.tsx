@@ -72,7 +72,7 @@ function App() {
         <FileSelector 
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
-        />
+        /> {/* This triggers the signal selector to load the file */}
         {selectedFile && (
           <SignalSelector 
             selectedFile={selectedFile} 

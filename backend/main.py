@@ -35,7 +35,7 @@ last_calls = {}
 
 def log_call(endpoint: str, params: dict = None) -> None:
     """Helper to log endpoint calls and detect React StrictMode double-invocations"""
-    print("\n=== Starting log_call() ===")
+    print("\n=== Starting log_call() in main.py ===")
     current_time = time.time()
     call_key = f"{endpoint}:{str(params)}"
     
@@ -56,7 +56,7 @@ def log_call(endpoint: str, params: dict = None) -> None:
             print(f"Parameters: {params}")
     
     last_calls[call_key] = current_time
-    print("=== Ending log_call() ===\n")
+    print("=== Ending log_call() in main.py ===\n")
 
 # API Endpoints
 """
@@ -70,7 +70,7 @@ async def get_file_list():
     log_call("/files")
     try:
         files = list_files()
-        print("=== Ending get_file_list() ===\n")
+        print("=== Ending get_file_list() in main.py ===\n")
         return JSONResponse(content=files)
     except Exception as e:
         print(f"ERROR in get_file_list(): {str(e)}")
@@ -123,7 +123,7 @@ async def get_spectrum(
     x: int = Query(0),
     y: int = Query(0)
 ):
-    print("\n=== Starting get_spectrum() ===")
+    print("\n=== Starting get_spectrum() in main.py ===")
     print(f"Filename: {filename}, Signal Index: {signal_idx}, X: {x}, Y: {y}")
     log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
     try:
@@ -148,11 +148,11 @@ async def get_spectrum(
         # Extract spectrum data
         print("Extracting spectrum data...")
         data = extract_spectrum_data_from_signal(signal, x, y)
-        print("=== Ending get_spectrum() ===\n")
+        print("=== Ending get_spectrum() in main.py ===\n")
         return JSONResponse(content=data)
     except Exception as e:
-        print(f"ERROR in get_spectrum(): {str(e)}")
-        print("=== Ending get_spectrum() with error ===\n")
+        print(f"ERROR in get_spectrum() in main.py: {str(e)}")
+        print("=== Ending get_spectrum() with error in main.py ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
@@ -171,7 +171,7 @@ async def get_image_data(
     filename: str = Query(...),
     signal_idx: int = Query(...)
 ):
-    print("\n=== Starting get_image_data() ===")
+    print("\n=== Starting get_image_data() from main.py ===")
     print(f"Filename: {filename}, Signal Index: {signal_idx}")
     log_call("/image-data", {"filename": filename, "signal_idx": signal_idx})
     try:
@@ -196,7 +196,7 @@ async def get_image_data(
         # Extract image data
         print("Extracting image data...")
         data = extract_image_data_from_signal(signal)
-        print("=== Ending get_image_data() ===\n")
+        print("=== Ending get_image_data() from main.py ===\n")
         return JSONResponse(content=data)
     except Exception as e:
         print(f"ERROR in get_image_data(): {str(e)}")
@@ -206,39 +206,41 @@ async def get_image_data(
             content={"error": str(e)}
         )
 
+"""Gets all signals from a file
+Args:
+    filename: Name of the file (required query parameter)
+Returns: List of signal information dictionaries
+"""
 @app.get("/signals")
 async def get_signals(filename: str = Query(...)):
-    """Gets all signals from a file
-    Args:
-        filename: Name of the file (required query parameter)
-    Returns: List of signal information dictionaries
-    """
-    print("\n=== Starting get_signals() ===")
+    print("\n=== Starting get_signals() from main.py ===")
     print(f"Filename: {filename}")
     log_call("/signals", {"filename": filename})
     try:
         signals = get_signals_from_file(filename)
-        print("=== Ending get_signals() ===\n")
+        print("=== Ending get_signals() from main.py ===\n")
         return JSONResponse(content={"signals": signals})
     except Exception as e:
         print(f"ERROR in get_signals(): {str(e)}")
-        print("=== Ending get_signals() with error ===\n")
+        print("=== Ending get_signals() from main.py with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
 
+"""Gets spectrum data from a specific signal
+Args:
+    signal_name: Name of the signal (required)
+    x: X coordinate for spectrum extraction (default: 0)
+Returns: List of spectrum data points
+"""
 @app.get("/signal/spectrum")
 async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
-    """Gets spectrum data from a specific signal
-    Args:
-        signal_name: Name of the signal (required)
-        x: X coordinate for spectrum extraction (default: 0)
-    Returns: List of spectrum data points
-    """
+    print("\n=== Starting get_signal_spectrum() from main.py ===")
     log_call("/signal/spectrum", {"signal_name": signal_name, "x": x})
     try:
         data = extract_spectrum_from_signal(signal_name, x)
+        print("\n=== Ending get_signal_spectrum() from main.py ===")
         return JSONResponse(content=data)
     except Exception as e:
         print(f"Error in main.py get_signal_spectrum(): {str(e)}")
@@ -247,17 +249,19 @@ async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
             content={"error": str(e)}
         )
 
+"""Gets image data from a specific signal
+Args:
+    signal_name: Name of the signal (required)
+Returns: Dictionary containing image data and metadata
+"""
 @app.get("/signal/image")
 async def get_signal_image(signal_name: str = Query(...)):
-    """Gets image data from a specific signal
-    Args:
-        signal_name: Name of the signal (required)
-    Returns: Dictionary containing image data and metadata
-    """
+    print("\n=== Starting get_signal_image() from main.py ===")
     log_call("/signal/image", {"signal_name": signal_name})
     try:
         data = extract_image_from_signal(signal_name)
         if data is None:
+            print("\n=== Ending get_signal_image() from main.py ===")
             return JSONResponse(
                 status_code=404,
                 content={"error": f"No image data found in signal {signal_name}"}

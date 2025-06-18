@@ -25,7 +25,7 @@ CURRENT_SIGNAL = {
 }
 
 def update_current_file(filepath, signals):
-    print(f"\n=== update_current_file() ===")
+    print(f"\n=== Starting update_current_file() in file_service.py ===")
     """Helper function to update CURRENT_FILE with logging"""
     print("\n=== Updating CURRENT_FILE ===")
     print(f"Previous file: {CURRENT_FILE['filename']}")
@@ -63,12 +63,14 @@ Returns:
     list: List of filenames with supported extensions
 """
 def list_files():
-    print(f"\n=== list_files() ===")
+    print(f"\n=== Starting list_files() ===")
     print("\nCalled list_files() in file_service.py")
     try:
         supported_extensions = ('.emd', '.tif', '.dm3', '.dm4', '.ser', '.emi')
         print("\nReturning list from list_files() in file_service.py")
-        return [f for f in os.listdir(DATA_DIR) if f.lower().endswith(supported_extensions)]
+        files = [f for f in os.listdir(DATA_DIR) if f.lower().endswith(supported_extensions)]
+        print("=== Ending list_files() ===\n")
+        return files
     except Exception as e:
         print(f"Error accessing directory {DATA_DIR}: {str(e)}")
         print("\nReturning empty list from list_files() in file_service.py")
@@ -93,12 +95,12 @@ Raises:
     ValueError: If the file cannot be loaded with any of the supported signal types
 """
 def try_load_file(filepath):
-    print(f"\n=== start try_load_file() ===")
+    print(f"\n=== Starting try_load_file() in file_service.py ===")
     signal_types = [None, 'EMD', 'EDS_TEM', 'EDS_SEM', 'EELS']  # None means try without specifying type
     
     for signal_type in signal_types:
         try:
-            print(f"\n=== Attempting to load file: {os.path.basename(filepath)} ===")
+            print(f"Attempting to load file: {os.path.basename(filepath)}")
             print(f"Using signal type: {signal_type if signal_type else 'auto-detect'}")
             
             # Start timer
@@ -114,28 +116,26 @@ def try_load_file(filepath):
             load_time = time.time() - start_time
             print(f"File loaded successfully in {load_time:.2f} seconds")
         
-            # Log what was loaded
-            if isinstance(signal, list):
-                print(f"Loaded {len(signal)} signals:")
-                for i, sig in enumerate(signal):
-                    print(f"\nSignal {i}:")
-                    print(f"  Type: {type(sig)}")
-                    print(f"  Shape: {sig.data.shape if hasattr(sig, 'data') else 'No data'}")
-                    if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
-                        print(f"  Title: {sig.metadata.General.title}")
-            else:
-                print("\nLoaded single signal:")
-                print(f"  Type: {type(signal)}")
-                print(f"  Shape: {signal.data.shape if hasattr(signal, 'data') else 'No data'}")
-                if hasattr(signal, 'metadata') and hasattr(signal.metadata, 'General'):
-                    print(f"  Title: {signal.metadata.General.title}")
+            # if isinstance(signal, list):
+            #     print(f"Loaded {len(signal)} signals:")
+            #     for i, sig in enumerate(signal):
+            #         print(f"\nSignal {i}:")
+            #         print(f"  Type: {type(sig)}")
+            #         print(f"  Shape: {sig.data.shape if hasattr(sig, 'data') else 'No data'}")
+            #         if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
+            #             print(f"  Title: {sig.metadata.General.title}")
+            # else:
+            #     print("\nLoaded single signal:")
+            #     print(f"  Type: {type(signal)}")
+            #     print(f"  Shape: {signal.data.shape if hasattr(signal, 'data') else 'No data'}")
+            #     if hasattr(signal, 'metadata') and hasattr(signal.metadata, 'General'):
+            #         print(f"  Title: {signal.metadata.General.title}")
             
             print("=== File loading complete ===\n")
 
             # Store in CURRENT_FILE
             CURRENT_FILE["filename"] = filepath
             CURRENT_FILE["signals"] = (signal if isinstance(signal, list) else [signal])
-            
             
             print(f"\n=== end try_load_file() ===")
             return signal
@@ -144,53 +144,59 @@ def try_load_file(filepath):
             print(f"Failed with signal_type {signal_type}: {str(e)}")
             continue
     
+    print("=== Ending try_load_file() with error in file_service.py ===\n")
     raise ValueError("Could not load file with any signal type")
 
-def get_signal_capabilities(signal):
-    """Determine what a signal can be used for based on its shape and type
+
+"""Determine what a signal can be used for based on its shape and type
+
+Args:
+    signal: A HyperSpy signal object
     
-    Args:
-        signal: A HyperSpy signal object
-        
-    Returns:
-        dict: Dictionary containing:
-            - hasSpectrum (bool): True if signal can be viewed as spectrum (1D or 3D)
-            - hasImage (bool): True if signal can be viewed as image (2D or 3D)
-    """
-    print(f"\nChecking capabilities for signal of type: {type(signal)}")
+Returns:
+    dict: Dictionary containing:
+        - hasSpectrum (bool): True if signal can be viewed as spectrum (1D or 3D)
+        - hasImage (bool): True if signal can be viewed as image (2D or 3D)
+"""
+def get_signal_capabilities(signal):
+    # print(f"\n=== Starting get_signal_capabilities() in file_service.py ===")
+    # print(f"Checking capabilities for signal of type: {type(signal)}")
     
     if not hasattr(signal, 'data') or not hasattr(signal.data, 'shape'):
-        print("Signal has no data or shape")
+        # print("Signal has no data or shape")
+        # print("=== Ending get_signal_capabilities() in file_service.py ===\n")
         return {"hasSpectrum": False, "hasImage": False}
         
     shape = signal.data.shape
     dims = len(shape)
-    print(f"Signal shape: {shape} ({dims}D)")
+    # print(f"Signal shape: {shape} ({dims}D)")
     
     capabilities = {
         "hasSpectrum": dims == 1 or dims == 3,  # 1D spectrum or 3D datacube
         "hasImage": dims == 2 or dims == 3      # 2D image or 3D datacube
     }
     
-    print(f"Signal capabilities: {capabilities}")
+    # print(f"Signal capabilities: {capabilities}")
+    # print("=== Ending get_signal_capabilities()  in file_service.py ===\n")
     return capabilities
 
-def get_signals_from_file(filename):
-    """Get all signals from a file.
+"""Get all signals from a file.
+
+Args:
+    filename (str): Name of the file to get signals from
     
-    Args:
-        filename (str): Name of the file to get signals from
-        
-    Returns:
-        list: List of signal information dictionaries containing:
-            - index: Signal index in the file
-            - title: Signal title if available
-            - type: Signal type (e.g., 'Signal1D', 'Signal2D', etc.)
-            - shape: Data shape as a tuple
-            - capabilities: Dictionary of what the signal can be used for
-    """
+Returns:
+    list: List of signal information dictionaries containing:
+        - index: Signal index in the file
+        - title: Signal title if available
+        - type: Signal type (e.g., 'Signal1D', 'Signal2D', etc.)
+        - shape: Data shape as a tuple
+        - capabilities: Dictionary of what the signal can be used for
+"""
+def get_signals_from_file(filename):
+
     try:
-        print(f"\n=== get_signals_from_file(): {filename} ===")
+        print(f"\n=== Starting get_signals_from_file() in file_service.py ===")
         
         # Construct full file path and load the file
         filepath = os.path.join(DATA_DIR, filename)
@@ -204,25 +210,26 @@ def get_signals_from_file(filename):
         if not isinstance(signal, list):
             print("File contains a single signal - converting to list")
             signal = [signal]
+
         
         print(f"\nFound {len(signal)} signals in file")
             
         # Extract info from each signal
         for idx, sig in enumerate(signal):
             try:
-                print(f"\nProcessing signal {idx}:")
-                print(f"Signal object type: {type(sig)}")
+                # print(f"\nProcessing signal {idx}:")
+                # print(f"Signal object type: {type(sig)}")
                 
                 # Get title with fallback
                 title = "Signal " + str(idx)  # Default title
                 try:
                     if hasattr(sig, 'metadata'):
-                        print("Has metadata attribute")
+                        # print("Has metadata attribute")
                         if hasattr(sig.metadata, 'General'):
-                            print("Has General metadata")
+                            # print("Has General metadata")
                             if hasattr(sig.metadata.General, 'title'):
                                 title = sig.metadata.General.title
-                                print(f"Found title in metadata: {title}")
+                                # print(f"Found title in metadata: {title}")
                             else:
                                 print("No title in General metadata")
                         else:
@@ -236,9 +243,9 @@ def get_signals_from_file(filename):
                 shape = None
                 try:
                     if hasattr(sig, 'data'):
-                        print("Has data attribute")
+                        # print("Has data attribute")
                         shape = sig.data.shape
-                        print(f"Data shape: {shape} ({len(shape)}D signal)")
+                        # print(f"Data shape: {shape} ({len(shape)}D signal)")
                     else:
                         print("No data attribute")
                 except Exception as e:
@@ -247,7 +254,7 @@ def get_signals_from_file(filename):
                 # Get signal type
                 try:
                     sig_type = type(sig).__name__
-                    print(f"Signal type: {sig_type}")
+                    # print(f"Signal type: {sig_type}")
                 except Exception as e:
                     print(f"Error getting signal type: {str(e)}")
                     sig_type = "Unknown"
@@ -263,7 +270,7 @@ def get_signals_from_file(filename):
                     "shape": shape,
                     "capabilities": capabilities
                 }
-                print("Added signal info:", signal_info)
+                # print("Added signal info:", signal_info)
                 signals_info.append(signal_info)
                 
             except Exception as e:
@@ -272,6 +279,11 @@ def get_signals_from_file(filename):
                 continue
             
         print(f"\n=== Processed {len(signals_info)} signals successfully ===")
+        
+        # Update Current File for further use
+        CURRENT_FILE["filename"] = filename
+        CURRENT_FILE["signals"] = signals_info
+
         return signals_info
         
     except Exception as e:
@@ -280,44 +292,13 @@ def get_signals_from_file(filename):
         traceback.print_exc()
         raise  # Re-raise the exception to let FastAPI handle it
 
-def try_load_signal():
-    if CURRENT_FILE["signals"] is None:
-        raise ValueError("No file loaded")
-    return CURRENT_FILE["signals"][0]
-
-"""
-Find a signal with 3D data representing a 2D image and spectrum.
-The first two dimensions should be spatial (image) and the third dimension is the spectrum length.
-
-Args:
-    signal_list (list): List of hyperspy signals
-    
-Returns:
-    tuple: (index, signal) of the first found 3D signal, or (None, None) if not found
-"""
-def find_3d_signal(signal_list):
-    print(f"\n=== find_3d_signal() ===")
-    print("\nSearching for 3D signals...")
-    for idx, sig in enumerate(signal_list):
-        print(f"\nChecking signal {idx}:")
-        print(f"Type: {type(sig)}")
-        if hasattr(sig, 'metadata') and hasattr(sig.metadata, 'General'):
-            print(f"Title: {sig.metadata.General.title}")
-        
-        # Check if signal has 3D data
-        if hasattr(sig, 'data'):
-            shape = sig.data.shape
-            print(f"Data shape: {shape}")
-            
-            # Look for 3D array with first two dims being spatial
-            if len(shape) == 3:
-                print(f"Found 3D signal at index {idx} with shape {shape}")
-                print(f"Data type: {sig.data.dtype}")
-                print(f"Data range: min={sig.data.min()}, max={sig.data.max()}")
-                return idx, sig
-            
-    print("No suitable 3D signal found")
-    return None, None
+# def try_load_signal():
+#     print(f"\n=== Starting try_load_signal() ===")
+#     if CURRENT_FILE["signals"] is None:
+#         print("=== Ending try_load_signal() with error ===\n")
+#         raise ValueError("No file loaded")
+#     print("=== Ending try_load_signal() ===\n")
+#     return CURRENT_FILE["signals"][0]
 
 """
 Extract image and spectrum data from a hyperspy file.
@@ -350,6 +331,7 @@ def extract_image_data(filename):
         
         if signal_data is None:
             print("No 3D signal found in file")
+            print("=== Ending extract_image_data() without finding signal ===\n")
             return None
             
         # Get the shape of the data
@@ -386,12 +368,14 @@ def extract_image_data(filename):
         print(f"Image data sample (5x5 corner):")
         print(image_data[:5, :5])
         
+        print("=== Ending extract_image_data() successfully ===\n")
         return result
         
     except Exception as e:
         print(f"Error extracting data from {filename}: {str(e)}")
         import traceback
         traceback.print_exc()
+        print("=== Ending extract_image_data() with error ===\n")
         return None
 
 """
@@ -413,7 +397,7 @@ Raises:
     ValueError: If the file cannot be loaded with any of the supported signal types
 """
 def try_load_signal(filepath):
-    print(f"\n=== try_load_signal() ===")
+    print(f"\n=== Starting try_load_signal() ===")
     """Try loading the signal with different signal types"""
     signal_types = ['EMD', 'EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
     
@@ -424,11 +408,13 @@ def try_load_signal(filepath):
                 signal = hs.load(filepath, reader=signal_type)
             else:
                 signal = hs.load(filepath)
+            print("=== Ending try_load_signal() successfully ===\n")
             return signal
         except Exception as e:
             print(f"Failed with signal_type {signal_type}: {str(e)}")
             continue
     
+    print("=== Ending try_load_signal() with error ===\n")
     raise ValueError("Could not load file with any signal type")
 
 """
@@ -441,9 +427,9 @@ Returns:
     dict: Dictionary containing metadata categories and their values
 """
 def load_metadata(filename):
-    print(f"\n=== load_metadata() ===")
+    print(f"\n=== Starting load_metadata() ===")
     try:
-        print(f"\n=== Loading metadata for {filename} ===")
+        print(f"\nLoading metadata for {filename}")
         
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
@@ -467,6 +453,7 @@ def load_metadata(filename):
                         metadata_dict[category] = str(category_data)
         
         print("\nMetadata categories found:", list(metadata_dict.keys()))
+        print("=== Ending load_metadata() successfully ===\n")
         return metadata_dict
         
     except Exception as e:
@@ -475,6 +462,7 @@ def load_metadata(filename):
         print(f"Error message: {str(e)}")
         import traceback
         traceback.print_exc()
+        print("=== Ending load_metadata() with error ===\n")
         raise
 
 # Extract spectrum data from x coordinate
@@ -482,7 +470,7 @@ def load_metadata(filename):
 # The x coordinate is the index of the array
 # The entry at index x is the intensity value
 def extract_spectrum(filename, x=0):
-    print(f"\n=== extract_spectrum() ===")
+    print(f"\n=== Starting extract_spectrum() ===")
     try:
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_signal(filepath)
@@ -490,37 +478,27 @@ def extract_spectrum(filename, x=0):
         
         # Handle different dimensionalities
         if len(sig.data.shape) == 1:
+            print("=== Ending extract_spectrum() successfully ===\n")
             return sig.data.tolist()
         elif len(sig.data.shape) == 2:
             if x >= sig.data.shape[0]:
+                print("=== Ending extract_spectrum() with error ===\n")
                 raise ValueError(f"Coordinates ({x}) out of bounds. Shape is {sig.data.shape}")
+            print("=== Ending extract_spectrum() successfully ===\n")
             return sig.data[x].tolist()
         else:
+            print("=== Ending extract_spectrum() with error ===\n")
             raise ValueError(f"Unexpected data dimensionality: {len(sig.data.shape)}D")
             
     except Exception as e:
         print(f"Error extracting spectrum from {filename}: {str(e)}")
+        print("=== Ending extract_spectrum() with error ===\n")
         raise
 
-"""
-Find the HAADF image from a list of hyperspy signals.
 
-Args:
-    signal_list (list): List of hyperspy signals
-    
-Returns:
-    tuple: (index, signal) of the HAADF image, or (None, None) if not found
-"""
-def find_haadf_image(signal_list):
-    print(f"\n=== find_haadf_image() ===")
-    for idx, sig in enumerate(signal_list):
-        if hasattr(sig, 'metadata'):
-            title = sig.metadata.General.title if hasattr(sig.metadata, 'General') else ''
-            if 'HAADF' in title and len(sig.data.shape) == 2:
-                return idx, sig
-    return None, None
 
 def extract_image_from_signal(filename):
+    print(f"\n=== Starting extract_image_from_signal() ===")
     try:
         print(f"\nExtracting data from {filename}")
         filepath = os.path.join(DATA_DIR, filename)
@@ -536,6 +514,7 @@ def extract_image_from_signal(filename):
         
         if signal_data is None:
             print("No 3D signal found in file")
+            print("=== Ending extract_image_from_signal() without finding signal ===\n")
             return None
             
         # Get the shape of the data
@@ -572,45 +551,50 @@ def extract_image_from_signal(filename):
         print(f"Image data sample (5x5 corner):")
         print(image_data[:5, :5])
         
+        print("=== Ending extract_image_from_signal() successfully ===\n")
         return result
         
     except Exception as e:
         print(f"Error extracting data from {filename}: {str(e)}")
         import traceback
         traceback.print_exc()
+        print("=== Ending extract_image_from_signal() with error ===\n")
         return None
 
-# Extract spectrum data from x coordinate
-# Spectrum data is a 1D array of intensity values
-# The x coordinate is the index of the array
-# The entry at index x is the intensity value
 def extract_spectrum_from_signal(signal_name, x=0):
+    print(f"\n=== Starting extract_spectrum_from_signal() ===")
     print(f"Extracting spectrum from {signal_name}")
     try:
         if "signals" not in CURRENT_FILE:
+            print("=== Ending extract_spectrum_from_signal() with error ===\n")
             raise KeyError("No signals loaded. Please load a file first.")
             
         if signal_name not in CURRENT_FILE["signals"]:
+            print("=== Ending extract_spectrum_from_signal() with error ===\n")
             raise KeyError(f"Signal {signal_name} not found in current file")
             
         sig = CURRENT_FILE["signals"][signal_name]
 
         # Handle different dimensionalities
         if len(sig.data.shape) == 1:
+            print("=== Ending extract_spectrum_from_signal() successfully ===\n")
             return sig.data.tolist()
         elif len(sig.data.shape) == 2:
+            print("=== Ending extract_spectrum_from_signal() with error ===\n")
             raise ValueError(f"Signal is {sig.data.shape} image, not a spectrum")
         elif len(sig.data.shape) == 3:
+            print("=== Ending extract_spectrum_from_signal() successfully ===\n")
             return sig.data[2].tolist()
         else:
+            print("=== Ending extract_spectrum_from_signal() with error ===\n")
             raise ValueError(f"Unexpected data dimensionality: {len(sig.data.shape)}D")
             
     except Exception as e:
         print(f"Error extracting spectrum from {filename}: {str(e)}")
+        print("=== Ending extract_spectrum_from_signal() with error ===\n")
         raise
 
-# Extract image data from a specific signal
-def extract_image_data_from_signal(signal):
+
     """Extract image data from a signal.
     
     Args:
@@ -624,11 +608,14 @@ def extract_image_data_from_signal(signal):
     Raises:
         ValueError: If signal cannot be displayed as an image
     """
-    print(f"\n=== extract_image_data_from_signal() ===")
-    print(f"Signal type: {type(signal)}")
-    print(f"Signal shape: {signal.data.shape}")
+def extract_image_data_from_signal(signal):
+    print(f"\n=== Starting extract_image_data_from_signal() ===")
+
+    # print(f"Signal type: {type(signal)}")
+    # print(f"Signal shape: {signal.data.shape}")
     
     if not hasattr(signal, 'data') or not hasattr(signal.data, 'shape'):
+        print("=== Ending extract_image_data_from_signal() with error ===\n")
         raise ValueError("Signal has no data or shape")
         
     shape = signal.data.shape
@@ -641,20 +628,22 @@ def extract_image_data_from_signal(signal):
         # For 3D signals, sum across spectrum dimension
         image_data = np.sum(signal.data, axis=2)
     else:
+        print("=== Ending extract_image_data_from_signal() with error ===\n")
         raise ValueError(f"Signal with {dims} dimensions cannot be displayed as image")
         
     # Normalize image data
     if image_data.size > 0:
         image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
         image_data = (image_data * 255).astype(np.uint8)
-        
+    
+    print("=== Ending extract_image_data_from_signal() successfully ===\n")    
     return {
         "data_shape": image_data.shape,
         "image_data": image_data.tolist()
     }
 
-# Extract spectrum data from a specific signal
 def extract_spectrum_data_from_signal(signal, x=0, y=0):
+    print(f"\n=== Starting extract_spectrum_data_from_signal() ===")
     """Extract spectrum data from a signal.
     
     Args:
@@ -668,11 +657,11 @@ def extract_spectrum_data_from_signal(signal, x=0, y=0):
     Raises:
         ValueError: If signal cannot be displayed as a spectrum
     """
-    print(f"\n=== extract_spectrum_data_from_signal() ===")
     print(f"Signal type: {type(signal)}")
     print(f"Signal shape: {signal.data.shape}")
     
     if not hasattr(signal, 'data') or not hasattr(signal.data, 'shape'):
+        print("=== Ending extract_spectrum_data_from_signal() with error ===\n")
         raise ValueError("Signal has no data or shape")
         
     shape = signal.data.shape
@@ -680,21 +669,28 @@ def extract_spectrum_data_from_signal(signal, x=0, y=0):
     
     if dims == 1:
         # For 1D signals, use data directly as spectrum
+        print("=== Ending extract_spectrum_data_from_signal() successfully ===\n")
         return signal.data.tolist()
     elif dims == 2:
         # For 2D signals, extract spectrum at x coordinate
         if x >= shape[0]:
+            print("=== Ending extract_spectrum_data_from_signal() with error ===\n")
             raise ValueError(f"X coordinate {x} out of bounds (max {shape[0]-1})")
+        print("=== Ending extract_spectrum_data_from_signal() successfully ===\n")
         return signal.data[x].tolist()
     elif dims == 3:
         # For 3D signals, extract spectrum at (x,y) coordinates
         if x >= shape[0] or y >= shape[1]:
+            print("=== Ending extract_spectrum_data_from_signal() with error ===\n")
             raise ValueError(f"Coordinates ({x},{y}) out of bounds (max {shape[0]-1},{shape[1]-1})")
+        print("=== Ending extract_spectrum_data_from_signal() successfully ===\n")
         return signal.data[x,y].tolist()
     else:
+        print("=== Ending extract_spectrum_data_from_signal() with error ===\n")
         raise ValueError(f"Signal with {dims} dimensions cannot be displayed as spectrum")
 
 def extract_image_data(filename):
+    print(f"\n=== Starting extract_image_data() ===")
     """Extract image data from a file.
     
     Args:
@@ -704,8 +700,6 @@ def extract_image_data(filename):
         dict: Dictionary containing image data and shape
     """
     try:
-        print(f"\n=== extract_image_data(): {filename} ===")
-        
         # Load file and get signals
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_file(filepath)
@@ -718,20 +712,25 @@ def extract_image_data(filename):
             try:
                 capabilities = get_signal_capabilities(sig)
                 if capabilities["hasImage"]:
-                    return extract_image_data_from_signal(sig)
+                    result = extract_image_data_from_signal(sig)
+                    print("=== Ending extract_image_data() successfully ===\n")
+                    return result
             except Exception as e:
                 print(f"Error checking signal: {str(e)}")
                 continue
                 
+        print("=== Ending extract_image_data() with error ===\n")
         raise ValueError("No signals in file can be displayed as image")
         
     except Exception as e:
         print(f"Error extracting image data: {str(e)}")
         import traceback
         traceback.print_exc()
+        print("=== Ending extract_image_data() with error ===\n")
         raise
 
 def extract_spectrum(filename, x=0, y=0):
+    print(f"\n=== Starting extract_spectrum() ===")
     """Extract spectrum data from a file.
     
     Args:
@@ -743,8 +742,6 @@ def extract_spectrum(filename, x=0, y=0):
         list: List of intensity values
     """
     try:
-        print(f"\n=== extract_spectrum(): {filename} ===")
-        
         # Load file and get signals
         filepath = os.path.join(DATA_DIR, filename)
         signal = try_load_file(filepath)
@@ -757,15 +754,19 @@ def extract_spectrum(filename, x=0, y=0):
             try:
                 capabilities = get_signal_capabilities(sig)
                 if capabilities["hasSpectrum"]:
-                    return extract_spectrum_data_from_signal(sig, x, y)
+                    result = extract_spectrum_data_from_signal(sig, x, y)
+                    print("=== Ending extract_spectrum() successfully ===\n")
+                    return result
             except Exception as e:
                 print(f"Error checking signal: {str(e)}")
                 continue
                 
+        print("=== Ending extract_spectrum() with error ===\n")
         raise ValueError("No signals in file can be displayed as spectrum")
         
     except Exception as e:
         print(f"Error extracting spectrum: {str(e)}")
         import traceback
         traceback.print_exc()
+        print("=== Ending extract_spectrum() with error ===\n")
         raise

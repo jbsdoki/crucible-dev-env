@@ -30,6 +30,7 @@ interface ImageViewerProps {
  * The component checks the signal's capabilities before attempting to display.
  */
 function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
+  console.log('=== Starting ImageViewer component ===');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -42,15 +43,18 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
   // Effect to fetch image data when file or signal changes
   useEffect(() => {
     const fetchImageData = async () => {
+      console.log('=== Starting fetchImageData ===');
       if (!selectedFile || !selectedSignal) {
         setError(null);
         setImageData(null);
+        console.log('=== Ending fetchImageData - no file or signal selected ===');
         return;
       }
 
       if (!selectedSignal.capabilities.hasImage) {
         setError('Selected signal cannot be displayed as an image');
         setImageData(null);
+        console.log('=== Ending fetchImageData - signal cannot be displayed as image ===');
         return;
       }
 
@@ -78,6 +82,7 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
           setError('Could not load image data from signal');
+          console.log('=== Ending fetchImageData - invalid data ===');
           return;
         }
 
@@ -100,9 +105,11 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
             bottomRight: data.image_data[height-1][width-1],
           }
         });
+        console.log('=== Ending fetchImageData successfully ===');
       } catch (err) {
         console.error('Error fetching image data:', err);
         setError(`Error loading image: ${(err as Error).message}`);
+        console.log('=== Ending fetchImageData with error ===');
       } finally {
         setLoading(false);
       }
@@ -116,10 +123,12 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
     if (!imageData) return;
 
     const drawImage = () => {
+      console.log('=== Starting drawImage ===');
       console.log('Attempting to draw image...');
       const canvas = canvasRef.current;
       if (!canvas) {
         console.log('Canvas not ready yet, waiting...');
+        console.log('=== Ending drawImage - canvas not ready ===');
         return;
       }
 
@@ -133,6 +142,7 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         console.error('Could not get canvas context');
+        console.log('=== Ending drawImage - could not get context ===');
         return;
       }
 
@@ -159,6 +169,7 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
         imageDataSize: `${imageDataObj.width} x ${imageDataObj.height}`
       });
       console.log('Image drawn to canvas successfully');
+      console.log('=== Ending drawImage successfully ===');
     };
 
     // Try to draw immediately
@@ -168,7 +179,7 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
     requestAnimationFrame(drawImage);
   }, [imageData]);
 
-  return (
+  const result = (
     <Box 
       sx={{ 
         width: '100%',
@@ -202,6 +213,9 @@ function ImageViewer({ selectedFile, selectedSignal }: ImageViewerProps) {
       )}
     </Box>
   );
+
+  console.log('=== Ending ImageViewer component ===');
+  return result;
 }
 
 export default ImageViewer; 
