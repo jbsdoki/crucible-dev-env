@@ -54,12 +54,14 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
       console.log('\n=== Signal Selector: File Selection Changed in SignalSelector.tsx ===');
       console.log('Selected file:', selectedFile);
 
+      // Reset states immediately when file changes
+      setSignals([]);
+      setSelectedSignal(-1);
+      onSignalSelect(null);
+
       // Reset states if no file selected
       if (!selectedFile) {
         console.log('No file selected, resetting states');
-        setSignals([]);
-        setSelectedSignal(-1);
-        onSignalSelect(null);
         console.log('=== Ending fetchSignals - no file selected in SignalSelector.tsx SignalSelector.tsx ===');
         return;
       }
@@ -83,17 +85,11 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
             capabilities: s.capabilities
           }))
         );
-
-        // Reset signal selection
-        setSelectedSignal(-1);
-        onSignalSelect(null);
         console.log('=== Ending fetchSignals successfully in SignalSelector.tsx ===');
         
       } catch (err) {
         console.error('Error fetching signals:', err);
         setError(`Error fetching signals: ${(err as Error).message}`);
-        setSignals([]);
-        onSignalSelect(null);
         console.log('=== Ending fetchSignals with error ===');
       } finally {
         setLoading(false);

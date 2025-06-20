@@ -110,7 +110,10 @@ function App() {
               <Typography variant="h6" gutterBottom>
                 Metadata
               </Typography>
-              <MetadataViewer selectedFile={selectedFile} />
+              <MetadataViewer 
+                selectedFile={selectedFile} 
+                selectedSignalIndex={selectedSignal ? selectedSignal.index : null} 
+              />
             </Paper>
           </Box>
 

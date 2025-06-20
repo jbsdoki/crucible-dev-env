@@ -36,15 +36,17 @@ export const getFiles = async () => {
 };
 
 /**
- * Fetches metadata for a specific .emd file
- * Calls: GET http://localhost:8000/metadata?filename=<filename>
- * @param filename - Name of the .emd file to get metadata for
- * Returns: Object containing axes, shape, and metadata keys
+ * Fetches metadata for a specific signal in a file
+ * Calls: GET http://localhost:8000/metadata?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing axes, shape, and metadata information
  */
-export const getMetadata = async (filename: string) => {
+export const getMetadata = async (filename: string, signalIdx: number) => {
   try {
+    console.log('Fetching metadata:', { filename, signalIdx });
     const response = await api.get('/metadata', {
-      params: { filename }
+      params: { filename, signal_idx: signalIdx }
     });
     return response.data;
   } catch (error) {

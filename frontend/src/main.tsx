@@ -25,5 +25,5 @@ import App from './App.tsx'
 // Create and render the React root
 // The '!' tells TypeScript that we're certain the element exists
 createRoot(document.getElementById('root')!).render(
-  <App />
+    <App />
 )

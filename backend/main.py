@@ -3,22 +3,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 import os
+from service_handlers import file_service, signal_service
+
 from file_service import (
-    list_files, 
     load_metadata, 
-    extract_spectrum, 
+    # extract_spectrum, 
     extract_image_data, 
-    get_signals_from_file,
-    try_load_file,
-    extract_spectrum_data_from_signal,
+    # extract_spectrum_data_from_signal,
     extract_image_data_from_signal,
-    DATA_DIR
+    # DATA_DIR
 )
 import time
 
 # Create FastAPI instance
 app = FastAPI()
 
+
+
+### THIS SECTION OF CODE IS FOR DEVELOPMENT ONLY ###
+### MUST ADD SECURITY FOR PRODUCTION ###
 # Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
@@ -69,42 +72,49 @@ async def get_file_list():
     print("\n=== Starting get_file_list() ===")
     log_call("/files")
     try:
-        files = list_files()
+        files = file_service.list_files()
         print("=== Ending get_file_list() in main.py ===\n")
         return JSONResponse(content=files)
     except Exception as e:
         print(f"ERROR in get_file_list(): {str(e)}")
-        print("=== Ending get_file_list() with error ===\n")
+        print("=== Ending get_file_list() in main.py with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
 
-"""
-Gets metadata for a specific .emd file
+
+"""Gets a list of signals from a file
 Args:
-    filename: Name of the .emd file (required query parameter)
-Returns: Dictionary containing:
-    - axes: List of axis names
-    - shape: Tuple of data dimensions
-    - original_metadata_keys: List of available metadata keys
-Called by: Frontend getMetadata() function
+    filename: Name of the file to get signals from
+Returns:
+    List of signals from the file
 """
-@app.get("/metadata")
-async def get_metadata(filename: str = Query(...)):
-    print("\n=== Starting get_metadata() ===")
+@app.get("/signals")
+async def get_signals(filename: str = Query(...)):
+    """
+    Gets a list of signals from a file
+    Args:
+        filename: Name of the file to get signals from
+    Returns:
+        Object containing list of signals from the file
+    """
+    print("\n=== Starting get_signals() from main.py ===")
     print(f"Filename: {filename}")
+    log_call("/signals", {"filename": filename})
+    
     try:
-        metadata = load_metadata(filename)
-        print("=== Ending get_metadata() ===\n")
-        return JSONResponse(content=metadata)
+        signals = signal_service.get_signal_list(filename)
+        print("=== Ending get_signals() from main.py ===\n")
+        return JSONResponse(content={"signals": signals})  # Wrap signals in an object
     except Exception as e:
-        print(f"ERROR in get_metadata(): {str(e)}")
-        print("=== Ending get_metadata() with error ===\n")
+        print(f"ERROR in get_signals(): {str(e)}")
+        print("=== Ending get_signals() from main.py with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
+
 
 """
 Gets spectrum data from a specific signal in a file
@@ -128,28 +138,32 @@ async def get_spectrum(
     log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
     try:
         # Get the full file path
-        filepath = os.path.join(DATA_DIR, filename)
-        print(f"Loading file from: {filepath}")
+        # filepath = os.path.join(DATA_DIR, filename)
+        # print(f"Loading file from: {filepath}")
         
         # Load the signals from the file
         print("Loading signals list...")
-        signals = get_signals_from_file(filename)
-        if signal_idx >= len(signals):
-            raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
+        # signals = file_service.get_signals_from_file(filename)# spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
+        # spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
+        
+        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx, x, y)
+        # if signal_idx >= len(signals):
+        #     raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
             
         # Load the file again to get the actual signal data
-        print("Loading signal data...")
-        signal = try_load_file(filepath)
-        if isinstance(signal, list):
-            signal = signal[signal_idx]
-        elif signal_idx != 0:
-            raise ValueError("File contains only one signal, index must be 0")
+        # print("Loading signal data...")
+        # signal = file_service.try_load_file(filepath)
+        # if isinstance(signal, list):
+        #     signal = signal[signal_idx]
+        # elif signal_idx != 0:
+        #     raise ValueError("File contains only one signal, index must be 0")
             
         # Extract spectrum data
-        print("Extracting spectrum data...")
-        data = extract_spectrum_data_from_signal(signal, x, y)
+        # print("Extracting spectrum data...")
+        # data = extract_spectrum_data_from_signal(signal, x, y)
         print("=== Ending get_spectrum() in main.py ===\n")
-        return JSONResponse(content=data)
+        # return JSONResponse(content=data)
+        return JSONResponse(content=spectrum_data)
     except Exception as e:
         print(f"ERROR in get_spectrum() in main.py: {str(e)}")
         print("=== Ending get_spectrum() with error in main.py ===\n")
@@ -157,6 +171,9 @@ async def get_spectrum(
             status_code=500,
             content={"error": str(e)}
         )
+
+
+
 
 """
 Gets image data from a specific signal in a file
@@ -175,29 +192,11 @@ async def get_image_data(
     print(f"Filename: {filename}, Signal Index: {signal_idx}")
     log_call("/image-data", {"filename": filename, "signal_idx": signal_idx})
     try:
-        # Get the full file path
-        filepath = os.path.join(DATA_DIR, filename)
-        print(f"Loading file from: {filepath}")
-        
-        # Load the signals from the file
-        print("Loading signals list...")
-        signals = get_signals_from_file(filename)
-        if signal_idx >= len(signals):
-            raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
-            
-        # Load the file again to get the actual signal data
-        print("Loading signal data...")
-        signal = try_load_file(filepath)
-        if isinstance(signal, list):
-            signal = signal[signal_idx]
-        elif signal_idx != 0:
-            raise ValueError("File contains only one signal, index must be 0")
-            
-        # Extract image data
-        print("Extracting image data...")
-        data = extract_image_data_from_signal(signal)
-        print("=== Ending get_image_data() from main.py ===\n")
-        return JSONResponse(content=data)
+        image_data = signal_service.get_image_data(filename, signal_idx)
+        if image_data is None:
+            raise ValueError("Failed to extract image data")
+        print("=== Ending get_image_data() successfully ===\n")
+        return JSONResponse(content=image_data)
     except Exception as e:
         print(f"ERROR in get_image_data(): {str(e)}")
         print("=== Ending get_image_data() with error ===\n")
@@ -206,27 +205,40 @@ async def get_image_data(
             content={"error": str(e)}
         )
 
-"""Gets all signals from a file
-Args:
-    filename: Name of the file (required query parameter)
-Returns: List of signal information dictionaries
+
+
 """
-@app.get("/signals")
-async def get_signals(filename: str = Query(...)):
-    print("\n=== Starting get_signals() from main.py ===")
-    print(f"Filename: {filename}")
-    log_call("/signals", {"filename": filename})
+Gets metadata from a specific signal in a file
+Args:
+    filename: Name of the file (required)
+    signal_idx: Index of the signal in the file (required)
+Returns: Dictionary containing metadata for the specific signal
+Called by: Frontend getMetadata() function
+"""
+@app.get("/metadata")
+async def get_metadata(
+    filename: str = Query(...),
+    signal_idx: int = Query(...)
+):
+    print("\n=== Starting get_metadata() from main.py ===")
+    print(f"Filename: {filename}, Signal Index: {signal_idx}")
+    log_call("/metadata", {"filename": filename, "signal_idx": signal_idx})
     try:
-        signals = get_signals_from_file(filename)
-        print("=== Ending get_signals() from main.py ===\n")
-        return JSONResponse(content={"signals": signals})
+        metadata = signal_service.get_metadata(filename, signal_idx)
+        if metadata is None:
+            raise ValueError("Failed to extract metadata")
+        print("=== Ending get_metadata() successfully ===\n")
+        return JSONResponse(content=metadata)
     except Exception as e:
-        print(f"ERROR in get_signals(): {str(e)}")
-        print("=== Ending get_signals() from main.py with error ===\n")
+        print(f"ERROR in get_metadata(): {str(e)}")
+        print("=== Ending get_metadata() with error ===\n")
         return JSONResponse(
             status_code=500,
             content={"error": str(e)}
         )
+
+
+
 
 """Gets spectrum data from a specific signal
 Args:
@@ -239,7 +251,7 @@ async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
     print("\n=== Starting get_signal_spectrum() from main.py ===")
     log_call("/signal/spectrum", {"signal_name": signal_name, "x": x})
     try:
-        data = extract_spectrum_from_signal(signal_name, x)
+        data = extract_spectrum(signal_name, x)
         print("\n=== Ending get_signal_spectrum() from main.py ===")
         return JSONResponse(content=data)
     except Exception as e:
@@ -259,7 +271,7 @@ async def get_signal_image(signal_name: str = Query(...)):
     print("\n=== Starting get_signal_image() from main.py ===")
     log_call("/signal/image", {"signal_name": signal_name})
     try:
-        data = extract_image_from_signal(signal_name)
+        data = extract_image_data(signal_name)
         if data is None:
             print("\n=== Ending get_signal_image() from main.py ===")
             return JSONResponse(
