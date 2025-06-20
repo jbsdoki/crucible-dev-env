@@ -4,4 +4,7 @@
 *.emi
 *.dm3
 *.dm4
+
+*.pyc
+
 .cursor/

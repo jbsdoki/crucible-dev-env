@@ -51,15 +51,6 @@ class SignalService:
                 print(f"Error getting signal titles: {str(e)}")
                 raise
             
-            print("\nCaching signals...")
-            # Cache the results
-            try:
-                signal_functions.cache_signals(filepath, signal_list)
-                print("Signals cached successfully")
-            except Exception as e:
-                print(f"Error caching signals: {str(e)}")
-                raise
-            
             print("=== Ending get_signal_list in SignalService ===\n")
             return signal_list
             

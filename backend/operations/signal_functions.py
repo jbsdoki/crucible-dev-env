@@ -4,12 +4,17 @@ import os
 
 
 def get_cached_signals(file_path):
-    if CURRENT_FILE["filepath"] == file_path:
-        if CURRENT_FILE["signals"] is not None:
-            return CURRENT_FILE["signals"]
-
-    else:
-        return None
+    """
+    Get cached signals for a file path.
+    Args:
+        file_path (str): Path to the file
+    Returns:
+        list: List of signal information dictionaries, or None if not cached
+    """
+    if CURRENT_FILE["filepath"] == file_path and CURRENT_FILE["data"] is not None:
+        # Extract signal list from cached data
+        return extract_signal_list(CURRENT_FILE["data"])
+    return None
 
 def extract_signal_list(signal_list):
     if signal_list is None:
@@ -86,11 +91,7 @@ def extract_signal_list(signal_list):
     
     return signals_info
 
-def cache_signals(file_path, signal_list):
-    CURRENT_FILE["filepath"] = file_path
-    CURRENT_FILE["signals"] = signal_list
 
-    
 """Determine what a signal can be used for based on its shape and type
 
 Args:
