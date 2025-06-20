@@ -207,7 +207,7 @@ class SignalService:
             filename (str): Name of the file to get metadata from
             signal_idx (int): Index of the signal to get metadata from
         Returns:
-            dict: Dictionary containing metadata for the specific signal
+            dict: Dictionary containing the signal's metadata
         """
         print(f"\n=== Starting get_metadata() in SignalService ===")
         try:
@@ -225,63 +225,15 @@ class SignalService:
                 signal_data = signal[signal_idx]
                 print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
             
-            # Extract metadata
-            metadata = {
-                "axes": [],
-                "shape": [],
-                "signal_type": str(type(signal_data)),
-                "original_metadata": {}
-            }
-            
-            # Get axes information
-            if hasattr(signal_data, 'axes_manager'):
-                print("\nProcessing axes information:")
-                for i, axis in enumerate(signal_data.axes_manager):
-                    axis_info = {}
-                    
-                    # Handle both object-style and tuple-style axes
-                    if hasattr(axis, 'name'):
-                        # Object-style axis
-                        axis_info = {
-                            "name": axis.name,
-                            "size": axis.size,
-                            "units": axis.units,
-                            "scale": axis.scale,
-                            "offset": axis.offset
-                        }
-                    else:
-                        # Tuple-style axis
-                        # For tuple axes, create a generic name and extract what we can
-                        axis_info = {
-                            "name": f"Axis {i}",
-                            "size": len(axis) if hasattr(axis, '__len__') else None,
-                            "units": getattr(axis, 'units', None),
-                            "scale": getattr(axis, 'scale', None),
-                            "offset": getattr(axis, 'offset', None)
-                        }
-                    
-                    # print(f"Axis {i} info: {axis_info}")
-                    metadata["axes"].append(axis_info)
-            
-            # Get shape information
-            if hasattr(signal_data, 'data') and hasattr(signal_data.data, 'shape'):
-                metadata["shape"] = list(signal_data.data.shape)
-                print(f"\nSignal shape: {metadata['shape']}")
-            
-            # Get original metadata
-            if hasattr(signal_data, 'original_metadata'):
-                print("\nExtracting original metadata")
-                # Convert metadata to a serializable format
-                try:
-                    metadata["original_metadata"] = self._convert_metadata_to_serializable(
-                        signal_data.original_metadata
-                    )
-                except Exception as e:
-                    print(f"Warning: Could not convert all metadata to serializable format: {str(e)}")
-            
-            print("\nMetadata extracted successfully")
-            print("=== Ending get_metadata() successfully ===\n")
-            return metadata
+            # Get the metadata
+            if hasattr(signal_data, 'metadata'):
+                metadata = self._convert_metadata_to_serializable(signal_data.metadata)
+                print("\nMetadata extracted successfully")
+                print("=== Ending get_metadata() successfully ===\n")
+                return metadata
+            else:
+                print("No metadata found in signal")
+                return {}
             
         except Exception as e:
             print(f"Error getting metadata: {str(e)}")

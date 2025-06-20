@@ -5,14 +5,14 @@ import hyperspy.api as hs
 import os
 from service_handlers import file_service, signal_service
 
-from file_service import (
-    load_metadata, 
-    # extract_spectrum, 
-    extract_image_data, 
-    # extract_spectrum_data_from_signal,
-    extract_image_data_from_signal,
-    # DATA_DIR
-)
+# from file_service import (
+#     load_metadata, 
+#     # extract_spectrum, 
+#     extract_image_data, 
+#     # extract_spectrum_data_from_signal,
+#     extract_image_data_from_signal,
+#     # DATA_DIR
+# )
 import time
 
 # Create FastAPI instance
