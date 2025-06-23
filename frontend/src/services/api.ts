@@ -36,15 +36,17 @@ export const getFiles = async () => {
 };
 
 /**
- * Fetches metadata for a specific .emd file
- * Calls: GET http://localhost:8000/metadata?filename=<filename>
- * @param filename - Name of the .emd file to get metadata for
- * Returns: Object containing axes, shape, and metadata keys
+ * Fetches metadata for a specific signal in a file
+ * Calls: GET http://localhost:8000/metadata?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing axes, shape, and metadata information
  */
-export const getMetadata = async (filename: string) => {
+export const getMetadata = async (filename: string, signalIdx: number) => {
   try {
+    console.log('Fetching metadata:', { filename, signalIdx });
     const response = await api.get('/metadata', {
-      params: { filename }
+      params: { filename, signal_idx: signalIdx }
     });
     return response.data;
   } catch (error) {
@@ -54,16 +56,24 @@ export const getMetadata = async (filename: string) => {
 };
 
 /**
- * Fetches spectrum data at specific coordinates from a .emd file
- * Calls: GET http://localhost:8000/spectrum?filename=<filename>&x=<x>
- * @param filename - Name of the .emd file
- * @param x - X coordinate (default: 0)
+ * Fetches spectrum data from a specific signal in a file
+ * Calls: GET http://localhost:8000/spectrum?filename=<filename>&signal_idx=<signal_idx>&x=<x>&y=<y>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * @param x - X coordinate for spectrum extraction (default: 0)
+ * @param y - Y coordinate for spectrum extraction (default: 0)
  * Returns: Array of spectrum data points
  */
-export const getSpectrum = async (filename: string, x: number = 0) => {
+export const getSpectrum = async (
+  filename: string, 
+  signalIdx: number,
+  x: number = 0,
+  y: number = 0
+) => {
   try {
+    console.log('Fetching spectrum data:', { filename, signalIdx, x, y });
     const response = await api.get('/spectrum', {
-      params: { filename, x }
+      params: { filename, signal_idx: signalIdx, x, y }
     });
     return response.data;
   } catch (error) {
@@ -73,20 +83,19 @@ export const getSpectrum = async (filename: string, x: number = 0) => {
 };
 
 /**
- * Fetches image data from a .emd file
- * Calls: GET http://localhost:8000/image-data?filename=<filename>
- * @param filename - Name of the .emd file
+ * Fetches image data from a specific signal in a file
+ * Calls: GET http://localhost:8000/image-data?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
  * Returns: Object containing:
- *  - spectrum_idx: Index of the 3D spectrum signal
- *  - spectrum_shape: Shape of the spectrum signal
- *  - haadf_idx: Index of the HAADF image
- *  - haadf_shape: Shape of the HAADF image
- *  - haadf_data: 2D array of the HAADF image if found
+ *  - data_shape: Shape of the image data
+ *  - image_data: 2D array of image data
  */
-export const getImageData = async (filename: string) => {
+export const getImageData = async (filename: string, signalIdx: number) => {
   try {
+    console.log('Fetching image data:', { filename, signalIdx });
     const response = await api.get('/image-data', {
-      params: { filename }
+      params: { filename, signal_idx: signalIdx }
     });
     return response.data;
   } catch (error) {

@@ -5,6 +5,7 @@ import { getMetadata } from '../services/api';
 
 interface MetadataViewerProps {
   selectedFile: string;
+  selectedSignalIndex: number | null;
 }
 
 type MetadataValue = string | number | boolean | object | null;
@@ -35,22 +36,22 @@ const MetadataValue = ({ value }: { value: MetadataValue }) => {
 /**
  * MetadataViewer Component
  * 
- * Displays metadata categories from the microscopy file, such as:
- * - Acquisition instrument settings
- * - Sample information
- * - General file information
- * - Signal properties
+ * Displays metadata for a specific signal in the microscopy file, including:
+ * - Signal type and shape
+ * - Axes information
+ * - Original metadata from the file
  * 
  * @param selectedFile - Name of the currently selected file
+ * @param selectedSignalIndex - Index of the selected signal
  */
-function MetadataViewer({ selectedFile }: MetadataViewerProps) {
+function MetadataViewer({ selectedFile, selectedSignalIndex }: MetadataViewerProps) {
   const [metadata, setMetadata] = useState<MetadataDict | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchMetadata = async () => {
-      if (!selectedFile) {
+      if (!selectedFile || selectedSignalIndex === null) {
         setMetadata(null);
         return;
       }
@@ -59,7 +60,7 @@ function MetadataViewer({ selectedFile }: MetadataViewerProps) {
       setError('');
 
       try {
-        const data = await getMetadata(selectedFile);
+        const data = await getMetadata(selectedFile, selectedSignalIndex);
         setMetadata(data);
       } catch (err) {
         setError(`Error loading metadata: ${(err as Error).message}`);
@@ -69,12 +70,12 @@ function MetadataViewer({ selectedFile }: MetadataViewerProps) {
     };
 
     fetchMetadata();
-  }, [selectedFile]);
+  }, [selectedFile, selectedSignalIndex]);
 
-  if (!selectedFile) {
+  if (!selectedFile || selectedSignalIndex === null) {
     return (
       <Paper sx={{ p: 2, mt: 2 }}>
-        <Typography>Select a file to view metadata</Typography>
+        <Typography>Select a file and signal to view metadata</Typography>
       </Paper>
     );
   }
@@ -102,7 +103,7 @@ function MetadataViewer({ selectedFile }: MetadataViewerProps) {
   return (
     <Paper sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom>
-        File Metadata: {selectedFile}
+        Signal {selectedSignalIndex} Metadata: {selectedFile}
       </Typography>
 
       <Box sx={{ mt: 2 }}>

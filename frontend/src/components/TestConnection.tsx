@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getFiles, getMetadata, getSpectrum } from '../services/api';
 
 function TestConnection() {
+  console.log('=== Starting TestConnection component ===');
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [metadata, setMetadata] = useState<any>(null);
@@ -11,12 +12,15 @@ function TestConnection() {
   // Test file list endpoint
   useEffect(() => {
     const fetchFiles = async () => {
+      console.log('=== Starting fetchFiles ===');
       try {
         const fileList = await getFiles();
         setFiles(fileList);
         setError('');
+        console.log('=== Ending fetchFiles successfully ===');
       } catch (err) {
         setError('Error fetching files: ' + (err as Error).message);
+        console.log('=== Ending fetchFiles with error ===');
       }
     };
     fetchFiles();
@@ -24,29 +28,38 @@ function TestConnection() {
 
   // Test metadata endpoint when a file is selected
   const handleFileSelect = async (filename: string) => {
+    console.log('=== Starting handleFileSelect ===');
     try {
       setSelectedFile(filename);
       const fileMetadata = await getMetadata(filename);
       setMetadata(fileMetadata);
       setError('');
+      console.log('=== Ending handleFileSelect successfully ===');
     } catch (err) {
       setError('Error fetching metadata: ' + (err as Error).message);
+      console.log('=== Ending handleFileSelect with error ===');
     }
   };
 
   // Test spectrum endpoint
   const handleGetSpectrum = async () => {
-    if (!selectedFile) return;
+    console.log('=== Starting handleGetSpectrum ===');
+    if (!selectedFile) {
+      console.log('=== Ending handleGetSpectrum - no file selected ===');
+      return;
+    }
     try {
       const spectrumData = await getSpectrum(selectedFile, 0, 0);
       setSpectrum(spectrumData);
       setError('');
+      console.log('=== Ending handleGetSpectrum successfully ===');
     } catch (err) {
       setError('Error fetching spectrum: ' + (err as Error).message);
+      console.log('=== Ending handleGetSpectrum with error ===');
     }
   };
 
-  return (
+  const result = (
     <div style={{ padding: '20px' }}>
       <h2>API Connection Test</h2>
       
@@ -85,6 +98,9 @@ function TestConnection() {
       )}
     </div>
   );
+
+  console.log('=== Ending TestConnection component ===');
+  return result;
 }
 
 export default TestConnection; 
