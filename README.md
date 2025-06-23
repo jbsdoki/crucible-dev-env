@@ -135,3 +135,43 @@ This code is currently in development, which means React is in <StrictMode> (fro
 This is development only, deactivate StrictMode in main.tsx while if in production.
 
 In backend/main.py any source or credential is allowed to connect. This is a development only setting, remove for production. 
+
+## Application Workflow
+
+```
+This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations. 
+Frontend:
+
+main.tsx <-> App.tsx <-> Components:
+                         - FileSelector.tsx
+                         - ImageViewer.tsx
+                         - MetadataViewer.tsx
+                         - SignalSelector.tsx
+                         - SpectrumViewer.tsx
+                         - TestConnection.tsx
+                                |
+                                v
+                            api.ts
+                                |
+                                v
+                        main.py in the backend
+
+
+Backend:
+
+api.ts in the frontend
+   ^ 
+   |
+main.py <-> Service Handlers:
+            - file_service.py
+            - signal_service.py
+                    |
+                    v
+            Operations:
+            - file_functions.py
+            - image_viewer_functions.py
+            - metadata_functions.py
+            - signal_functions.py
+            - spectrum_viewer_functions.py
+```
+
