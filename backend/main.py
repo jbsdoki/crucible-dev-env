@@ -3,17 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 import os
+import time
 from service_handlers import file_service, signal_service
 
-# from file_service import (
-#     load_metadata, 
-#     # extract_spectrum, 
-#     extract_image_data, 
-#     # extract_spectrum_data_from_signal,
-#     extract_image_data_from_signal,
-#     # DATA_DIR
-# )
-import time
 
 # Create FastAPI instance
 app = FastAPI()
@@ -205,6 +197,37 @@ async def get_image_data(
             content={"error": str(e)}
         )
 
+"""
+Gets HAADF data from a specific signal in a file
+Args:
+    filename: Name of the file (required)
+Returns: Dictionary containing HAADF data and shape
+Called by: Frontend getHAADFData() function
+"""
+@app.get("/haadf-data")
+async def get_haadf_data(
+    filename: str = Query(...)
+):
+    print("\n=== Starting get_haadf_data() from main.py ===")
+    print(f"Filename: {filename}")
+    log_call("/haadf-data", {"filename": filename})
+    try:
+        haadf_data = signal_service.get_haadf_data(filename)
+        if haadf_data is None:
+            print("=== Ending get_haadf_data() - No HAADF data found ===\n")
+            return JSONResponse(
+                status_code=404,
+                content={"error": "No HAADF data found in file"}
+            )
+        print("=== Ending get_haadf_data() successfully ===\n")
+        return JSONResponse(content=haadf_data)
+    except Exception as e:
+        print(f"ERROR in get_haadf_data(): {str(e)}")
+        print("=== Ending get_haadf_data() with error ===\n")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
 
 
 """

@@ -25,6 +25,7 @@
 import { useState } from 'react'
 import SpectrumViewer from './components/SpectrumViewer'
 import ImageViewer from './components/ImageViewer'
+import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
@@ -117,18 +118,25 @@ function App() {
             </Paper>
           </Box>
 
-          {/* Right Column: Spectrum */}
-          {selectedSignal.capabilities.hasSpectrum && (
+          {/* Right Column: Spectrum and HAADF */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            {selectedSignal.capabilities.hasSpectrum && (
+              <Paper elevation={3} sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Spectrum View
+                </Typography>
+                <SpectrumViewer 
+                  selectedFile={selectedFile}
+                  selectedSignal={selectedSignal}
+                />
+              </Paper>
+            )}
+            
+            {/* HAADF Viewer - Always shown when file is selected */}
             <Paper elevation={3} sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Spectrum View
-              </Typography>
-              <SpectrumViewer 
-                selectedFile={selectedFile}
-                selectedSignal={selectedSignal}
-              />
+              <HAADFViewer selectedFile={selectedFile} />
             </Paper>
-          )}
+          </Box>
         </Box>
       )}
     </Box>

@@ -5,6 +5,10 @@ import numpy as np
 import hyperspy.api as hs
 
 class SignalService:
+    #############################################################################
+    #                              Signal List Methods                            #
+    #############################################################################
+    
     def get_signal_list(self, filename: str):
         """
         Gets a list of signals from a file.
@@ -62,7 +66,21 @@ class SignalService:
             traceback.print_exc()
             raise e
 
+    #############################################################################
+    #                              Spectrum Methods                               #
+    #############################################################################
+
     def get_spectrum_data(self, filename, signal_idx, x, y):
+        """
+        Gets spectrum data from a file.
+        Args:
+            filename (str): Name of the file to get spectrum data from
+            signal_idx (int): Index of the signal to get spectrum data from
+            x (int): X coordinate for spectrum extraction
+            y (int): Y coordinate for spectrum extraction
+        Returns:
+            list: List of spectrum data points
+        """
         print(f"\n=== Starting get_spectrum_data() in SignalService ===")
         print(f"Loading file: {filename}")
         print(f"Signal index: {signal_idx}, x: {x}, y: {y}")
@@ -119,7 +137,19 @@ class SignalService:
             print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
             raise ValueError(f"Signal with {dims} dimensions cannot be displayed as spectrum")
 
+    #############################################################################
+    #                               Image Methods                                 #
+    #############################################################################
+
     def get_image_data(self, filename, signal_idx):
+        """
+        Gets the image data from a file.
+        Args:
+            filename (str): Name of the file to get image data from
+            signal_idx (int): Index of the signal to get image data from
+        Returns:
+            dict: Dictionary containing the image data
+        """
         print(f"\n=== Starting get_image_data() from signal_service.py ===")
         try:
             print(f"\nExtracting data from {filename}")
@@ -191,14 +221,100 @@ class SignalService:
             print("=== Ending extract_image_from_signal() with error ===\n")
             return None
 
+    #############################################################################
+    #                              HAADF Methods                                  #
+    #############################################################################
+
+    def get_haadf_data(self, filename):
+        """
+        Gets the HAADF data from a file.
+        Args:
+            filename (str): Name of the file to get HAADF data from
+        Returns:
+            dict: Dictionary containing the HAADF data
+        """
+        print(f"\n=== Starting get_haadf_data() in SignalService ===")
+        try:
+            print(f"\nExtracting data from {filename}")
+            filepath = os.path.join(DATA_DIR, filename)
+            print(f"Constructed filepath: {filepath}")
+            print(f"File exists: {os.path.exists(filepath)}")
+            
+            # Load all signals from the file
+            signals = file_functions.get_signals_from_file(filepath)
+            print(f"\nLoaded signals type: {type(signals)}")
+            
+            # Get the signal list to find HAADF
+            signal_list = signal_functions.extract_signal_list(signals)
+            
+            # Find the HAADF signal
+            haadf_idx = None
+            for idx, signal_info in enumerate(signal_list):
+                if 'HAADF' in signal_info['title'].upper():
+                    haadf_idx = idx
+                    break
+            
+            if haadf_idx is None:
+                print("No HAADF signal found in file")
+                return None
+                
+            # Get the HAADF signal
+            signal_data = signals[haadf_idx]
+            
+            # Get the shape of the data
+            data_shape = signal_data.data.shape
+            print(f"HAADF signal shape: {data_shape}")
+            
+            # Create 2D image data
+            print("\nProcessing HAADF image data:")
+            print(f"Initial data type: {signal_data.data.dtype}")
+            print(f"Initial data range: min={signal_data.data.min()}, max={signal_data.data.max()}")
+            
+            # Handle different dimensionalities
+            if len(data_shape) == 2:
+                # For 2D signals, use the data directly
+                image_data = signal_data.data
+                print("2D signal - using data directly")
+            else:
+                raise ValueError(f"Unsupported data shape: {data_shape}")
+                
+            print(f"Image shape after processing: {image_data.shape}")
+            print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
+            
+            # Normalize the image data for display
+            if image_data.size > 0:
+                image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
+                image_data = (image_data * 255).astype(np.uint8)
+                print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
+                print(f"Final data type: {image_data.dtype}")
+            
+            result = {
+                "data_shape": data_shape,
+                "image_data": image_data.tolist()
+            }
+            
+            print("=== Ending get_haadf_data() successfully ===\n")
+            return result
+            
+        except Exception as e:
+            print(f"Error extracting HAADF data from {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print("=== Ending get_haadf_data() with error ===\n")
+            return None
+
+    #############################################################################
+    #                             Metadata Methods                                #
+    #############################################################################
+
     def get_metadata(self, filename, signal_idx):
         """
-        Gets metadata for a specific signal in a file.
+        Gets metadata from a file.
         Args:
             filename (str): Name of the file to get metadata from
             signal_idx (int): Index of the signal to get metadata from
         Returns:
-            dict: Dictionary containing the signal's metadata
+            dict: Dictionary containing metadata
         """
         print(f"\n=== Starting get_metadata() in SignalService ===")
         try:
@@ -235,11 +351,11 @@ class SignalService:
             
     def _convert_metadata_to_serializable(self, metadata_dict):
         """
-        Recursively converts metadata to a JSON-serializable format.
+        Converts metadata dictionary to a JSON-serializable format.
         Args:
-            metadata_dict: Dictionary or DictionaryBrowser containing metadata
+            metadata_dict (dict): Dictionary containing metadata
         Returns:
-            dict: Dictionary with all values converted to serializable types
+            dict: JSON-serializable dictionary
         """
         result = {}
         

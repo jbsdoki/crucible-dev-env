@@ -105,6 +105,29 @@ export const getImageData = async (filename: string, signalIdx: number) => {
 };
 
 /**
+ * Fetches image data from a specific signal in a file
+ * Calls: GET http://localhost:8000/image-data?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing:
+ *  - data_shape: Shape of the image data
+ *  - image_data: 2D array of image data
+ */
+export const getHAADFData = async (filename: string ) => {
+  try {
+    console.log('Fetching HAADF data:', { filename });
+    const response = await api.get('/haadf-data', {
+      params: { filename }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching image data:', error);
+    throw error;
+  }
+};
+
+
+/**
  * Fetches all signals from a specific file
  * Calls: GET http://localhost:8000/signals?filename=<filename>
  * @param filename - Name of the file to get signals from
