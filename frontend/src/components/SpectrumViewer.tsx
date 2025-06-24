@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import Plot from 'react-plotly.js';
 import { getSpectrum } from '../services/api';
 import { Box, CircularProgress, Typography } from '@mui/material';
 
@@ -46,7 +46,7 @@ interface SpectrumViewerProps {
  */
 function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
   console.log('=== Starting SpectrumViewer component ===');
-  const [spectrumData, setSpectrumData] = useState<SpectrumDataPoint[]>([]);  // Processed spectrum data
+  const [spectrumData, setSpectrumData] = useState<number[]>([]);  // Raw spectrum data
   const [error, setError] = useState<string>('');  // Error messages
   const [loading, setLoading] = useState<boolean>(false);  // Loading state
 
@@ -83,35 +83,12 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
         
         const data = await getSpectrum(selectedFile, selectedSignal.index);
         
-        // Add detailed logging about the received data
-        console.log('Raw spectrum data:', {
-          type: typeof data,
-          isArray: Array.isArray(data),
-          length: data.length,
-          sampleValue: data[0],
-          sampleValueType: typeof data[0]
-        });
-        
-        // Check if data is valid before processing
         if (!Array.isArray(data)) {
           console.log('=== Ending fetchSpectrum - invalid data format ===');
           throw new Error(`Expected array but received ${typeof data}`);
         }
         
-        // Convert spectrum data to format expected by Recharts
-        const formattedData = data.map((value: number, index: number) => ({
-          energy: index,
-          intensity: value
-        }));
-        
-        // Log the formatted data structure
-        console.log('Formatted spectrum data:', {
-          length: formattedData.length,
-          firstPoint: formattedData[0],
-          lastPoint: formattedData[formattedData.length - 1]
-        });
-        
-        setSpectrumData(formattedData);
+        setSpectrumData(data);
         console.log('=== Ending fetchSpectrum successfully ===');
       } catch (err) {
         console.error('Error fetching spectrum:', err);
@@ -153,19 +130,60 @@ function SpectrumViewer({ selectedFile, selectedSignal }: SpectrumViewerProps) {
 
       {/* Spectrum plot */}
       {!loading && !error && spectrumData.length > 0 && (
-        <LineChart
-          width={800}
-          height={400}
-          data={spectrumData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="energy" label={{ value: 'Energy', position: 'insideBottom', offset: -5 }} />
-          <YAxis label={{ value: 'Intensity', angle: -90, position: 'insideLeft' }} />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="intensity" stroke="#8884d8" name={selectedSignal.title} />
-        </LineChart>
+        <Plot
+          data={[
+            {
+              x: Array.from({ length: spectrumData.length }, (_, i) => i),  // Energy values
+              y: spectrumData,  // Count values
+              type: 'scatter',
+              mode: 'lines',
+              name: 'Count',
+              line: {
+                color: '#1f77b4',
+                width: 2
+              }
+            }
+          ]}
+          layout={{
+            width: 800,
+            height: 400,
+            margin: { t: 10, r: 50, b: 50, l: 70 },
+            showlegend: false,
+            xaxis: {
+              title: {
+                text: 'Energy (eV)',
+                standoff: 10
+              },
+              showgrid: true,
+              gridcolor: '#e1e1e1',
+              zeroline: false
+            },
+            yaxis: {
+              title: {
+                text: 'Count',
+                standoff: 10
+              },
+              showgrid: true,
+              gridcolor: '#e1e1e1',
+              zeroline: false
+            },
+            plot_bgcolor: 'white',
+            paper_bgcolor: 'white'
+          }}
+          config={{
+            responsive: true,
+            displayModeBar: true,
+            scrollZoom: true,
+            toImageButtonOptions: {
+              format: 'svg',
+              filename: 'spectrum_plot',
+              height: 800,
+              width: 1200,
+              scale: 2
+            }
+          }}
+          style={{ width: '100%', height: '100%' }}
+        />
       )}
     </Box>
   );

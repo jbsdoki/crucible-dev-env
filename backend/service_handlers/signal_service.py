@@ -150,25 +150,30 @@ class SignalService:
             print(f"Image shape after processing: {image_data.shape}")
             print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
             
-            # Normalize the image data for display
-            if image_data.size > 0:
-                image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
-                image_data = (image_data * 255).astype(np.uint8)
-                print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
-                print(f"Final data type: {image_data.dtype}")
+            # Store shape and range before converting to list
+            image_shape = image_data.shape
+            data_min = float(image_data.min())
+            data_max = float(image_data.max())
+            
+            # Convert to Python native types for JSON serialization
+            image_data = image_data.astype(float).tolist()
             
             result = {
                 "signal_idx": signal_idx,
                 "data_shape": data_shape,
-                "image_data": image_data.tolist() 
+                "image_data": image_data,
+                "image_shape": image_shape,
+                "data_range": {
+                    "min": data_min,
+                    "max": data_max
+                }
             }
             
             print("\nExtracted data successfully")
             print(f"Signal index: {signal_idx}")
             print(f"Data shape: {data_shape}")
-            print(f"Image shape: {image_data.shape}")
-            print(f"Image data sample (5x5 corner):")
-            print(image_data[:5, :5])
+            print(f"Image shape: {image_shape}")
+            print(f"Data range: min={data_min}, max={data_max}")
             
             print("=== Ending extract_image_from_signal() successfully ===\n")
             return result
