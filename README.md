@@ -28,6 +28,31 @@
    - scipy==1.10.1
    - matplotlib==3.5.1
 
+-frontend npm library list: (automatically installed with bash npm "install" command)
+frontend@0.0.0 \react-explorers\frontend
+├── @emotion/react@11.14.0
+├── @emotion/styled@11.14.0
+├── @eslint/js@9.28.0
+├── @kurkle/color@0.3.4 extraneous
+├── @mui/icons-material@7.1.1
+├── @mui/material@7.1.1
+├── @types/react-dom@19.1.6
+├── @types/react@19.1.7
+├── @vitejs/plugin-react@4.5.2
+├── axios@1.9.0
+├── chart.js@4.5.0 extraneous
+├── eslint-plugin-react-hooks@5.2.0
+├── eslint-plugin-react-refresh@0.4.20
+├── eslint@9.28.0
+├── globals@16.2.0
+├── react-chartjs-2@5.3.0 extraneous
+├── react-dom@19.1.0
+├── react@19.1.0
+├── recharts@2.15.3
+├── typescript-eslint@8.34.0
+├── typescript@5.8.3
+└── vite@6.3.5
+
    
 (Specific build type should not matter)
 
@@ -159,19 +184,19 @@ main.tsx <-> App.tsx <-> Components:
 
 Backend:
 
-api.ts in the frontend
-   ^ 
-   |
-main.py <-> Service Handlers:
-            - file_service.py
-            - signal_service.py
-                    |
-                    v
-            Operations:
-            - file_functions.py
-            - image_viewer_functions.py
-            - metadata_functions.py
-            - signal_functions.py
-            - spectrum_viewer_functions.py
-```
+                        api.ts in the frontend
+                           ^ 
+                           |
+                        main.py <-> Service Handlers:
+                                    - file_service.py
+                                    - signal_service.py
+                                          |
+                                          v
+                                    Operations:
+                                    - file_functions.py
+                                    - image_viewer_functions.py
+                                    - metadata_functions.py
+                                    - signal_functions.py
+                                    - spectrum_viewer_functions.py
+                        ```
 

@@ -11,12 +11,22 @@ def get_cached_signals(file_path):
     Returns:
         list: List of signal information dictionaries, or None if not cached
     """
+    print(f"\n=== Starting get_cached_signals() in signal_functions.py ===")
     if CURRENT_FILE["filepath"] == file_path and CURRENT_FILE["data"] is not None:
         # Extract signal list from cached data
         return extract_signal_list(CURRENT_FILE["data"])
     return None
 
 def extract_signal_list(signal_list):
+    """
+    Extracts signal information from a list of hyperspy signals.
+
+    Args:
+        signal_list (list): List of hyperspy signals
+
+    Returns:
+        list: List of signal information dictionaries
+    """
     if signal_list is None:
         raise ValueError("File data is None")
 
@@ -286,3 +296,25 @@ Raises:
     
     # print("=== Ending try_load_signal() with error ===\n")
     # raise ValueError("Could not load file with any signal type")
+
+
+def find_haadf_signal(signal_list):
+    
+    """
+    Find the HAADF image from a list of hyperspy signals.
+
+    Args:
+        signal_list (list): List of hyperspy signals
+        
+    Returns:
+        tuple: (index, signal) of the HAADF image, or (None, None) if not found
+    """
+    print(f"\n=== Starting find_haadf_signal() in signal_functions.py ===")
+    for idx, sig in enumerate(signal_list):
+        if hasattr(sig, 'metadata'):
+            title = sig.metadata.General.title if hasattr(sig.metadata, 'General') else ''
+            if 'HAADF' in title and len(sig.data.shape) == 2:
+                print(f"Found HAADF signal at index {idx}, end find_haadf_signal() in signal_functions.py")
+                return idx, sig
+    print(f"No HAADF signal found in the file, end find_haadf_signal() in signal_functions.py")
+    return None, None

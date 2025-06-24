@@ -1,10 +1,14 @@
-from operations import file_functions, signal_functions
-from utils.constants import DATA_DIR
+from operations import file_functions, signal_functions, spectrum_functions
+from utils import constants
 import os
 import numpy as np
 import hyperspy.api as hs
 
 class SignalService:
+    #############################################################################
+    #                              Signal List Methods                            #
+    #############################################################################
+    
     def get_signal_list(self, filename: str):
         """
         Gets a list of signals from a file.
@@ -16,10 +20,10 @@ class SignalService:
         try:
             print("\n=== Starting get_signal_list in SignalService ===")
             print(f"Input filename: {filename}")
-            print(f"DATA_DIR: {DATA_DIR}")
+            print(f"DATA_DIR: {constants.DATA_DIR}")
             
             # Construct full filepath
-            filepath = os.path.join(DATA_DIR, filename)
+            filepath = os.path.join(constants.DATA_DIR, filename)
             print(f"Constructed filepath: {filepath}")
             print(f"File exists: {os.path.exists(filepath)}")
             
@@ -62,16 +66,24 @@ class SignalService:
             traceback.print_exc()
             raise e
 
-    def get_spectrum_data(self, filename, signal_idx, x, y):
+    #############################################################################
+    #                              Spectrum Methods                               #
+    #############################################################################
+
+    def get_spectrum_data(self, filename, signal_idx):
+        """
+        Gets spectrum data from a file.
+        Args:
+            filename (str): Name of the file to get spectrum data from
+            signal_idx (int): Index of the signal to get spectrum data from
+        Returns:
+            list: List of spectrum data points
+        """
         print(f"\n=== Starting get_spectrum_data() in SignalService ===")
-        print(f"Loading file: {filename}")
-        print(f"Signal index: {signal_idx}, x: {x}, y: {y}")
         
         # Construct full filepath
-        filepath = os.path.join(DATA_DIR, filename)
-        print(f"Constructed filepath: {filepath}")
-        print(f"File exists: {os.path.exists(filepath)}")
-        
+        filepath = constants.full_filepath(filename)
+
         signal = file_functions.load_file(filepath)
         print(f"\nLoaded signal type: {type(signal)}")
         
@@ -81,49 +93,26 @@ class SignalService:
                 raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
             signal = signal[signal_idx]
             # print(f"Selected signal {signal_idx}, type: {type(signal)}")
-        
-        # print(f"Signal has data attribute: {hasattr(signal, 'data')}")
-        # if hasattr(signal, 'data'):
-        #     print(f"Signal data type: {type(signal.data)}")
-        #     print(f"Signal data has shape attribute: {hasattr(signal.data, 'shape')}")
-        #     if hasattr(signal.data, 'shape'):
-        #         print(f"Signal data shape: {signal.data.shape}")
 
-        if not hasattr(signal, 'data') or not hasattr(signal.data, 'shape'):
-            print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
-            raise ValueError("Signal has no data or shape")
-            
-        shape = signal.data.shape
-        dims = len(shape)
-        print(f"Signal dimensions: {dims}")
-        
-        if dims == 1:
-            # For 1D signals, use data directly as spectrum
-            print("=== Ending extract_spectrum_data_from_signal() in signal_service.py successfully ===\n")
-            return signal.data.tolist()
-        elif dims == 2:
-            # For 2D signals, extract spectrum at x coordinate
-            if x >= shape[0]:
-                print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
-                raise ValueError(f"X coordinate {x} out of bounds (max {shape[0]-1})")
-            print("=== Ending extract_spectrum_data_from_signal() in signal_service.py successfully ===\n")
-            return signal.data[x].tolist()
-        elif dims == 3:
-            # For 3D signals, extract spectrum at (x,y) coordinates
-            if x >= shape[0] or y >= shape[1]:
-                print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
-                raise ValueError(f"Coordinates ({x},{y}) out of bounds (max {shape[0]-1},{shape[1]-1})")
-            print("=== Ending extract_spectrum_data_from_signal() in signal_service.py successfully ===\n")
-            return signal.data[x,y].tolist()
-        else:
-            print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
-            raise ValueError(f"Signal with {dims} dimensions cannot be displayed as spectrum")
+        return spectrum_functions.extract_spectrum_data(signal)
+      
+    #############################################################################
+    #                               Image Methods                                 #
+    #############################################################################
 
     def get_image_data(self, filename, signal_idx):
+        """
+        Gets the image data from a file.
+        Args:
+            filename (str): Name of the file to get image data from
+            signal_idx (int): Index of the signal to get image data from
+        Returns:
+            dict: Dictionary containing the image data
+        """
         print(f"\n=== Starting get_image_data() from signal_service.py ===")
         try:
             print(f"\nExtracting data from {filename}")
-            filepath = os.path.join(DATA_DIR, filename)
+            filepath = os.path.join(constants.DATA_DIR, filename)
             print(f"Constructed filepath: {filepath}")
             print(f"File exists: {os.path.exists(filepath)}")
             
@@ -191,19 +180,105 @@ class SignalService:
             print("=== Ending extract_image_from_signal() with error ===\n")
             return None
 
+    #############################################################################
+    #                              HAADF Methods                                  #
+    #############################################################################
+
+    def get_haadf_data(self, filename):
+        """
+        Gets the HAADF data from a file.
+        Args:
+            filename (str): Name of the file to get HAADF data from
+        Returns:
+            dict: Dictionary containing the HAADF data
+        """
+        print(f"\n=== Starting get_haadf_data() in SignalService ===")
+        try:
+            print(f"\nExtracting data from {filename}")
+            filepath = os.path.join(constants.DATA_DIR, filename)
+            print(f"Constructed filepath: {filepath}")
+            print(f"File exists: {os.path.exists(filepath)}")
+            
+            # Load all signals from the file
+            signals = file_functions.get_signals_from_file(filepath)
+            print(f"\nLoaded signals type: {type(signals)}")
+            
+            # Get the signal list to find HAADF
+            signal_list = signal_functions.extract_signal_list(signals)
+            
+            # Find the HAADF signal
+            haadf_idx = None
+            for idx, signal_info in enumerate(signal_list):
+                if 'HAADF' in signal_info['title'].upper():
+                    haadf_idx = idx
+                    break
+            
+            if haadf_idx is None:
+                print("No HAADF signal found in file")
+                return None
+                
+            # Get the HAADF signal
+            signal_data = signals[haadf_idx]
+            
+            # Get the shape of the data
+            data_shape = signal_data.data.shape
+            print(f"HAADF signal shape: {data_shape}")
+            
+            # Create 2D image data
+            print("\nProcessing HAADF image data:")
+            print(f"Initial data type: {signal_data.data.dtype}")
+            print(f"Initial data range: min={signal_data.data.min()}, max={signal_data.data.max()}")
+            
+            # Handle different dimensionalities
+            if len(data_shape) == 2:
+                # For 2D signals, use the data directly
+                image_data = signal_data.data
+                print("2D signal - using data directly")
+            else:
+                raise ValueError(f"Unsupported data shape: {data_shape}")
+                
+            print(f"Image shape after processing: {image_data.shape}")
+            print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
+            
+            # Normalize the image data for display
+            if image_data.size > 0:
+                image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
+                image_data = (image_data * 255).astype(np.uint8)
+                print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
+                print(f"Final data type: {image_data.dtype}")
+            
+            result = {
+                "data_shape": data_shape,
+                "image_data": image_data.tolist()
+            }
+            
+            print("=== Ending get_haadf_data() successfully ===\n")
+            return result
+            
+        except Exception as e:
+            print(f"Error extracting HAADF data from {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print("=== Ending get_haadf_data() with error ===\n")
+            return None
+
+    #############################################################################
+    #                             Metadata Methods                                #
+    #############################################################################
+
     def get_metadata(self, filename, signal_idx):
         """
-        Gets metadata for a specific signal in a file.
+        Gets metadata from a file.
         Args:
             filename (str): Name of the file to get metadata from
             signal_idx (int): Index of the signal to get metadata from
         Returns:
-            dict: Dictionary containing the signal's metadata
+            dict: Dictionary containing metadata
         """
         print(f"\n=== Starting get_metadata() in SignalService ===")
         try:
             print(f"Getting metadata for file: {filename}, signal index: {signal_idx}")
-            filepath = os.path.join(DATA_DIR, filename)
+            filepath = os.path.join(constants.DATA_DIR, filename)
             
             # Load the file (will use cache if available)
             signal = file_functions.load_file(filepath)
@@ -235,11 +310,11 @@ class SignalService:
             
     def _convert_metadata_to_serializable(self, metadata_dict):
         """
-        Recursively converts metadata to a JSON-serializable format.
+        Converts metadata dictionary to a JSON-serializable format.
         Args:
-            metadata_dict: Dictionary or DictionaryBrowser containing metadata
+            metadata_dict (dict): Dictionary containing metadata
         Returns:
-            dict: Dictionary with all values converted to serializable types
+            dict: JSON-serializable dictionary
         """
         result = {}
         

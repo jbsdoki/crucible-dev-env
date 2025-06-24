@@ -35,7 +35,7 @@ def list_files():
 
 
 def get_cached_file(file_path):
-    print("\n=== Starting get_cached_file() ===")
+    print("\n=== Starting get_cached_file() in file_functions.py ===")
     print(f"Checking cache for filepath: {file_path}")
     print(f"Current cached filepath: {CURRENT_FILE['filepath']}")
     
@@ -96,12 +96,12 @@ def load_file(filepath):
     print("Checking cache...")
     cached_data = get_cached_file(filepath)
     if cached_data is not None:
-        print("Found cached data")
+        # print("Found cached data")
         if isinstance(cached_data, list):
-            print(f"Cached data is a list with {len(cached_data)} signals")
+            # print(f"Cached data is a list with {len(cached_data)} signals")
             if len(cached_data) > 0:
-                print(f"First signal type: {type(cached_data[0])}")
-                print(f"First signal has data: {hasattr(cached_data[0], 'data')}")
+                # print(f"First signal type: {type(cached_data[0])}")
+                # print(f"First signal has data: {hasattr(cached_data[0], 'data')}")
                 if hasattr(cached_data[0], 'data'):
                     print(f"First signal data shape: {cached_data[0].data.shape if hasattr(cached_data[0].data, 'shape') else 'No shape'}")
         print("Returning cached file data")

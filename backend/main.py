@@ -3,17 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 import os
+import time
 from service_handlers import file_service, signal_service
 
-# from file_service import (
-#     load_metadata, 
-#     # extract_spectrum, 
-#     extract_image_data, 
-#     # extract_spectrum_data_from_signal,
-#     extract_image_data_from_signal,
-#     # DATA_DIR
-# )
-import time
 
 # Create FastAPI instance
 app = FastAPI()
@@ -121,48 +113,20 @@ Gets spectrum data from a specific signal in a file
 Args:
     filename: Name of the file (required)
     signal_idx: Index of the signal in the file (required)
-    x: X coordinate for spectrum extraction (default: 0)
-    y: Y coordinate for spectrum extraction (default: 0)
 Returns: List of spectrum data points
 Called by: Frontend getSpectrum() function
 """
 @app.get("/spectrum")
 async def get_spectrum(
     filename: str = Query(...), 
-    signal_idx: int = Query(...),
-    x: int = Query(0),
-    y: int = Query(0)
+    signal_idx: int = Query(...)
 ):
     print("\n=== Starting get_spectrum() in main.py ===")
-    print(f"Filename: {filename}, Signal Index: {signal_idx}, X: {x}, Y: {y}")
-    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
+    print(f"Filename: {filename}, Signal Index: {signal_idx}")
+    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx})
     try:
-        # Get the full file path
-        # filepath = os.path.join(DATA_DIR, filename)
-        # print(f"Loading file from: {filepath}")
-        
-        # Load the signals from the file
-        print("Loading signals list...")
-        # signals = file_service.get_signals_from_file(filename)# spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
-        # spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
-        
-        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx, x, y)
-        # if signal_idx >= len(signals):
-        #     raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
-            
-        # Load the file again to get the actual signal data
-        # print("Loading signal data...")
-        # signal = file_service.try_load_file(filepath)
-        # if isinstance(signal, list):
-        #     signal = signal[signal_idx]
-        # elif signal_idx != 0:
-        #     raise ValueError("File contains only one signal, index must be 0")
-            
-        # Extract spectrum data
-        # print("Extracting spectrum data...")
-        # data = extract_spectrum_data_from_signal(signal, x, y)
+        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx)
         print("=== Ending get_spectrum() in main.py ===\n")
-        # return JSONResponse(content=data)
         return JSONResponse(content=spectrum_data)
     except Exception as e:
         print(f"ERROR in get_spectrum() in main.py: {str(e)}")
@@ -205,6 +169,37 @@ async def get_image_data(
             content={"error": str(e)}
         )
 
+"""
+Gets HAADF data from a specific signal in a file
+Args:
+    filename: Name of the file (required)
+Returns: Dictionary containing HAADF data and shape
+Called by: Frontend getHAADFData() function
+"""
+@app.get("/haadf-data")
+async def get_haadf_data(
+    filename: str = Query(...)
+):
+    print("\n=== Starting get_haadf_data() from main.py ===")
+    print(f"Filename: {filename}")
+    log_call("/haadf-data", {"filename": filename})
+    try:
+        haadf_data = signal_service.get_haadf_data(filename)
+        if haadf_data is None:
+            print("=== Ending get_haadf_data() - No HAADF data found ===\n")
+            return JSONResponse(
+                status_code=404,
+                content={"error": "No HAADF data found in file"}
+            )
+        print("=== Ending get_haadf_data() successfully ===\n")
+        return JSONResponse(content=haadf_data)
+    except Exception as e:
+        print(f"ERROR in get_haadf_data(): {str(e)}")
+        print("=== Ending get_haadf_data() with error ===\n")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
 
 
 """
@@ -238,28 +233,6 @@ async def get_metadata(
         )
 
 
-
-
-"""Gets spectrum data from a specific signal
-Args:
-    signal_name: Name of the signal (required)
-    x: X coordinate for spectrum extraction (default: 0)
-Returns: List of spectrum data points
-"""
-@app.get("/signal/spectrum")
-async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
-    print("\n=== Starting get_signal_spectrum() from main.py ===")
-    log_call("/signal/spectrum", {"signal_name": signal_name, "x": x})
-    try:
-        data = extract_spectrum(signal_name, x)
-        print("\n=== Ending get_signal_spectrum() from main.py ===")
-        return JSONResponse(content=data)
-    except Exception as e:
-        print(f"Error in main.py get_signal_spectrum(): {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
 
 """Gets image data from a specific signal
 Args:
