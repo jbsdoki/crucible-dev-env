@@ -113,23 +113,19 @@ Gets spectrum data from a specific signal in a file
 Args:
     filename: Name of the file (required)
     signal_idx: Index of the signal in the file (required)
-    x: X coordinate for spectrum extraction (default: 0)
-    y: Y coordinate for spectrum extraction (default: 0)
 Returns: List of spectrum data points
 Called by: Frontend getSpectrum() function
 """
 @app.get("/spectrum")
 async def get_spectrum(
     filename: str = Query(...), 
-    signal_idx: int = Query(...),
-    x: int = Query(0),
-    y: int = Query(0)
+    signal_idx: int = Query(...)
 ):
     print("\n=== Starting get_spectrum() in main.py ===")
-    print(f"Filename: {filename}, Signal Index: {signal_idx}, X: {x}, Y: {y}")
-    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
+    print(f"Filename: {filename}, Signal Index: {signal_idx}")
+    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx})
     try:
-        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx, x, y)
+        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx)
         print("=== Ending get_spectrum() in main.py ===\n")
         return JSONResponse(content=spectrum_data)
     except Exception as e:
@@ -237,28 +233,6 @@ async def get_metadata(
         )
 
 
-
-
-"""Gets spectrum data from a specific signal
-Args:
-    signal_name: Name of the signal (required)
-    x: X coordinate for spectrum extraction (default: 0)
-Returns: List of spectrum data points
-"""
-@app.get("/signal/spectrum")
-async def get_signal_spectrum(signal_name: str = Query(...), x: int = Query(0)):
-    print("\n=== Starting get_signal_spectrum() from main.py ===")
-    log_call("/signal/spectrum", {"signal_name": signal_name, "x": x})
-    try:
-        data = extract_spectrum(signal_name, x)
-        print("\n=== Ending get_signal_spectrum() from main.py ===")
-        return JSONResponse(content=data)
-    except Exception as e:
-        print(f"Error in main.py get_signal_spectrum(): {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
 
 """Gets image data from a specific signal
 Args:

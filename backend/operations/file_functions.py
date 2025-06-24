@@ -103,7 +103,7 @@ def load_file(filepath):
                 # print(f"First signal type: {type(cached_data[0])}")
                 # print(f"First signal has data: {hasattr(cached_data[0], 'data')}")
                 if hasattr(cached_data[0], 'data'):
-                    # print(f"First signal data shape: {cached_data[0].data.shape if hasattr(cached_data[0].data, 'shape') else 'No shape'}")
+                    print(f"First signal data shape: {cached_data[0].data.shape if hasattr(cached_data[0].data, 'shape') else 'No shape'}")
         print("Returning cached file data")
         return cached_data
         

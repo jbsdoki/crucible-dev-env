@@ -60,20 +60,16 @@ export const getMetadata = async (filename: string, signalIdx: number) => {
  * Calls: GET http://localhost:8000/spectrum?filename=<filename>&signal_idx=<signal_idx>&x=<x>&y=<y>
  * @param filename - Name of the file
  * @param signalIdx - Index of the signal in the file
- * @param x - X coordinate for spectrum extraction (default: 0)
- * @param y - Y coordinate for spectrum extraction (default: 0)
  * Returns: Array of spectrum data points
  */
 export const getSpectrum = async (
   filename: string, 
   signalIdx: number,
-  x: number = 0,
-  y: number = 0
 ) => {
   try {
-    console.log('Fetching spectrum data:', { filename, signalIdx, x, y });
+    console.log('Fetching spectrum data:', { filename, signalIdx});
     const response = await api.get('/spectrum', {
-      params: { filename, signal_idx: signalIdx, x, y }
+      params: { filename, signal_idx: signalIdx}
     });
     return response.data;
   } catch (error) {
@@ -105,10 +101,9 @@ export const getImageData = async (filename: string, signalIdx: number) => {
 };
 
 /**
- * Fetches image data from a specific signal in a file
+ * Fetches haadf data from a specific signal in a file
  * Calls: GET http://localhost:8000/image-data?filename=<filename>&signal_idx=<signal_idx>
  * @param filename - Name of the file
- * @param signalIdx - Index of the signal in the file
  * Returns: Object containing:
  *  - data_shape: Shape of the image data
  *  - image_data: 2D array of image data
