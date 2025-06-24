@@ -129,32 +129,8 @@ async def get_spectrum(
     print(f"Filename: {filename}, Signal Index: {signal_idx}, X: {x}, Y: {y}")
     log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx, "x": x, "y": y})
     try:
-        # Get the full file path
-        # filepath = os.path.join(DATA_DIR, filename)
-        # print(f"Loading file from: {filepath}")
-        
-        # Load the signals from the file
-        print("Loading signals list...")
-        # signals = file_service.get_signals_from_file(filename)# spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
-        # spectrum_data = signal_service.get_spectrum_data(signals, signal_idx, x, y)
-        
         spectrum_data = signal_service.get_spectrum_data(filename, signal_idx, x, y)
-        # if signal_idx >= len(signals):
-        #     raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
-            
-        # Load the file again to get the actual signal data
-        # print("Loading signal data...")
-        # signal = file_service.try_load_file(filepath)
-        # if isinstance(signal, list):
-        #     signal = signal[signal_idx]
-        # elif signal_idx != 0:
-        #     raise ValueError("File contains only one signal, index must be 0")
-            
-        # Extract spectrum data
-        # print("Extracting spectrum data...")
-        # data = extract_spectrum_data_from_signal(signal, x, y)
         print("=== Ending get_spectrum() in main.py ===\n")
-        # return JSONResponse(content=data)
         return JSONResponse(content=spectrum_data)
     except Exception as e:
         print(f"ERROR in get_spectrum() in main.py: {str(e)}")

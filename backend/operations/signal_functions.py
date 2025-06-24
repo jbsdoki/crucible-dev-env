@@ -11,6 +11,7 @@ def get_cached_signals(file_path):
     Returns:
         list: List of signal information dictionaries, or None if not cached
     """
+    print(f"\n=== Starting get_cached_signals() in signal_functions.py ===")
     if CURRENT_FILE["filepath"] == file_path and CURRENT_FILE["data"] is not None:
         # Extract signal list from cached data
         return extract_signal_list(CURRENT_FILE["data"])

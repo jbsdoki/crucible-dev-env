@@ -100,12 +100,6 @@ class SignalService:
             signal = signal[signal_idx]
             # print(f"Selected signal {signal_idx}, type: {type(signal)}")
         
-        # print(f"Signal has data attribute: {hasattr(signal, 'data')}")
-        # if hasattr(signal, 'data'):
-        #     print(f"Signal data type: {type(signal.data)}")
-        #     print(f"Signal data has shape attribute: {hasattr(signal.data, 'shape')}")
-        #     if hasattr(signal.data, 'shape'):
-        #         print(f"Signal data shape: {signal.data.shape}")
 
         if not hasattr(signal, 'data') or not hasattr(signal.data, 'shape'):
             print("=== Ending extract_spectrum_data_from_signal() in signal_service.py with error ===\n")
