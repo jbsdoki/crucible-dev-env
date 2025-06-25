@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import type { PlotData } from 'plotly.js';
 import { getSpectrum } from '../services/api';
-import { Box, CircularProgress, Typography, IconButton, Tooltip } from '@mui/material';
+import { Box, CircularProgress, Typography, IconButton, Tooltip, Stack } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import CropIcon from '@mui/icons-material/Crop';
 
 /**
  * Interface defining the structure of a single data point in the spectrum
@@ -60,6 +61,8 @@ function SpectrumViewer({
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showRegion, setShowRegion] = useState<boolean>(true);
+  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
 
   /**
    * Fetch spectrum data when selectedFile or selectedSignal changes
@@ -119,6 +122,28 @@ function SpectrumViewer({
     }
   }, [selectedFile, selectedSignal]);
 
+  // Handle selection events
+  const handleSelection = (event: any) => {
+    if (!isSelectingRange || !event?.range?.x) return;
+
+    const [start, end] = event.range.x;
+    const rangeStart = Math.max(0, Math.round(start));
+    const rangeEnd = Math.min(fullSpectrumData.length - 1, Math.round(end));
+
+    console.log('Selection range:', { start: rangeStart, end: rangeEnd });
+    setSelectedRange({ start: rangeStart, end: rangeEnd });
+    // Here you would typically call a callback to handle the selected range
+    // onSpectrumRangeSelected([rangeStart, rangeEnd]);
+  };
+
+  // Reset selection when toggling mode off
+  const handleSelectionModeToggle = () => {
+    if (isSelectingRange) {
+      setSelectedRange(null);
+    }
+    setIsSelectingRange(!isSelectingRange);
+  };
+
   const result = (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -126,23 +151,39 @@ function SpectrumViewer({
           {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
           {selectedRegion && ' (Region Selected)'}
         </Typography>
-        {regionSpectrumData && (
-          <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+        <Stack direction="row" spacing={1}>
+          {regionSpectrumData && (
+            <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+              <IconButton 
+                onClick={() => setShowRegion(!showRegion)}
+                color={showRegion ? "warning" : "default"}
+                sx={{ 
+                  bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
+                  '&:hover': {
+                    bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'action.hover',
+                  },
+                  color: showRegion ? '#ff7f0e' : 'default',
+                }}
+              >
+                {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title={isSelectingRange ? "Cancel Selection" : "Isolate Spectrum Region"}>
             <IconButton 
-              onClick={() => setShowRegion(!showRegion)}
-              color={showRegion ? "warning" : "default"}
+              onClick={handleSelectionModeToggle}
+              color={isSelectingRange ? "primary" : "default"}
               sx={{ 
-                bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
+                bgcolor: isSelectingRange ? 'primary.light' : 'transparent',
                 '&:hover': {
-                  bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'action.hover',
-                },
-                color: showRegion ? '#ff7f0e' : 'default',
+                  bgcolor: isSelectingRange ? 'primary.main' : 'action.hover',
+                }
               }}
             >
-              {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+              <CropIcon />
             </IconButton>
           </Tooltip>
-        )}
+        </Stack>
       </Box>
       
       {/* Error message display */}
@@ -168,7 +209,7 @@ function SpectrumViewer({
       {!loading && !error && (fullSpectrumData.length > 0 || (regionSpectrumData && regionSpectrumData.length > 0)) && (
         <Plot
           data={[
-            // Full spectrum trace (dimmed if region is selected)
+            // Full spectrum trace
             {
               x: Array.from({ length: fullSpectrumData.length }, (_, i) => i),
               y: fullSpectrumData,
@@ -176,11 +217,11 @@ function SpectrumViewer({
               mode: 'lines' as const,
               name: 'Full Spectrum',
               line: {
-                color: regionSpectrumData && showRegion ? '#1f77b480' : '#1f77b4', // Dimmed if region selected and shown
+                color: regionSpectrumData && showRegion ? '#1f77b480' : '#1f77b4',
                 width: 2
               }
             },
-            // Region spectrum trace (only shown if region is selected and showRegion is true)
+            // Region spectrum trace
             ...(regionSpectrumData && showRegion ? [{
               x: Array.from({ length: regionSpectrumData.length }, (_, i) => i),
               y: regionSpectrumData,
@@ -191,6 +232,58 @@ function SpectrumViewer({
                 color: '#ff7f0e',
                 width: 2
               }
+            }] : []),
+            // Selected range highlight
+            ...(selectedRange ? [{
+              x: Array.from({ length: fullSpectrumData.length }, (_, i) => i)
+                .filter(i => i >= selectedRange.start && i <= selectedRange.end),
+              y: fullSpectrumData
+                .filter((_, i) => i >= selectedRange.start && i <= selectedRange.end),
+              type: 'scatter' as const,
+              mode: 'lines' as const,
+              name: 'Selected Range',
+              line: {
+                color: '#ff7f0e',
+                width: 2
+              },
+              showlegend: false,
+              hoverinfo: 'skip' as const
+            },
+            // Start point marker
+            {
+              x: [selectedRange.start],
+              y: [fullSpectrumData[selectedRange.start]],
+              type: 'scatter' as const,
+              mode: 'markers' as const,
+              marker: {
+                color: '#ff7f0e',
+                size: 10,
+                line: {
+                  color: 'white',
+                  width: 2
+                }
+              },
+              name: 'Selection Start',
+              showlegend: false,
+              hovertemplate: 'Start: %{x}<br>Count: %{y}<extra></extra>'
+            },
+            // End point marker
+            {
+              x: [selectedRange.end],
+              y: [fullSpectrumData[selectedRange.end]],
+              type: 'scatter' as const,
+              mode: 'markers' as const,
+              marker: {
+                color: '#ff7f0e',
+                size: 10,
+                line: {
+                  color: 'white',
+                  width: 2
+                }
+              },
+              name: 'Selection End',
+              showlegend: false,
+              hovertemplate: 'End: %{x}<br>Count: %{y}<extra></extra>'
             }] : [])
           ]}
           layout={{
@@ -222,7 +315,9 @@ function SpectrumViewer({
               zeroline: false
             },
             plot_bgcolor: 'white',
-            paper_bgcolor: 'white'
+            paper_bgcolor: 'white',
+            dragmode: isSelectingRange ? 'select' : 'zoom', // Toggle between select and zoom modes
+            selectdirection: 'h' // Only allow horizontal selection
           }}
           config={{
             responsive: true,
@@ -237,6 +332,7 @@ function SpectrumViewer({
               scale: 2
             }
           }}
+          onSelected={handleSelection}
           style={{ width: '100%', height: '100%' }}
         />
       )}
