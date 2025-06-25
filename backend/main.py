@@ -268,3 +268,27 @@ async def get_region_spectrum(filename: str, signal_idx: int, x1: int, y1: int, 
         print(f"ERROR in get_region_spectrum(): {str(e)}")
         print("=== Ending get_region_spectrum() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/energy-range-spectrum")
+async def energy_range_spectrum(
+    filename: str = Query(..., description="Name of the file to process"),
+    signal_idx: int = Query(..., description="Index of the signal in the file"),
+    start: int = Query(..., description="Start index of the energy range"),
+    end: int = Query(..., description="End index of the energy range")
+):
+    """
+    Get the spectrum data for a specific range of energy channels.
+    
+    Parameters:
+    - filename: Name of the file containing the signal
+    - signal_idx: Index of the signal in the file
+    - start: Starting energy channel index
+    - end: Ending energy channel index
+    
+    Returns:
+    - Array of spectrum data points for the selected energy range
+    """
+    try:
+        return await signal_service.get_energy_range_spectrum(filename, signal_idx, start, end)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

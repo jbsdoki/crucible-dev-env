@@ -3,6 +3,7 @@ from utils import constants
 import os
 import numpy as np
 import hyperspy.api as hs
+from typing import List, Dict, Any, Tuple
 
 class SignalService:
     #############################################################################
@@ -404,3 +405,53 @@ class SignalService:
                 result[key] = str(value)
                 
         return result
+
+    async def get_energy_range_spectrum(
+        self,
+        filename: str,
+        signal_idx: int,
+        start: int,
+        end: int
+    ) -> List[List[float]]:
+        """
+        Get a 2D image representing the sum of intensities within a specific energy range.
+        
+        Args:
+            filename (str): Name of the file containing the signal
+            signal_idx (int): Index of the signal in the file
+            start (int): Starting energy channel index
+            end (int): Ending energy channel index
+            
+        Returns:
+            List[List[float]]: 2D array representing the summed image over the energy range
+        """
+        print(f"=== Starting get_energy_range_spectrum() ===")
+        print(f"Parameters: filename={filename}, signal_idx={signal_idx}, start={start}, end={end}")
+        
+        try:
+            # Load the signal
+            filepath = os.path.join(constants.DATA_DIR, filename)
+            signal = file_functions.load_file(filepath)
+            if isinstance(signal, list):
+                signal = signal[signal_idx]
+            
+            # Get the full 3D data
+            signal_data = signal.data
+            print(f"Full signal data shape: {signal_data.shape}")
+            
+            # Validate range indices
+            if start < 0 or end >= signal_data.shape[2] or start > end:
+                raise ValueError(f"Invalid range: start={start}, end={end}, spectrum_length={signal_data.shape[2]}")
+            
+            # Extract the energy range and sum along that axis
+            range_data = signal_data[:, :, start:end + 1]
+            summed_image = np.sum(range_data, axis=2)
+            print(f"Summed image shape: {summed_image.shape}")
+            
+            print("=== Ending get_energy_range_spectrum() successfully ===\n")
+            return summed_image.tolist()
+            
+        except Exception as e:
+            print(f"Error in get_energy_range_spectrum: {str(e)}")
+            print("=== Ending get_energy_range_spectrum() with error ===\n")
+            raise e

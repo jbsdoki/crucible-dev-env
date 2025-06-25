@@ -167,4 +167,33 @@ export const getRegionSpectrum = async (
   }
 };
 
+/**
+ * Fetches spectrum data from a selected range of energy channels
+ * Calls: GET http://localhost:8000/energy-range-spectrum
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * @param range - Object containing start and end indices of the energy range
+ * Returns: Array of averaged spectrum data points from the energy range
+ */
+export const getEnergyRangeSpectrum = async (
+  filename: string, 
+  signalIdx: number,
+  range: {start: number, end: number}
+) => {
+  try {
+    const response = await api.get('/energy-range-spectrum', {
+      params: {
+        filename,
+        signal_idx: signalIdx,
+        start: Math.round(range.start),
+        end: Math.round(range.end)
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching energy range spectrum:', error);
+    throw error;
+  }
+};
+
 export default api; 
