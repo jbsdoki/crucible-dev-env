@@ -70,6 +70,60 @@ class SignalService:
     #                              Spectrum Methods                               #
     #############################################################################
 
+    def get_spectrum_from_region(self, filename: str, signal_idx: int, region: dict):
+        """
+        Gets spectrum data from a specific region of a 3D signal.
+        Args:
+            filename (str): Name of the file
+            signal_idx (int): Index of the signal
+            region (dict): Dictionary containing x1, y1, x2, y2 coordinates
+        Returns:
+            list: Averaged spectrum data from the selected region
+        """
+        print(f"\n=== Starting get_spectrum_from_region() in SignalService ===")
+        try:
+            filepath = os.path.join(constants.DATA_DIR, filename)
+            signal = file_functions.load_file(filepath)
+            
+            if isinstance(signal, list):
+                if signal_idx >= len(signal):
+                    raise ValueError(f"Signal index {signal_idx} out of range")
+                signal = signal[signal_idx]
+
+            # Ensure we have a 3D signal
+            if len(signal.data.shape) != 3:
+                raise ValueError("Selected signal must be 3D for region selection")
+
+            # Extract coordinates
+            x1, y1 = region['x1'], region['y1']
+            x2, y2 = region['x2'], region['y2']
+            
+            # Ensure coordinates are within bounds
+            height, width, _ = signal.data.shape
+            x1 = max(0, min(x1, width - 1))
+            x2 = max(0, min(x2, width - 1))
+            y1 = max(0, min(y1, height - 1))
+            y2 = max(0, min(y2, height - 1))
+            
+            # Ensure x1 < x2 and y1 < y2
+            x1, x2 = min(x1, x2), max(x1, x2)
+            y1, y2 = min(y1, y2), max(y1, y2)
+            
+            print(f"Extracting spectrum from region: ({x1}, {y1}) to ({x2}, {y2})")
+            
+            # Extract and average the spectra from the selected region
+            region_data = signal.data[y1:y2+1, x1:x2+1, :]
+            print(f"Region data shape: {region_data.shape}")
+            averaged_spectrum = np.sum(region_data, axis=(0, 1))
+            
+            return averaged_spectrum.tolist()
+            
+        except Exception as e:
+            print(f"Error in get_spectrum_from_region: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise
+
     def get_spectrum_data(self, filename, signal_idx):
         """
         Gets spectrum data from a file.

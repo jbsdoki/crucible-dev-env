@@ -57,19 +57,15 @@ export const getMetadata = async (filename: string, signalIdx: number) => {
 
 /**
  * Fetches spectrum data from a specific signal in a file
- * Calls: GET http://localhost:8000/spectrum?filename=<filename>&signal_idx=<signal_idx>&x=<x>&y=<y>
+ * Calls: GET http://localhost:8000/spectrum?filename=<filename>&signal_idx=<signal_idx>
  * @param filename - Name of the file
  * @param signalIdx - Index of the signal in the file
  * Returns: Array of spectrum data points
  */
-export const getSpectrum = async (
-  filename: string, 
-  signalIdx: number,
-) => {
+export const getSpectrum = async (filename: string, signalIdx: number) => {
   try {
-    console.log('Fetching spectrum data:', { filename, signalIdx});
     const response = await api.get('/spectrum', {
-      params: { filename, signal_idx: signalIdx}
+      params: { filename, signal_idx: signalIdx }
     });
     return response.data;
   } catch (error) {
@@ -136,6 +132,37 @@ export const getSignals = async (filename: string) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching signals:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches spectrum data from a selected region of a signal
+ * Calls: GET http://localhost:8000/region-spectrum
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * @param region - Object containing x1, y1, x2, y2 coordinates of the selected region
+ * Returns: Array of averaged spectrum data points from the region
+ */
+export const getRegionSpectrum = async (
+  filename: string, 
+  signalIdx: number,
+  region: {x1: number, y1: number, x2: number, y2: number}
+) => {
+  try {
+    const response = await api.get('/region-spectrum', {
+      params: {
+        filename,
+        signal_idx: signalIdx,
+        x1: Math.round(region.x1),
+        y1: Math.round(region.y1),
+        x2: Math.round(region.x2),
+        y2: Math.round(region.y2)
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching region spectrum:', error);
     throw error;
   }
 };

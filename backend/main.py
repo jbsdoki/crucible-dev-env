@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import hyperspy.api as hs
@@ -211,26 +211,19 @@ Returns: Dictionary containing metadata for the specific signal
 Called by: Frontend getMetadata() function
 """
 @app.get("/metadata")
-async def get_metadata(
-    filename: str = Query(...),
-    signal_idx: int = Query(...)
-):
-    print("\n=== Starting get_metadata() from main.py ===")
-    print(f"Filename: {filename}, Signal Index: {signal_idx}")
-    log_call("/metadata", {"filename": filename, "signal_idx": signal_idx})
+async def get_metadata(filename: str = Query(...), signal_idx: int = Query(...)):
     try:
+        print("\n=== Starting get_metadata() in main.py ===")
+        print(f"Requested metadata for file: {filename}, signal: {signal_idx}")
+        
         metadata = signal_service.get_metadata(filename, signal_idx)
-        if metadata is None:
-            raise ValueError("Failed to extract metadata")
         print("=== Ending get_metadata() successfully ===\n")
-        return JSONResponse(content=metadata)
+        return metadata
+        
     except Exception as e:
         print(f"ERROR in get_metadata(): {str(e)}")
         print("=== Ending get_metadata() with error ===\n")
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
@@ -258,3 +251,20 @@ async def get_signal_image(signal_name: str = Query(...)):
             status_code=500,
             content={"error": str(e)}
         )
+
+@app.get("/region-spectrum")
+async def get_region_spectrum(filename: str, signal_idx: int, x1: int, y1: int, x2: int, y2: int):
+    try:
+        print(f"\n=== Starting get_region_spectrum() in main.py ===")
+        print(f"Requested region spectrum for file: {filename}, signal: {signal_idx}")
+        print(f"Region: ({x1}, {y1}) to ({x2}, {y2})")
+        
+        region = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+        data = signal_service.get_spectrum_from_region(filename, signal_idx, region)
+        print("=== Ending get_region_spectrum() successfully ===\n")
+        return data
+        
+    except Exception as e:
+        print(f"ERROR in get_region_spectrum(): {str(e)}")
+        print("=== Ending get_region_spectrum() with error ===\n")
+        raise HTTPException(status_code=500, detail=str(e))

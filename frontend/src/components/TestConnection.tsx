@@ -1,106 +1,108 @@
-import { useState, useEffect } from 'react';
-import { getFiles, getMetadata, getSpectrum } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { getFiles, getMetadata, getSpectrum, getRegionSpectrum } from '../services/api';
 
-function TestConnection() {
-  console.log('=== Starting TestConnection component ===');
+const TestConnection: React.FC = () => {
   const [files, setFiles] = useState<string[]>([]);
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [metadata, setMetadata] = useState<any>(null);
-  const [spectrum, setSpectrum] = useState<number[]>([]);
-  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Test file list endpoint
   useEffect(() => {
-    const fetchFiles = async () => {
-      console.log('=== Starting fetchFiles ===');
-      try {
-        const fileList = await getFiles();
-        setFiles(fileList);
-        setError('');
-        console.log('=== Ending fetchFiles successfully ===');
-      } catch (err) {
-        setError('Error fetching files: ' + (err as Error).message);
-        console.log('=== Ending fetchFiles with error ===');
-      }
-    };
     fetchFiles();
   }, []);
 
-  // Test metadata endpoint when a file is selected
-  const handleFileSelect = async (filename: string) => {
-    console.log('=== Starting handleFileSelect ===');
+  const fetchFiles = async () => {
     try {
-      setSelectedFile(filename);
-      const fileMetadata = await getMetadata(filename);
-      setMetadata(fileMetadata);
-      setError('');
-      console.log('=== Ending handleFileSelect successfully ===');
+      const fileList = await getFiles();
+      setFiles(fileList);
+      if (fileList.length > 0) {
+        setSelectedFile(fileList[0]);
+      }
     } catch (err) {
-      setError('Error fetching metadata: ' + (err as Error).message);
-      console.log('=== Ending handleFileSelect with error ===');
+      setError('Failed to fetch files');
+      console.error('Error fetching files:', err);
     }
   };
 
-  // Test spectrum endpoint
-  const handleGetSpectrum = async () => {
-    console.log('=== Starting handleGetSpectrum ===');
+  const fetchMetadata = async () => {
+    if (!selectedFile) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getMetadata(selectedFile, 0);
+      setMetadata(data);
+    } catch (err) {
+      setError('Failed to fetch metadata');
+      console.error('Error fetching metadata:', err);
+    }
+    setLoading(false);
+  };
+
+  const testRegionSpectrum = async () => {
     if (!selectedFile) {
-      console.log('=== Ending handleGetSpectrum - no file selected ===');
+      console.error('No file selected');
       return;
     }
     try {
-      const spectrumData = await getSpectrum(selectedFile, 0, 0);
-      setSpectrum(spectrumData);
-      setError('');
-      console.log('=== Ending handleGetSpectrum successfully ===');
-    } catch (err) {
-      setError('Error fetching spectrum: ' + (err as Error).message);
-      console.log('=== Ending handleGetSpectrum with error ===');
+      console.log('Testing region spectrum with:', selectedFile);
+      const result = await getRegionSpectrum(
+        selectedFile,
+        0,  // First signal
+        {
+          x1: 10,
+          y1: 10,
+          x2: 20,
+          y2: 20
+        }
+      );
+      console.log('Region spectrum result:', result);
+    } catch (error) {
+      console.error('Error testing region spectrum:', error);
     }
   };
 
-  const result = (
-    <div style={{ padding: '20px' }}>
-      <h2>API Connection Test</h2>
-      
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+  return (
+    <div>
+      <h2>Test Connection</h2>
       
       <div>
-        <h3>Available Files:</h3>
-        <ul>
-          {files.map((file) => (
-            <li key={file}>
-              <button onClick={() => handleFileSelect(file)}>{file}</button>
-            </li>
+        <h3>Files</h3>
+        <select 
+          value={selectedFile} 
+          onChange={(e) => setSelectedFile(e.target.value)}
+        >
+          {files.map(file => (
+            <option key={file} value={file}>{file}</option>
           ))}
-        </ul>
+        </select>
       </div>
 
-      {selectedFile && (
-        <div>
-          <h3>Selected File: {selectedFile}</h3>
-          <button onClick={handleGetSpectrum}>Get Spectrum at (0,0)</button>
+      <div>
+        <button onClick={fetchMetadata} disabled={loading || !selectedFile}>
+          Test Metadata
+        </button>
+        <button onClick={testRegionSpectrum} disabled={!selectedFile}>
+          Test Region Spectrum
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ color: 'red' }}>
+          Error: {error}
         </div>
       )}
+
+      {loading && <div>Loading...</div>}
 
       {metadata && (
         <div>
-          <h3>Metadata:</h3>
+          <h3>Metadata Result:</h3>
           <pre>{JSON.stringify(metadata, null, 2)}</pre>
-        </div>
-      )}
-
-      {spectrum.length > 0 && (
-        <div>
-          <h3>Spectrum Data (first 5 points):</h3>
-          <pre>{JSON.stringify(spectrum.slice(0, 5), null, 2)}</pre>
         </div>
       )}
     </div>
   );
-
-  console.log('=== Ending TestConnection component ===');
-  return result;
-}
+};
 
 export default TestConnection; 

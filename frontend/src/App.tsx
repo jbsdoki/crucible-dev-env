@@ -56,6 +56,19 @@ interface SignalInfo {
 function App() {
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [selectedSignal, setSelectedSignal] = useState<SignalInfo | null>(null);
+  const [regionSpectrumData, setRegionSpectrumData] = useState<number[] | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
+
+  // Handler for region selection from ImageViewer
+  const handleRegionSelected = (
+    region: {x1: number, y1: number, x2: number, y2: number},
+    spectrumData: number[]
+  ) => {
+    console.log('Region selected in App:', region);
+    console.log('Spectrum data received:', spectrumData);
+    setSelectedRegion(region);
+    setRegionSpectrumData(spectrumData);
+  };
 
   return (
     <Box className="App">
@@ -104,6 +117,7 @@ function App() {
                 <ImageViewer 
                   selectedFile={selectedFile}
                   selectedSignal={selectedSignal}
+                  onRegionSelected={handleRegionSelected}
                 />
               </Paper>
             )}
@@ -128,6 +142,8 @@ function App() {
                 <SpectrumViewer 
                   selectedFile={selectedFile}
                   selectedSignal={selectedSignal}
+                  regionSpectrumData={regionSpectrumData}
+                  selectedRegion={selectedRegion}
                 />
               </Paper>
             )}
