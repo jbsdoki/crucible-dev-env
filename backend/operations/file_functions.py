@@ -78,32 +78,12 @@ Raises:
     ValueError: If the file cannot be loaded with any of the supported signal types
 """
 def load_file(filepath):
-    """
-    Load a file and cache it for future use.
-    
-    Args:
-        filepath (str): Full path to the file to load
-        
-    Returns:
-        The loaded file data
-        
-    Raises:
-        ValueError: If file cannot be loaded
-    """
     print(f"\n=== Starting load_file in file_functions.py ===")
     
     # Check cache first
     print("Checking cache...")
     cached_data = get_cached_file(filepath)
     if cached_data is not None:
-        # print("Found cached data")
-        if isinstance(cached_data, list):
-            # print(f"Cached data is a list with {len(cached_data)} signals")
-            if len(cached_data) > 0:
-                # print(f"First signal type: {type(cached_data[0])}")
-                # print(f"First signal has data: {hasattr(cached_data[0], 'data')}")
-                if hasattr(cached_data[0], 'data'):
-                    print(f"First signal data shape: {cached_data[0].data.shape if hasattr(cached_data[0].data, 'shape') else 'No shape'}")
         print("Returning cached file data")
         return cached_data
         
@@ -127,7 +107,8 @@ def load_file(filepath):
             load_time = time.time() - start_time
             print(f"File loaded successfully in {load_time:.2f} seconds")
             
-            # Return a list of signals for standardization
+            # Return a list of signals for standardization, all functions that call
+            # this function expect a list of signals
             if not isinstance(signal, list):
                 signal = [signal]
             

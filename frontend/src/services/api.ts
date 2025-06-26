@@ -1,3 +1,26 @@
+/**
+ * Frontend API Service Architecture
+ * -------------------------------
+ * This file serves as the central API client for the React frontend, managing all HTTP communications 
+ * with the FastAPI backend (main.py). Here's how the data flows through the application:
+ * 
+ * 1. Component -> API Flow:
+ *    - React components (like FileSelector.tsx, ImageViewer.tsx, etc.) import functions from this file
+ *    - Components call these functions when they need data (e.g., on mount or user interaction)
+ *    - Example: SpectrumViewer.tsx calls getSpectrum() when a user selects a signal
+ * 
+ * 2. API -> Backend Flow:
+ *    - This file uses axios to make HTTP requests to the FastAPI backend (main.py)
+ *    - Each function corresponds to a specific endpoint in main.py
+ *    - Requests are made to http://localhost:8000 (the FastAPI server)
+ *    - Example: getSpectrum() calls GET /spectrum, which maps to @app.get("/spectrum") in main.py
+ * 
+ * 3. Error Handling:
+ *    - Each function includes try/catch blocks to handle network errors
+ *    - Errors are logged to console and propagated back to the calling component
+ *    - Components can then handle these errors appropriately (e.g., showing error messages)
+ */
+
 import axios from 'axios';
 
 /**

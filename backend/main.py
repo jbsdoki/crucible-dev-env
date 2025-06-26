@@ -1,3 +1,34 @@
+"""
+Backend Service Architecture
+--------------------------
+This FastAPI application serves as the central backend server, managing data flow between
+the frontend and backend services. Here's the architecture:
+
+1. Frontend -> Backend (main.py):
+   - Frontend api.ts makes HTTP requests to endpoints here
+   - Each endpoint maps to a frontend function
+   - Example: frontend getSpectrum() -> GET /spectrum endpoint
+
+2. Main -> Service Layer:
+   - Endpoints delegate to service handlers (service_handlers/*.py)
+   - file_service.py: Handles file operations
+   - signal_service.py: Handles signal processing
+
+3. Service -> Operations:
+   - Services use operations modules (operations/*.py) for core tasks
+   - file_functions.py: File I/O
+   - signal_functions.py: Signal processing
+   - spectrum_functions.py: Spectrum analysis
+   - metadata_functions.py: Metadata handling
+   - Example: signal_service uses spectrum_functions.extract_spectrum_data()
+
+4. Error Flow:
+   - HTTP errors handled in main.py
+   - logic errors in services
+   - Processing errors in operations
+   - All errors are logged and propagated up
+"""
+
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
