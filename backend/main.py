@@ -53,7 +53,10 @@ def log_call(endpoint: str, params: dict = None) -> None:
     last_calls[call_key] = current_time
     print("=== Ending log_call() in main.py ===\n")
 
-# API Endpoints
+################################################################################
+#################### API Endpoints for getting data ############################
+################################################################################
+
 """
 Lists all .emd files in the sample_data directory
 Returns: List of filenames
@@ -84,13 +87,6 @@ Returns:
 """
 @app.get("/signals")
 async def get_signals(filename: str = Query(...)):
-    """
-    Gets a list of signals from a file
-    Args:
-        filename: Name of the file to get signals from
-    Returns:
-        Object containing list of signals from the file
-    """
     print("\n=== Starting get_signals() from main.py ===")
     print(f"Filename: {filename}")
     log_call("/signals", {"filename": filename})
@@ -109,11 +105,11 @@ async def get_signals(filename: str = Query(...)):
 
 
 """
-Gets spectrum data from a specific signal in a file
+Gets spectrum data from a specific signal in a file (1d list returned)
 Args:
     filename: Name of the file (required)
     signal_idx: Index of the signal in the file (required)
-Returns: List of spectrum data points
+Returns: List of spectrum data points (1d list from numpy.tolist())
 Called by: Frontend getSpectrum() function
 """
 @app.get("/spectrum")
@@ -225,33 +221,16 @@ async def get_metadata(filename: str = Query(...), signal_idx: int = Query(...))
         print("=== Ending get_metadata() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
+################################################################################
+#################### API Endpoints for manipulating data #######################
+################################################################################
 
-
-"""Gets image data from a specific signal
-Args:
-    signal_name: Name of the signal (required)
-Returns: Dictionary containing image data and metadata
 """
-@app.get("/signal/image")
-async def get_signal_image(signal_name: str = Query(...)):
-    print("\n=== Starting get_signal_image() from main.py ===")
-    log_call("/signal/image", {"signal_name": signal_name})
-    try:
-        data = extract_image_data(signal_name)
-        if data is None:
-            print("\n=== Ending get_signal_image() from main.py ===")
-            return JSONResponse(
-                status_code=404,
-                content={"error": f"No image data found in signal {signal_name}"}
-            )
-        return JSONResponse(content=data)
-    except Exception as e:
-        print(f"Error in main.py get_signal_image(): {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
-
+Gets the spectrum data for a specific region of the image
+Args:
+    filename: Name of the file (required)
+    signal_idx: Index of the signal in the file (required)
+"""
 @app.get("/region-spectrum")
 async def get_region_spectrum(filename: str, signal_idx: int, x1: int, y1: int, x2: int, y2: int):
     try:
@@ -269,6 +248,19 @@ async def get_region_spectrum(filename: str, signal_idx: int, x1: int, y1: int, 
         print("=== Ending get_region_spectrum() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+"""
+Get the spectrum data for a specific range of energy channels.
+
+Parameters:
+- filename: Name of the file containing the signal
+- signal_idx: Index of the signal in the file
+- start: Starting energy channel index
+- end: Ending energy channel index
+
+Returns:
+- Array of spectrum data points for the selected energy range
+"""
 @app.get("/energy-range-spectrum")
 async def energy_range_spectrum(
     filename: str = Query(..., description="Name of the file to process"),
@@ -276,18 +268,7 @@ async def energy_range_spectrum(
     start: int = Query(..., description="Start index of the energy range"),
     end: int = Query(..., description="End index of the energy range")
 ):
-    """
-    Get the spectrum data for a specific range of energy channels.
-    
-    Parameters:
-    - filename: Name of the file containing the signal
-    - signal_idx: Index of the signal in the file
-    - start: Starting energy channel index
-    - end: Ending energy channel index
-    
-    Returns:
-    - Array of spectrum data points for the selected energy range
-    """
+
     try:
         return await signal_service.get_energy_range_spectrum(filename, signal_idx, start, end)
     except Exception as e:
