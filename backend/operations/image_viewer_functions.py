@@ -1,79 +1,80 @@
-from .file_functions import try_load_signal_from_saved_file
-from .signal_functions import get_signals_from_file
+import numpy as np
+from typing import Dict, Any, Optional
 
-def extract_image_data(signal):
-            print(f"\n=== Starting get_image_data() from signal_service.py ===")
-        try:
-            print(f"\nExtracting data from {filename}")
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            print(f"Constructed filepath: {filepath}")
-            print(f"File exists: {os.path.exists(filepath)}")
+def extract_image_data(signal) -> Optional[Dict[str, Any]]:
+    """
+    Extracts 2D image data from a HyperSpy signal object.
+    
+    Args:
+        signal: HyperSpy signal object containing either 2D or 3D data
+        
+    Returns:
+        Dictionary containing:
+            - data_shape: Original shape of the signal data
+            - image_data: 2D array of image data (as list)
+            - image_shape: Shape of the processed 2D image
+            - data_range: Min and max values of the data
             
-            signal = file_functions.load_file(filepath)
-            print(f"\nLoaded signal type: {type(signal)}")
-
-            if isinstance(signal, list):
-                print(f"Signal is a list with {len(signal)} items")
-                if signal_idx >= len(signal):
-                    raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
-                signal_data = signal[signal_idx]
-                print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
-                
-            # Get the shape of the data
-            data_shape = signal_data.data.shape
-            print(f"Signal shape: {data_shape}")
+    Raises:
+        ValueError: If signal dimensions are not 2D or 3D
+        TypeError: If signal data is not in expected format
+        Exception: For other processing errors
+    """
+    print("\n=== Starting extract_image_data() in image_viewer_functions.py ===")
+    
+    try:
+        # Validate input
+        if not hasattr(signal, 'data'):
+            raise TypeError("Input signal must have 'data' attribute")
             
-            # Create 2D image data based on signal dimensions
-            print("\nProcessing image data:")
-            print(f"Initial data type: {signal_data.data.dtype}")
-            print(f"Initial data range: min={signal_data.data.min()}, max={signal_data.data.max()}")
+        # Get the shape of the data
+        data_shape = signal.data.shape
+        print(f"Input signal shape: {data_shape}")
+        
+        # Process data based on dimensions
+        print("Processing image data...")
+        print(f"Input data type: {signal.data.dtype}")
+        print(f"Input data range: [{signal.data.min()}, {signal.data.max()}]")
+        
+        if len(data_shape) == 2:
+            image_data = signal.data
+            print("2D signal - using data directly")
+        elif len(data_shape) == 3:
+            image_data = np.sum(signal.data, axis=2)
+            print("3D signal - summing across spectrum dimension")
+        else:
+            raise ValueError(f"Signal must be 2D or 3D, got shape {data_shape}")
             
-            # Handle different dimensionalities
-            if len(data_shape) == 2:
-                # For 2D signals, use the data directly
-                image_data = signal_data.data
-                print("2D signal - using data directly")
-            elif len(data_shape) == 3:
-                # For 3D signals, sum across spectrum dimension
-                image_data = np.sum(signal_data.data, axis=2)
-                print("3D signal - summing across spectrum dimension")
-            else:
-                raise ValueError(f"Unsupported data shape: {data_shape}")
-                
-            print(f"Image shape after processing: {image_data.shape}")
-            print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
-            
-            # Store shape and range before converting to list
-            image_shape = image_data.shape
-            data_min = float(image_data.min())
-            data_max = float(image_data.max())
-            
-            # Convert to Python native types for JSON serialization
-            image_data = image_data.astype(float).tolist()
-            
-            result = {
-                "signal_idx": signal_idx,
-                "data_shape": data_shape,
-                "image_data": image_data,
-                "image_shape": image_shape,
-                "data_range": {
-                    "min": data_min,
-                    "max": data_max
-                }
+        # Record processed data properties
+        image_shape = image_data.shape
+        data_min = float(image_data.min())
+        data_max = float(image_data.max())
+        
+        print(f"Processed image shape: {image_shape}")
+        print(f"Processed data range: [{data_min}, {data_max}]")
+        
+        # Prepare return data
+        result = {
+            "data_shape": data_shape,
+            "image_data": image_data.astype(float).tolist(),
+            "image_shape": image_shape,
+            "data_range": {
+                "min": data_min,
+                "max": data_max
             }
-            
-            print("\nExtracted data successfully")
-            print(f"Signal index: {signal_idx}")
-            print(f"Data shape: {data_shape}")
-            print(f"Image shape: {image_shape}")
-            print(f"Data range: min={data_min}, max={data_max}")
-            
-            print("=== Ending extract_image_from_signal() successfully ===\n")
-            return result
-            
-        except Exception as e:
-            print(f"Error extracting data from {filename}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            print("=== Ending extract_image_from_signal() with error ===\n")
-            return None
+        }
+        
+        print("=== Successfully completed extract_image_data() in image_viewer_functions.py ===\n")
+        return result
+        
+    except ValueError as ve:
+        print(f"ValueError in extract_image_data: {str(ve)}")
+        raise  # Re-raise for handling by service layer
+    except TypeError as te:
+        print(f"TypeError in extract_image_data: {str(te)}")
+        raise  # Re-raise for handling by service layer
+    except Exception as e:
+        print(f"Unexpected error in extract_image_data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise  # Re-raise for handling by service layer
