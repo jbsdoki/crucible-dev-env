@@ -73,7 +73,7 @@ function App() {
   return (
     <Box className="App">
       {/* File and Signal Selection */}
-      <Box sx={{ maxWidth: '800px', margin: '0 auto', mt: 4, mb: 4 }}>
+      <Box sx={{ maxWidth: '800px', margin: '0 auto', mt: 2, mb: 2 }}>
         <Box sx={{ 
           typography: 'h5', 
           mb: 2, 
@@ -86,7 +86,7 @@ function App() {
         <FileSelector 
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
-        /> {/* This triggers the signal selector to load the file */}
+        />
         {selectedFile && (
           <SignalSelector 
             selectedFile={selectedFile} 
@@ -95,66 +95,139 @@ function App() {
         )}
       </Box>
 
-      {/* Viewers Grid - Only shown when signal is selected */}
-      {selectedSignal && (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr',
-            gap: '2rem',
-            padding: '2rem',
-            maxWidth: '1600px',
-            margin: '0 auto',
-          }}
-        >
-          {/* Left Column: Image and Metadata */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {selectedSignal.capabilities.hasImage && (
-              <Paper elevation={3} sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Image View
-                </Typography>
+      {/* Main Three-Column Layout */}
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: '25% 50% 25%', // Three columns with center being larger
+        gap: '1rem',
+        padding: '1rem',
+        width: '100%',
+        maxWidth: '1800px', // Increased max width to accommodate all content
+        margin: '0 auto',
+        '& > *': { // Style all direct children
+          minHeight: '300px', // Minimum height for consistency
+        }
+      }}>
+        {/* Left Column: HAADF and Metadata */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '1rem',
+          height: '100%',
+          position: 'relative'  // Add this for absolute positioning context
+        }}>
+          {/* HAADF Viewer */}
+          <Paper elevation={3} sx={{ 
+            flex: '0 0 50%',  // Fixed at 50% height, won't grow or shrink
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <Box sx={{ flex: 1, position: 'relative' }}>
+              <HAADFViewer selectedFile={selectedFile} />
+            </Box>
+          </Paper>
+
+          {/* Metadata Viewer */}
+          <Paper elevation={3} sx={{ 
+            flex: '0 0 50%',  // Fixed at 50% height, won't grow or shrink
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'auto'  // Allow scrolling within the metadata container
+          }}>
+            <Typography variant="h6" gutterBottom>
+              Metadata
+            </Typography>
+            <Box sx={{ 
+              overflow: 'auto',  // Enable scrolling
+              flex: 1
+            }}>
+              <MetadataViewer 
+                selectedFile={selectedFile} 
+                selectedSignalIndex={selectedSignal ? selectedSignal.index : null} 
+              />
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* Center Column: Spectrum Viewer */}
+        <Paper elevation={3} sx={{ 
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden'  // Prevent any overflow
+        }}>
+          <Typography variant="h6" gutterBottom>
+            Spectrum View
+          </Typography>
+          <Box sx={{ flex: 1, position: 'relative' }}>
+            {selectedSignal?.capabilities.hasSpectrum && (
+              <SpectrumViewer 
+                selectedFile={selectedFile}
+                selectedSignal={selectedSignal}
+                regionSpectrumData={regionSpectrumData}
+                selectedRegion={selectedRegion}
+              />
+            )}
+          </Box>
+        </Paper>
+
+        {/* Right Column: Periodic Table and Image Viewer */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '1rem',
+          height: '100%'
+        }}>
+          {/* Periodic Table */}
+          <Paper elevation={3} sx={{ 
+            flex: 1,
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Typography variant="h6" gutterBottom>
+              Periodic Table
+            </Typography>
+            <Box sx={{ 
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'background.default',
+              borderRadius: 1
+            }}>
+              <Typography variant="h5" color="text.secondary">
+                Periodic Table Here
+              </Typography>
+            </Box>
+          </Paper>
+
+          {/* Image Viewer */}
+          {selectedSignal?.capabilities.hasImage && (
+            <Paper elevation={3} sx={{ 
+              flex: 1,
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <Typography variant="h6" gutterBottom>
+                Image View
+              </Typography>
+              <Box sx={{ flex: 1, position: 'relative' }}>
                 <ImageViewer 
                   selectedFile={selectedFile}
                   selectedSignal={selectedSignal}
                   onRegionSelected={handleRegionSelected}
                 />
-              </Paper>
-            )}
-            <Paper elevation={3} sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Metadata
-              </Typography>
-              <MetadataViewer 
-                selectedFile={selectedFile} 
-                selectedSignalIndex={selectedSignal ? selectedSignal.index : null} 
-              />
+              </Box>
             </Paper>
-          </Box>
-
-          {/* Right Column: Spectrum and HAADF */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            {selectedSignal.capabilities.hasSpectrum && (
-              <Paper elevation={3} sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Spectrum View
-                </Typography>
-                <SpectrumViewer 
-                  selectedFile={selectedFile}
-                  selectedSignal={selectedSignal}
-                  regionSpectrumData={regionSpectrumData}
-                  selectedRegion={selectedRegion}
-                />
-              </Paper>
-            )}
-            
-            {/* HAADF Viewer - Always shown when file is selected */}
-            <Paper elevation={3} sx={{ p: 2 }}>
-              <HAADFViewer selectedFile={selectedFile} />
-            </Paper>
-          </Box>
+          )}
         </Box>
-      )}
+      </Box>
     </Box>
   )
 }

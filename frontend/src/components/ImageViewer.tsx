@@ -172,111 +172,131 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
     <Box 
       sx={{ 
         width: '100%',
-        height: '400px',
+        height: '100%',
         border: '1px solid #ccc',
         borderRadius: '4px',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#f5f5f5',
-        overflow: 'hidden',
-        padding: 2
+        position: 'relative',  // For absolute positioning of tools
+        overflow: 'hidden'
       }}
     >
-      {/* Show selection loading/error states */}
-      {selectionLoading && (
-        <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
+      {/* Tools and Status Section - Centered at Top */}
+      <Box sx={{
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 1,
+        gap: 2,
+        borderBottom: '1px solid #ccc'
+      }}>
+        {selectionLoading && (
           <CircularProgress size={20} />
-        </Box>
-      )}
-      {selectionError && (
-        <Box sx={{ position: 'absolute', top: 10, right: 10 }}>
-          <Alert severity="error" onClose={() => setSelectionError(null)}>
+        )}
+        {selectionError && (
+          <Alert 
+            severity="error" 
+            onClose={() => setSelectionError(null)}
+            sx={{ maxWidth: '300px' }}
+          >
             {selectionError}
           </Alert>
-        </Box>
-      )}
+        )}
+      </Box>
 
-      {/* Existing loading/error/plot content */}
-      {loading ? (
-        <CircularProgress />
-      ) : error ? (
-        <Typography color="error">{error}</Typography>
-      ) : !selectedFile || !selectedSignal ? (
-        <Typography>Select a file and signal to view image</Typography>
-      ) : imageData ? (
-        <Plot
-          data={[
-            {
-              z: imageData.data,
-              type: 'heatmap',
-              colorscale: 'Viridis',
-              showscale: true,
-              colorbar: {
-                title: {
-                  text: 'Count',
-                  side: 'right'
-                }
+      {/* Main Content Area */}
+      <Box sx={{
+        flex: 1,
+        display: 'flex',
+        justifyContent: 'flex-start',  // Align to left
+        alignItems: 'center',
+        padding: 2,
+        overflow: 'auto'
+      }}>
+        {loading ? (
+          <CircularProgress />
+        ) : error ? (
+          <Typography color="error">{error}</Typography>
+        ) : !selectedFile || !selectedSignal ? (
+          <Typography>Select a file and signal to view image</Typography>
+        ) : imageData ? (
+          <Plot
+            data={[
+              {
+                z: imageData.data,
+                type: 'heatmap',
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                  title: {
+                    text: 'Count',
+                    side: 'right'
+                  }
+                },
+                zsmooth: 'best'
+              }
+            ]}
+            layout={{
+              width: 400,  // Reduced width to fit better
+              height: 400,
+              margin: { t: 30, r: 80, b: 30, l: 30 },  // Increased margins for better tool access
+              xaxis: { 
+                visible: false,
+                showgrid: false,
+                range: [0, imageData.image_shape[1] - 1],
+                scaleanchor: 'y',
+                constrain: 'domain',
+                rangemode: 'nonnegative'
               },
-              zsmooth: 'best'
-            }
-          ]}
-          layout={{
-            width: 600,
-            height: 400,
-            margin: { t: 10, r: 80, b: 10, l: 10 },
-            xaxis: { 
-              visible: false,
-              showgrid: false,
-              range: [0, imageData.image_shape[1] - 1],
-              scaleanchor: 'y',
-              constrain: 'domain',
-              rangemode: 'nonnegative'
-            },
-            yaxis: { 
-              visible: false,
-              showgrid: false,
-              range: [0, imageData.image_shape[0] - 1],
-              constrain: 'domain',
-              rangemode: 'nonnegative'
-            },
-            plot_bgcolor: 'transparent',
-            paper_bgcolor: 'transparent',
-            dragmode: 'select',  // Enable box selection
-            selectdirection: 'any'  // Allow selection in any direction
-          }}
-          config={{
-            responsive: true,
-            displayModeBar: true,
-            displaylogo: false,
-            scrollZoom: true,
-            modeBarButtonsToRemove: ['autoScale2d'],
-            toImageButtonOptions: {
-              format: 'svg',
-              filename: `${selectedSignal.title}_image`,
-              height: 800,
-              width: 800,
-              scale: 2
-            }
-          }}
-          style={{ width: '100%', height: '100%' }}
-          onSelected={handleSelection}
-          onRelayout={(e: any) => {
-            const xRange = e['xaxis.range'] || e['xaxis.range[0]'];
-            const yRange = e['yaxis.range'] || e['yaxis.range[0]'];
-            if (xRange && (xRange[0] < 0 || xRange[1] > imageData.image_shape[1] - 1) ||
-                yRange && (yRange[0] < 0 || yRange[1] > imageData.image_shape[0] - 1)) {
-              const update = {
-                'xaxis.range': [0, imageData.image_shape[1] - 1],
-                'yaxis.range': [0, imageData.image_shape[0] - 1]
-              };
-              // @ts-ignore (Plotly types are incomplete)
-              e.target.relayout(update);
-            }
-          }}
-        />
-      ) : null}
+              yaxis: { 
+                visible: false,
+                showgrid: false,
+                range: [0, imageData.image_shape[0] - 1],
+                constrain: 'domain',
+                rangemode: 'nonnegative'
+              },
+              plot_bgcolor: 'transparent',
+              paper_bgcolor: 'transparent',
+              dragmode: 'select',
+              selectdirection: 'any'
+            }}
+            config={{
+              responsive: true,
+              displayModeBar: true,
+              displaylogo: false,
+              scrollZoom: true,
+              modeBarButtonsToRemove: ['autoScale2d'],
+              toImageButtonOptions: {
+                format: 'svg',
+                filename: `${selectedSignal.title}_image`,
+                height: 800,
+                width: 800,
+                scale: 2
+              }
+            }}
+            style={{ 
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+            onSelected={handleSelection}
+            onRelayout={(e: any) => {
+              const xRange = e['xaxis.range'] || e['xaxis.range[0]'];
+              const yRange = e['yaxis.range'] || e['yaxis.range[0]'];
+              if (xRange && (xRange[0] < 0 || xRange[1] > imageData.image_shape[1] - 1) ||
+                  yRange && (yRange[0] < 0 || yRange[1] > imageData.image_shape[0] - 1)) {
+                const update = {
+                  'xaxis.range': [0, imageData.image_shape[1] - 1],
+                  'yaxis.range': [0, imageData.image_shape[0] - 1]
+                };
+                // @ts-ignore (Plotly types are incomplete)
+                e.target.relayout(update);
+              }
+            }}
+          />
+        ) : null}
+      </Box>
     </Box>
   );
 
