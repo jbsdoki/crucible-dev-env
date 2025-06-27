@@ -195,12 +195,13 @@ function SpectrumViewer({
               <Tooltip title={isSelectingRange ? "Cancel Selection" : "Isolate Spectrum Region"}>
                 <IconButton 
                   onClick={handleSelectionModeToggle}
-                  color={isSelectingRange ? "primary" : "default"}
+                  color={isSelectingRange ? "success" : "default"}
                   sx={{ 
-                    bgcolor: isSelectingRange ? 'primary.light' : 'transparent',
+                    bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
                     '&:hover': {
-                      bgcolor: isSelectingRange ? 'primary.main' : 'action.hover',
-                    }
+                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'action.hover',
+                    },
+                    color: isSelectingRange ? '#4caf50' : 'default',
                   }}
                 >
                   <CropIcon />
@@ -246,7 +247,7 @@ function SpectrumViewer({
                     width: 2
                   }
                 },
-                // Region spectrum trace
+                // Region spectrum trace (orange)
                 ...(regionSpectrumData && showRegion ? [{
                   x: Array.from({ length: regionSpectrumData.length }, (_, i) => i),
                   y: regionSpectrumData,
@@ -258,7 +259,7 @@ function SpectrumViewer({
                     width: 2
                   }
                 }] : []),
-                // Selected range highlight
+                // Selected range highlight (green)
                 ...(selectedRange ? [{
                   x: Array.from({ length: fullSpectrumData.length }, (_, i) => i)
                     .filter(i => i >= selectedRange.start && i <= selectedRange.end),
@@ -268,20 +269,20 @@ function SpectrumViewer({
                   mode: 'lines' as const,
                   name: 'Selected Range',
                   line: {
-                    color: '#ff7f0e',
+                    color: '#4caf50',
                     width: 2
                   },
                   showlegend: false,
                   hoverinfo: 'skip' as const
                 },
-                // Start point marker
+                // Start point marker (green)
                 {
                   x: [selectedRange.start],
                   y: [fullSpectrumData[selectedRange.start]],
                   type: 'scatter' as const,
                   mode: 'markers' as const,
                   marker: {
-                    color: '#ff7f0e',
+                    color: '#4caf50',
                     size: 10,
                     line: {
                       color: 'white',
@@ -292,14 +293,14 @@ function SpectrumViewer({
                   showlegend: false,
                   hovertemplate: 'Start: %{x}<br>Count: %{y}<extra></extra>'
                 },
-                // End point marker
+                // End point marker (green)
                 {
                   x: [selectedRange.end],
                   y: [fullSpectrumData[selectedRange.end]],
                   type: 'scatter' as const,
                   mode: 'markers' as const,
                   marker: {
-                    color: '#ff7f0e',
+                    color: '#4caf50',
                     size: 10,
                     line: {
                       color: 'white',
