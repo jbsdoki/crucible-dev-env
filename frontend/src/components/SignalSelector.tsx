@@ -37,7 +37,6 @@ interface SignalSelectorProps {
  * @param onSignalSelect - Callback when a signal is selected
  */
 function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
-  console.log('=== Starting SignalSelector component in SignalSelector.tsx ===');
   // State for list of available signals
   const [signals, setSignals] = useState<SignalInfo[]>([]);
   // State for currently selected signal index (-1 means none selected)
@@ -50,9 +49,7 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
   // Effect to fetch signals when selectedFile changes
   useEffect(() => {
     const fetchSignals = async () => {
-      console.log('=== Starting fetchSignals in SignalSelector.tsx ===');
-      console.log('\n=== Signal Selector: File Selection Changed in SignalSelector.tsx ===');
-      console.log('Selected file:', selectedFile);
+      // console.log('Selected file:', selectedFile);
 
       // Reset states immediately when file changes
       setSignals([]);
@@ -67,25 +64,25 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
       }
 
       try {
-        console.log('Fetching signals from file...');
+        // console.log('Fetching signals from file...');
         setLoading(true);
         setError('');
 
         // Get signals from backend
         const data = await getSignals(selectedFile);
-        console.log('Received signals from backend:', data);
+        // console.log('Received signals from backend:', data);
 
         // Update signals list
         setSignals(data.signals);
-        console.log(`Loaded ${data.signals.length} signals:`, 
-          data.signals.map((s: SignalInfo) => ({
-            title: s.title,
-            type: s.type,
-            shape: s.shape,
-            capabilities: s.capabilities
-          }))
-        );
-        console.log('=== Ending fetchSignals successfully in SignalSelector.tsx ===');
+        // console.log(`Loaded ${data.signals.length} signals:`, 
+        //   data.signals.map((s: SignalInfo) => ({
+        //     title: s.title,
+        //     type: s.type,
+        //     shape: s.shape,
+        //     capabilities: s.capabilities
+        //   }))
+        // );
+        // console.log('=== Ending fetchSignals successfully in SignalSelector.tsx ===');
         
       } catch (err) {
         console.error('Error fetching signals:', err);
@@ -93,7 +90,6 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
         console.log('=== Ending fetchSignals with error ===');
       } finally {
         setLoading(false);
-        console.log('=== Signal fetching complete ===\n');
       }
     };
 
@@ -101,7 +97,6 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
   }, [selectedFile, onSignalSelect]);
 
   const handleSignalChange = (event: any) => {
-    console.log('=== Starting handleSignalChange ===');
     const index = event.target.value as number;
     setSelectedSignal(index);
     
@@ -111,15 +106,14 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
     } else {
       const signal = signals.find(s => s.index === index);
       if (signal) {
-        console.log('Signal selected:', {
-          index: signal.index,
-          title: signal.title,
-          capabilities: signal.capabilities
-        });
+        // console.log('Signal selected:', {
+        //   index: signal.index,
+        //   title: signal.title,
+        //   capabilities: signal.capabilities
+        // });
         onSignalSelect(signal);
       }
     }
-    console.log('=== Ending handleSignalChange ===');
   };
 
   const result = (
@@ -183,7 +177,6 @@ function SignalSelector({ selectedFile, onSignalSelect }: SignalSelectorProps) {
     </Box>
   );
 
-  console.log('=== Ending SignalSelector component ===');
   return result;
 }
 

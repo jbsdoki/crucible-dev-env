@@ -64,8 +64,8 @@ function App() {
     region: {x1: number, y1: number, x2: number, y2: number},
     spectrumData: number[]
   ) => {
-    console.log('Region selected in App:', region);
-    console.log('Spectrum data received:', spectrumData);
+    // console.log('Region selected in App:', region);
+    // console.log('Spectrum data received:', spectrumData);
     setSelectedRegion(region);
     setRegionSpectrumData(spectrumData);
   };

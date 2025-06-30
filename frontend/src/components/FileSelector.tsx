@@ -17,23 +17,23 @@ interface FileSelectorProps {
  * @param onFileSelect - Callback function when a file is selected
  */
 function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
-  console.log('=== Starting FileSelector component from FileSelector.tsx ===');
+  // console.log('=== Starting FileSelector component from FileSelector.tsx ===');
   const [files, setFiles] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchFiles = async () => {
-      console.log('=== Starting fetchFiles ===');
+      // console.log('=== Starting fetchFiles ===');
       try {
         //Calls getFiles in frontend/src/services/api.ts 
         // which calls get_file_list() in backend/main.py
         const fileList = await getFiles();  
         setFiles(fileList);
         setError('');
-        console.log('=== Ending fetchFiles successfully from FileSelector.tsx ===');
+        // console.log('=== Ending fetchFiles successfully from FileSelector.tsx ===');
       } catch (err) {
         setError(`Error fetching files: ${(err as Error).message}`);
-        console.log('=== Ending fetchFiles with error from FileSelector.tsx ===');
+        console.log(`${err}`);
       }
     };
 
@@ -48,9 +48,9 @@ function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
           value={selectedFile}
           label="Select File"
           onChange={(e) => {
-            console.log('=== Starting file selection change handler ===');
+            // console.log('=== Starting file selection change handler ===');
             onFileSelect(e.target.value);
-            console.log('=== Ending file selection change handler ===');
+            // console.log('=== Ending file selection change handler ===');
           }}
         >
           {files.map((file) => (
@@ -63,7 +63,7 @@ function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
     </Box>
   );
   
-  console.log('=== Ending FileSelector component from FileSelector.tsx ===');
+  // console.log('=== Ending FileSelector component from FileSelector.tsx ===');
   return result;
 }
 

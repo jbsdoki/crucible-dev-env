@@ -42,7 +42,7 @@ interface ImageViewerProps {
  * Now supports rectangular region selection for spectrum analysis.
  */
 function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageViewerProps) {
-  console.log('=== Starting ImageViewer component ===');
+  /* console.log('=== Starting ImageViewer component ==='); */
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageData, setImageData] = useState<ImageData | null>(null);
@@ -53,42 +53,42 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
   // Effect to fetch image data when file or signal changes
   useEffect(() => {
     const fetchImageData = async () => {
-      console.log('=== Starting fetchImageData ===');
+      /* console.log('=== Starting fetchImageData ==='); */
       if (!selectedFile || !selectedSignal) {
         setError(null);
         setImageData(null);
-        console.log('=== Ending fetchImageData - no file or signal selected ===');
+        /* console.log('=== Ending fetchImageData - no file or signal selected ==='); */
         return;
       }
 
       if (!selectedSignal.capabilities.hasImage) {
         setError('Selected signal cannot be displayed as an image');
         setImageData(null);
-        console.log('=== Ending fetchImageData - signal cannot be displayed as image ===');
+        /* console.log('=== Ending fetchImageData - signal cannot be displayed as image ==='); */
         return;
       }
 
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching image data for:', {
+        /* console.log('Fetching image data for:', {
           file: selectedFile,
           signal: selectedSignal.title,
           type: selectedSignal.type,
           shape: selectedSignal.shape
-        });
+        }); */
         
         const data = await getImageData(selectedFile, selectedSignal.index);
         
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
           setError('Could not load image data from signal');
-          console.log('=== Ending fetchImageData - invalid data ===');
+          /* console.log('=== Ending fetchImageData - invalid data ==='); */
           return;
         }
 
         const [height, width] = data.data_shape;
-        console.log('Image dimensions:', width, 'x', height);
+        /* console.log('Image dimensions:', width, 'x', height); */
         
         setImageData({
           data: data.image_data,
@@ -99,7 +99,7 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
           }
         });
 
-        console.log('=== Ending fetchImageData successfully ===');
+        /* console.log('=== Ending fetchImageData successfully ==='); */
       } catch (err) {
         console.error('Error fetching image data:', err);
         setError(`Error loading image: ${(err as Error).message}`);
@@ -114,12 +114,16 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
 
   // Image selection, selects 2 x,y coordinates and sends them to parent component
   const handleSelection = async (event: any) => {
-    console.log('Selection event:', event);
+    /* console.log('Selection event:', event);
+    console.log('Raw selection coordinates:', {
+      x: event?.range?.x,
+      y: event?.range?.y
+    }); */
     setSelectionError(null);
     
     // Check if we have a valid selection event
     if (!event || !event.range) {
-      console.log('No valid selection event');
+      /* console.log('No valid selection event');  // Keep this as it's error-related */
       return;
     }
 
@@ -127,6 +131,11 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
       // Plotly selection event structure:
       // event.range = { x: [x0, x1], y: [y0, y1] }
       const { x: [x1, x2], y: [y1, y2] } = event.range;
+      
+      /* console.log('Pre-rounding coordinates:', {
+        x1, y1, x2, y2,
+        imageShape: imageData?.image_shape
+      }); */
       
       // Round to integers since we're dealing with pixel coordinates
       const region = {
@@ -136,34 +145,56 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
         y2: Math.round(y2)
       };
 
-      console.log('Selected region:', region);
+      // console.log('Final rounded coordinates being sent to backend:', region);
+      
+      // Log z-values at selected points
+      /* Commented out z-value logging for now
+      if (imageData?.data) {
+        // Get z-values at each corner of selection
+        const corners = [
+          { x: region.x1, y: region.y1, label: 'Top-Left' },
+          { x: region.x1, y: region.y2, label: 'Bottom-Left' },
+          { x: region.x2, y: region.y1, label: 'Top-Right' },
+          { x: region.x2, y: region.y2, label: 'Bottom-Right' }
+        ];
+
+        console.log('\nFrontend z-values at selection corners:');
+        corners.forEach(corner => {
+          if (corner.y >= 0 && corner.y < imageData.data.length &&
+              corner.x >= 0 && corner.x < imageData.data[0].length) {
+            console.log(`${corner.label} (${corner.x}, ${corner.y}):`, imageData.data[corner.y][corner.x]);
+          }
+        });
+      }
+      */
+
       setSelectedRegion(region);
 
       // Send region coordinates to backend
       if (selectedFile && selectedSignal) {
         try {
           setSelectionLoading(true);
-          console.log('Fetching spectrum for region:', region);
+          /* console.log('Fetching spectrum for region:', region); */
           const spectrumData = await getRegionSpectrum(
             selectedFile,
             selectedSignal.index,
             region
           );
-          console.log('Received spectrum data:', spectrumData);
+          /* console.log('Received spectrum data:', spectrumData); */
           
           // Pass both region and spectrum data to parent
           if (onRegionSelected) {
             onRegionSelected(region, spectrumData);
           }
         } catch (error) {
-          console.error('Error fetching region spectrum:', error);
+          /* console.error('Error fetching region spectrum:', error);  // Keep this as it's error-related */
           setSelectionError(`Error processing region: ${(error as Error).message}`);
         } finally {
           setSelectionLoading(false);
         }
       }
     } catch (error) {
-      console.error('Error processing selection:', error);
+      /* console.error('Error processing selection:', error);  // Keep this as it's error-related */
       setSelectionError('Invalid selection coordinates');
     }
   };
@@ -255,7 +286,8 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
                 showgrid: false,
                 range: [0, imageData.image_shape[0] - 1],
                 constrain: 'domain',
-                rangemode: 'nonnegative'
+                rangemode: 'nonnegative',
+                autorange: 'reversed'
               },
               plot_bgcolor: 'transparent',
               paper_bgcolor: 'transparent',
@@ -300,7 +332,7 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
     </Box>
   );
 
-  console.log('=== Ending ImageViewer component ===');
+  /* console.log('=== Ending ImageViewer component ==='); */
   return result;
 }
 

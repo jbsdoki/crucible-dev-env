@@ -67,7 +67,7 @@ export const getFiles = async () => {
  */
 export const getMetadata = async (filename: string, signalIdx: number) => {
   try {
-    console.log('Fetching metadata:', { filename, signalIdx });
+    // console.log('Fetching metadata:', { filename, signalIdx });
     const response = await api.get('/metadata', {
       params: { filename, signal_idx: signalIdx }
     });
@@ -108,7 +108,7 @@ export const getSpectrum = async (filename: string, signalIdx: number) => {
  */
 export const getImageData = async (filename: string, signalIdx: number) => {
   try {
-    console.log('Fetching image data:', { filename, signalIdx });
+    // console.log('Fetching image data:', { filename, signalIdx });
     const response = await api.get('/image-data', {
       params: { filename, signal_idx: signalIdx }
     });
@@ -129,7 +129,7 @@ export const getImageData = async (filename: string, signalIdx: number) => {
  */
 export const getHAADFData = async (filename: string ) => {
   try {
-    console.log('Fetching HAADF data:', { filename });
+    // console.log('Fetching HAADF data:', { filename });
     const response = await api.get('/haadf-data', {
       params: { filename }
     });

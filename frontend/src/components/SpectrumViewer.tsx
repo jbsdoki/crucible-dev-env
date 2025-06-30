@@ -56,7 +56,7 @@ function SpectrumViewer({
   regionSpectrumData,
   selectedRegion 
 }: SpectrumViewerProps) {
-  console.log('=== Starting SpectrumViewer component ===');
+  // console.log('=== Starting SpectrumViewer component ===');
   const [fullSpectrumData, setFullSpectrumData] = useState<number[]>([]);  // Full signal spectrum
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -72,7 +72,7 @@ function SpectrumViewer({
    */
   useEffect(() => {
     const fetchSpectrum = async () => {
-      console.log('=== Starting fetchSpectrum ===');
+      // console.log('=== Starting fetchSpectrum ===');
       if (!selectedFile || !selectedSignal) {
         setFullSpectrumData([]);
         setError('');
@@ -91,12 +91,12 @@ function SpectrumViewer({
         setLoading(true);
         setError('');
         
-        console.log('Fetching spectrum data for:', {
-          file: selectedFile,
-          signal: selectedSignal.title,
-          type: selectedSignal.type,
-          shape: selectedSignal.shape
-        });
+        // console.log('Fetching spectrum data for:', {
+        //   file: selectedFile,
+        //   signal: selectedSignal.title,
+        //   type: selectedSignal.type,
+        //   shape: selectedSignal.shape
+        // });
         
         const data = await getSpectrum(selectedFile, selectedSignal.index);
         
@@ -106,7 +106,7 @@ function SpectrumViewer({
         }
         
         setFullSpectrumData(data);
-        console.log('=== Ending fetchSpectrum successfully ===');
+        // console.log('=== Ending fetchSpectrum successfully ===');
       } catch (err) {
         console.error('Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
@@ -133,7 +133,7 @@ function SpectrumViewer({
     const rangeStart = Math.max(0, Math.round(start));
     const rangeEnd = Math.min(fullSpectrumData.length - 1, Math.round(end));
 
-    console.log('Selection range:', { start: rangeStart, end: rangeEnd });
+    // console.log('Selection range:', { start: rangeStart, end: rangeEnd });
     setSelectedRange({ start: rangeStart, end: rangeEnd });
 
     try {
@@ -412,7 +412,8 @@ function SpectrumViewer({
                     yaxis: { 
                       visible: false,
                       showgrid: false,
-                      constrain: 'domain'
+                      constrain: 'domain',
+                      autorange: "reversed"
                     },
                     plot_bgcolor: 'transparent',
                     paper_bgcolor: 'transparent'
@@ -440,7 +441,7 @@ function SpectrumViewer({
     </Box>
   );
 
-  console.log('=== Ending SpectrumViewer component ===');
+  // console.log('=== Ending SpectrumViewer component ===');
   return result;
 }
 

@@ -99,8 +99,15 @@ class SignalService:
             x1, y1 = region['x1'], region['y1']
             x2, y2 = region['x2'], region['y2']
             
+            print(f"\nReceived coordinates from frontend:")
+            print(f"x1, y1: ({x1}, {y1})")
+            print(f"x2, y2: ({x2}, {y2})")
+            
             # Ensure coordinates are within bounds
             height, width, _ = signal.data.shape
+            print(f"\nSignal data shape: {signal.data.shape}")
+            print(f"Height x Width: {height} x {width}")
+            
             x1 = max(0, min(x1, width - 1))
             x2 = max(0, min(x2, width - 1))
             y1 = max(0, min(y1, height - 1))
@@ -110,14 +117,49 @@ class SignalService:
             x1, x2 = min(x1, x2), max(x1, x2)
             y1, y2 = min(y1, y2), max(y1, y2)
             
-            print(f"Extracting spectrum from region: ({x1}, {y1}) to ({x2}, {y2})")
+            # print(f"\nAdjusted coordinates after bounds checking:")
+            # print(f"x1, y1: ({x1}, {y1})")
+            # print(f"x2, y2: ({x2}, {y2})")
+            
+            # # Print z-values (spectrum sums) at the corners
+            # print("\nBackend z-values at selection corners:")
+            # corners = [
+            #     ('Top-Left', x1, y1),
+            #     ('Bottom-Left', x1, y2),
+            #     ('Top-Right', x2, y1),
+            #     ('Bottom-Right', x2, y2)
+            # ]
+            
+            # for label, x, y in corners:
+            #     if 0 <= y < height and 0 <= x < width:
+            #         # Sum the entire spectrum at this x,y coordinate
+            #         z_sum = np.sum(signal.data[y, x, :])
+            #         # Also get the raw spectrum for detailed comparison
+            #         spectrum = signal.data[y, x, :]
+            #         print(f"{label} ({x}, {y}):")
+            #         print(f"  Sum of spectrum: {z_sum}")
+            #         print(f"  First few spectrum values: {spectrum[:5]}")  # Show first 5 values
+            
+            # print(f"\nExtracting spectrum from region: ({x1}, {y1}) to ({x2}, {y2})")
             
             # Extract and average the spectra from the selected region
             region_data = signal.data[y1:y2+1, x1:x2+1, :]
-            print(f"Region data shape: {region_data.shape}")
-            averaged_spectrum = np.sum(region_data, axis=(0, 1))
+            # print(f"Selected region shape: {region_data.shape}")
             
-            return averaged_spectrum.tolist()
+            # print("\nObject inspection:")
+            # print(f"Type: {type(region_data)}")
+            # print("\nAvailable attributes and methods:")
+            # print(dir(region_data))
+            
+            # Print some common HyperSpy attributes if they exist
+            # print("\nCommon attributes (if they exist):")
+            # for attr in ['data', 'axes', 'metadata', 'original_metadata', 'signal_type']:
+            #     if hasattr(region_data, attr):
+            #         print(f"{attr}: {getattr(region_data, attr)}")
+            
+            summed_spectrum = np.sum(region_data, axis=(0, 1))
+            
+            return summed_spectrum.tolist()
             
         except Exception as e:
             print(f"Error in get_spectrum_from_region: {str(e)}")
