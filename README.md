@@ -129,7 +129,7 @@ Frontend:
 
 main.tsx (Starts app)
    |
-   -> App.tsx (Calls components, organizes them into sections of the screen)
+   -> App.tsx (Calls components, organizes them into sections on the screen)
             |
             -> Components: (Control what is displayed to screen, only displays in one section)
                          - FileSelector.tsx
@@ -137,7 +137,6 @@ main.tsx (Starts app)
                          - MetadataViewer.tsx
                          - SignalSelector.tsx
                          - SpectrumViewer.tsx
-                         - TestConnection.tsx
                                 |
                                 v
                             api.ts (File that calls backend API)

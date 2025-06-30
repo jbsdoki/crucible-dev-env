@@ -6,6 +6,7 @@ import { Box, CircularProgress, Typography, IconButton, Tooltip, Stack, Grid } f
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CropIcon from '@mui/icons-material/Crop';
+import ScaleIcon from '@mui/icons-material/Scale';
 
 /**
  * Interface defining the structure of a single data point in the spectrum
@@ -66,6 +67,7 @@ function SpectrumViewer({
   const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isLogScale, setIsLogScale] = useState<boolean>(false);
 
   /**
    * Fetch spectrum data when selectedFile or selectedSignal changes
@@ -192,6 +194,21 @@ function SpectrumViewer({
                   </IconButton>
                 </Tooltip>
               )}
+              <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
+                <IconButton 
+                  onClick={() => setIsLogScale(!isLogScale)}
+                  color={isLogScale ? "info" : "default"}
+                  sx={{ 
+                    bgcolor: isLogScale ? 'rgba(33, 150, 243, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: isLogScale ? 'rgba(33, 150, 243, 0.2)' : 'action.hover',
+                    },
+                    color: isLogScale ? '#2196f3' : 'default',
+                  }}
+                >
+                  <ScaleIcon />
+                </IconButton>
+              </Tooltip>
               <Tooltip title={isSelectingRange ? "Cancel Selection" : "Isolate Spectrum Region"}>
                 <IconButton 
                   onClick={handleSelectionModeToggle}
@@ -338,7 +355,8 @@ function SpectrumViewer({
                   },
                   showgrid: true,
                   gridcolor: '#e1e1e1',
-                  zeroline: false
+                  zeroline: false,
+                  type: isLogScale ? 'log' : 'linear'
                 },
                 plot_bgcolor: 'white',
                 paper_bgcolor: 'white',
