@@ -127,7 +127,11 @@ In backend/main.py any source or credential is allowed to connect. This is a dev
 This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations. 
 Frontend:
 
-main.tsx <-> App.tsx <-> Components:
+main.tsx (Starts app)
+   |
+   -> App.tsx (Calls components, organizes them into sections of the screen)
+            |
+            -> Components: (Control what is displayed to screen, only displays in one section)
                          - FileSelector.tsx
                          - ImageViewer.tsx
                          - MetadataViewer.tsx
@@ -136,27 +140,25 @@ main.tsx <-> App.tsx <-> Components:
                          - TestConnection.tsx
                                 |
                                 v
-                            api.ts
+                            api.ts (File that calls backend API)
+                                ^
+                                |
+                                |
+Backend:                        |
                                 |
                                 v
-                        main.py in the backend
-
-
-Backend:
-
-                        api.ts in the frontend
-                           ^ 
-                           |
-                        main.py <-> Service Handlers:
-                                    - file_service.py
-                                    - signal_service.py
-                                          |
-                                          v
-                                    Operations:
-                                    - file_functions.py
-                                    - image_viewer_functions.py
-                                    - metadata_functions.py
-                                    - signal_functions.py
-                                    - spectrum_viewer_functions.py
-                        ```
+                             main.py (File that returns data to frontend, calls service functions)
+                                |
+                                 -> Service Handlers: (Organizes and calls individual functions)
+                                         - file_service.py
+                                         - signal_service.py
+                                               |
+                                               v
+                                          Operations: (Individual data manipulating functions stored here)
+                                             - file_functions.py
+                                             - image_viewer_functions.py
+                                             - metadata_functions.py
+                                             - signal_functions.py
+                                             - spectrum_viewer_functions.py
+                           ```
 
