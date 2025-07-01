@@ -17,6 +17,11 @@ def get_cached_signals(file_path):
         return extract_signal_list(CURRENT_FILE["data"])
     return None
 
+#STILL NEED TO IMPLEMENT
+# def load_signal(signal_list, signal_idx):
+
+
+
 def extract_signal_list(signal_list):
     """
     Extracts signal information from a list of hyperspy signals.

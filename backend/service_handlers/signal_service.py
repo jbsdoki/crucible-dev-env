@@ -198,6 +198,7 @@ class SignalService:
     ) -> List[List[float]]:
         """
         Get a 2D image representing the sum of intensities within a specific energy range.
+        async allows other functions to run in the background while this one is running
         
         Args:
             filename (str): Name of the file containing the signal
@@ -214,9 +215,10 @@ class SignalService:
         try:
             # Load the signal
             filepath = os.path.join(constants.DATA_DIR, filename)
+            
             signal = file_functions.load_file(filepath)
-            if isinstance(signal, list):
-                signal = signal[signal_idx]
+
+            signal = signal[signal_idx]
             
             # Get the full 3D data
             signal_data = signal.data
@@ -259,7 +261,8 @@ class SignalService:
             print(f"File exists: {os.path.exists(filepath)}")
             
             # Load all signals from the file
-            signals = file_functions.get_signals_from_file(filepath)
+            # signals = file_functions.get_signals_from_file(filepath)
+            signals = file_functions.load_file(filepath)
             print(f"\nLoaded signals type: {type(signals)}")
             
             # Get the signal list to find HAADF
@@ -281,13 +284,7 @@ class SignalService:
             
             # Get the shape of the data
             data_shape = signal_data.data.shape
-            print(f"HAADF signal shape: {data_shape}")
-            
-            # Create 2D image data
-            print("\nProcessing HAADF image data:")
-            print(f"Initial data type: {signal_data.data.dtype}")
-            print(f"Initial data range: min={signal_data.data.min()}, max={signal_data.data.max()}")
-            
+
             # Handle different dimensionalities
             if len(data_shape) == 2:
                 # For 2D signals, use the data directly
@@ -343,16 +340,16 @@ class SignalService:
             signal = file_functions.load_file(filepath)
             print(f"\nLoaded signal type: {type(signal)}")
             
-            if isinstance(signal, list):
-                print(f"Signal is a list with {len(signal)} items")
-                if signal_idx >= len(signal):
-                    raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
-                signal_data = signal[signal_idx]
-                print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
+
+            if signal_idx >= len(signal):
+                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
+            signal_data = signal[signal_idx]
+            print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
             
             # Get the metadata
             if hasattr(signal_data, 'metadata'):
-                metadata = self._convert_metadata_to_serializable(signal_data.metadata)
+                # metadata = self._convert_metadata_to_serializable(signal_data.metadata)
+                metadata = data_functions._convert_metadata_to_serializable(signal_data.metadata)
                 print("\nMetadata extracted successfully")
                 print("=== Ending get_metadata() successfully ===\n")
                 return metadata
@@ -367,42 +364,42 @@ class SignalService:
             print("=== Ending get_metadata() with error ===\n")
             return None
             
-    def _convert_metadata_to_serializable(self, metadata_dict):
-        """
-        Converts metadata dictionary to a JSON-serializable format.
-        Args:
-            metadata_dict (dict): Dictionary containing metadata
-        Returns:
-            dict: JSON-serializable dictionary
-        """
-        result = {}
+    # def _convert_metadata_to_serializable(self, metadata_dict):
+    #     """
+    #     Converts metadata dictionary to a JSON-serializable format.
+    #     Args:
+    #         metadata_dict (dict): Dictionary containing metadata
+    #     Returns:
+    #         dict: JSON-serializable dictionary
+    #     """
+    #     result = {}
         
-        # If it's a DictionaryBrowser, convert to dict
-        if hasattr(metadata_dict, 'as_dictionary'):
-            metadata_dict = metadata_dict.as_dictionary()
+    #     # If it's a DictionaryBrowser, convert to dict
+    #     if hasattr(metadata_dict, 'as_dictionary'):
+    #         metadata_dict = metadata_dict.as_dictionary()
             
-        for key, value in metadata_dict.items():
-            # Skip private keys
-            if key.startswith('_'):
-                continue
+    #     for key, value in metadata_dict.items():
+    #         # Skip private keys
+    #         if key.startswith('_'):
+    #             continue
                 
-            try:
-                # Handle nested dictionaries
-                if hasattr(value, 'as_dictionary') or isinstance(value, dict):
-                    result[key] = self._convert_metadata_to_serializable(value)
-                # Handle numpy arrays
-                elif hasattr(value, 'tolist'):
-                    result[key] = value.tolist()
-                # Handle basic types
-                elif isinstance(value, (str, int, float, bool, list)):
-                    result[key] = value
-                # Convert other types to string representation
-                else:
-                    result[key] = str(value)
-            except Exception as e:
-                print(f"Warning: Could not convert metadata key {key}: {str(e)}")
-                result[key] = str(value)
+    #         try:
+    #             # Handle nested dictionaries
+    #             if hasattr(value, 'as_dictionary') or isinstance(value, dict):
+    #                 result[key] = self._convert_metadata_to_serializable(value)
+    #             # Handle numpy arrays
+    #             elif hasattr(value, 'tolist'):
+    #                 result[key] = value.tolist()
+    #             # Handle basic types
+    #             elif isinstance(value, (str, int, float, bool, list)):
+    #                 result[key] = value
+    #             # Convert other types to string representation
+    #             else:
+    #                 result[key] = str(value)
+    #         except Exception as e:
+    #             print(f"Warning: Could not convert metadata key {key}: {str(e)}")
+    #             result[key] = str(value)
                 
-        return result
+    #     return result
 
 

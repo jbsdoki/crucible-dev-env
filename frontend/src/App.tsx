@@ -29,7 +29,8 @@ import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
-import { Box, Typography, Paper } from '@mui/material'
+import ContextTest from './components/ContextTest'
+import { Box, Typography, Paper, Button } from '@mui/material'
 import './App.css'
 
 // Import SignalInfo type from SignalSelector
@@ -54,6 +55,9 @@ interface SignalInfo {
  * Shows/hides viewers based on signal capabilities.
  */
 function App() {
+  // Add a temporary toggle for testing
+  const [showTest, setShowTest] = useState(false);
+  
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [selectedSignal, setSelectedSignal] = useState<SignalInfo | null>(null);
   const [regionSpectrumData, setRegionSpectrumData] = useState<number[] | null>(null);
@@ -70,8 +74,33 @@ function App() {
     setRegionSpectrumData(spectrumData);
   };
 
+  // Add temporary test toggle button at the top
+  if (showTest) {
+    return (
+      <Box>
+        <Button 
+          variant="contained" 
+          onClick={() => setShowTest(false)}
+          sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}
+        >
+          Show Main App
+        </Button>
+        <ContextTest />
+      </Box>
+    );
+  }
+
   return (
     <Box className="App">
+      {/* Add test toggle button */}
+      <Button 
+        variant="contained" 
+        onClick={() => setShowTest(true)}
+        sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}
+      >
+        Test Context
+      </Button>
+
       {/* File and Signal Selection */}
       <Box sx={{ maxWidth: '800px', margin: '0 auto', mt: 2, mb: 2 }}>
         <Box sx={{ 

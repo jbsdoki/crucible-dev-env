@@ -8,15 +8,6 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CropIcon from '@mui/icons-material/Crop';
 import ScaleIcon from '@mui/icons-material/Scale';
 
-/**
- * Interface defining the structure of a single data point in the spectrum
- * Used by Recharts to plot the data
- */
-// interface SpectrumDataPoint {
-//   energy: number;
-//   intensity: number;
-// }
-
 interface SignalCapabilities {
   hasSpectrum: boolean;
   hasImage: boolean;

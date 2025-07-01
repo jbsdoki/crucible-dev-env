@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { getFiles, getMetadata, getSpectrum, getRegionSpectrum } from '../services/api';
+import { getFiles } from '../services/api';
+import { useFileContext } from '../contexts/fileContext';
+import { Box, Typography, Select, MenuItem, Button, CircularProgress, Paper } from '@mui/material';
 
 const TestConnection: React.FC = () => {
-  const [files, setFiles] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>('');
-  const [metadata, setMetadata] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // Get everything from FileContext
+  const {
+    selectedFile,
+    setSelectedFile,
+    selectedSignal,
+    setSelectedSignal,
+    metadata,
+    error,
+    loading
+  } = useFileContext();
 
+  // Local state just for available files list
+  const [files, setFiles] = useState<string[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  // Fetch available files on mount
   useEffect(() => {
     fetchFiles();
   }, []);
@@ -16,92 +28,108 @@ const TestConnection: React.FC = () => {
     try {
       const fileList = await getFiles();
       setFiles(fileList);
-      if (fileList.length > 0) {
-        setSelectedFile(fileList[0]);
-      }
+      setFetchError(null);
     } catch (err) {
-      setError('Failed to fetch files');
+      setFetchError('Failed to fetch files');
       console.error('Error fetching files:', err);
     }
   };
 
-  const fetchMetadata = async () => {
-    if (!selectedFile) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getMetadata(selectedFile, 0);
-      setMetadata(data);
-    } catch (err) {
-      setError('Failed to fetch metadata');
-      console.error('Error fetching metadata:', err);
-    }
-    setLoading(false);
-  };
-
-  const testRegionSpectrum = async () => {
-    if (!selectedFile) {
-      console.error('No file selected');
-      return;
-    }
-    try {
-      console.log('Testing region spectrum with:', selectedFile);
-      const result = await getRegionSpectrum(
-        selectedFile,
-        0,  // First signal
-        {
-          x1: 10,
-          y1: 10,
-          x2: 20,
-          y2: 20
-        }
-      );
-      console.log('Region spectrum result:', result);
-    } catch (error) {
-      console.error('Error testing region spectrum:', error);
-    }
+  // Test signal selection
+  const testSignalSelection = () => {
+    // Create a test signal
+    const testSignal = {
+      index: 0,
+      title: "Test Signal",
+      type: "spectrum",
+      shape: [100, 100],
+      capabilities: {
+        hasSpectrum: true,
+        hasImage: true
+      }
+    };
+    setSelectedSignal(testSignal);
   };
 
   return (
-    <div>
-      <h2>Test Connection</h2>
-      
-      <div>
-        <h3>Files</h3>
-        <select 
-          value={selectedFile} 
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        FileContext Test Panel
+      </Typography>
+
+      {/* File Selection Test */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          File Selection Test
+        </Typography>
+        <Select
+          fullWidth
+          value={selectedFile}
           onChange={(e) => setSelectedFile(e.target.value)}
+          sx={{ mb: 2 }}
         >
           {files.map(file => (
-            <option key={file} value={file}>{file}</option>
+            <MenuItem key={file} value={file}>{file}</MenuItem>
           ))}
-        </select>
-      </div>
+        </Select>
+        {fetchError && (
+          <Typography color="error" sx={{ mb: 1 }}>
+            {fetchError}
+          </Typography>
+        )}
+      </Paper>
 
-      <div>
-        <button onClick={fetchMetadata} disabled={loading || !selectedFile}>
-          Test Metadata
-        </button>
-        <button onClick={testRegionSpectrum} disabled={!selectedFile}>
-          Test Region Spectrum
-        </button>
-      </div>
+      {/* Signal Selection Test */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Signal Selection Test
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={testSignalSelection}
+          disabled={!selectedFile}
+          sx={{ mb: 1 }}
+        >
+          Set Test Signal
+        </Button>
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="subtitle1">Current Signal:</Typography>
+          <pre>
+            {selectedSignal ? JSON.stringify(selectedSignal, null, 2) : 'No signal selected'}
+          </pre>
+        </Box>
+      </Paper>
 
-      {error && (
-        <div style={{ color: 'red' }}>
-          Error: {error}
-        </div>
-      )}
+      {/* Metadata Display */}
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Metadata Test
+        </Typography>
+        
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-      {loading && <div>Loading...</div>}
+        {error && (
+          <Typography color="error" sx={{ mb: 1 }}>
+            {error}
+          </Typography>
+        )}
 
-      {metadata && (
-        <div>
-          <h3>Metadata Result:</h3>
-          <pre>{JSON.stringify(metadata, null, 2)}</pre>
-        </div>
-      )}
-    </div>
+        {metadata && (
+          <Box>
+            <Typography variant="subtitle1">Metadata Result:</Typography>
+            <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+              <pre>
+                {JSON.stringify(metadata, null, 2)}
+              </pre>
+            </Box>
+          </Box>
+        )}
+      </Paper>
+    </Box>
   );
 };
 

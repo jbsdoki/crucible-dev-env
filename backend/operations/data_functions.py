@@ -49,6 +49,44 @@ def load_metadata(signal):
         print("=== Ending load_metadata() with error ===\n")
         raise
 
+def _convert_metadata_to_serializable(metadata_dict):
+        """
+        Converts metadata dictionary to a JSON-serializable format.
+        Args:
+            metadata_dict (dict): Dictionary containing metadata
+        Returns:
+            dict: JSON-serializable dictionary
+        """
+        result = {}
+        
+        # If it's a DictionaryBrowser, convert to dict
+        if hasattr(metadata_dict, 'as_dictionary'):
+            metadata_dict = metadata_dict.as_dictionary()
+            
+        for key, value in metadata_dict.items():
+            # Skip private keys
+            if key.startswith('_'):
+                continue
+                
+            try:
+                # Handle nested dictionaries
+                if hasattr(value, 'as_dictionary') or isinstance(value, dict):
+                    result[key] = self._convert_metadata_to_serializable(value)
+                # Handle numpy arrays
+                elif hasattr(value, 'tolist'):
+                    result[key] = value.tolist()
+                # Handle basic types
+                elif isinstance(value, (str, int, float, bool, list)):
+                    result[key] = value
+                # Convert other types to string representation
+                else:
+                    result[key] = str(value)
+            except Exception as e:
+                print(f"Warning: Could not convert metadata key {key}: {str(e)}")
+                result[key] = str(value)
+                
+        return result
+
 def load_axes_manager(signal):
     """
     Loads axes manager information from a signal in a microscopy file.
