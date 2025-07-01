@@ -34,31 +34,6 @@ def list_files():
         return []
 
 
-def get_cached_file(file_path):
-    print("\n=== Starting get_cached_file() in file_functions.py ===")
-    print(f"Checking cache for filepath: {file_path}")
-    print(f"Current cached filepath: {CURRENT_FILE['filepath']}")
-    
-    if CURRENT_FILE["filepath"] == file_path:
-        print("Filepath match found in cache")
-        if CURRENT_FILE["data"] is not None:
-            # print(f"Cache has data: {type(CURRENT_FILE['data'])}")
-            # if isinstance(CURRENT_FILE["data"], list):
-                # print(f"Number of signals in cache: {len(CURRENT_FILE['data'])}")
-                # for idx, sig in enumerate(CURRENT_FILE["data"]):
-                    # print(f"Signal {idx} type: {type(sig)}")
-                    # print(f"Signal {idx} has data attribute: {hasattr(sig, 'data')}")
-                    # if hasattr(sig, 'data'):
-                        # print(f"Signal {idx} data shape: {sig.data.shape if hasattr(sig.data, 'shape') else 'No shape'}")
-            return CURRENT_FILE["data"]
-        else:
-            print("Cache entry exists but data is None")
-            return None
-    else:
-        print("No matching filepath in cache")
-        return None
-
-
 """
 Direct data retrieval function that loads EMD files using HyperSpy.
 This is the core function that actually reads the raw EMD file data from disk.
@@ -125,6 +100,33 @@ def load_file(filepath):
     
     print("=== Ending load_file with error in file_functions.py ===\n")
     raise ValueError("Could not load file with any signal type")
+
+
+
+def get_cached_file(file_path):
+    print("\n=== Starting get_cached_file() in file_functions.py ===")
+    print(f"Checking cache for filepath: {file_path}")
+    print(f"Current cached filepath: {CURRENT_FILE['filepath']}")
+    
+    if CURRENT_FILE["filepath"] == file_path:
+        print("Filepath match found in cache")
+        if CURRENT_FILE["data"] is not None:
+            # print(f"Cache has data: {type(CURRENT_FILE['data'])}")
+            # if isinstance(CURRENT_FILE["data"], list):
+                # print(f"Number of signals in cache: {len(CURRENT_FILE['data'])}")
+                # for idx, sig in enumerate(CURRENT_FILE["data"]):
+                    # print(f"Signal {idx} type: {type(sig)}")
+                    # print(f"Signal {idx} has data attribute: {hasattr(sig, 'data')}")
+                    # if hasattr(sig, 'data'):
+                        # print(f"Signal {idx} data shape: {sig.data.shape if hasattr(sig.data, 'shape') else 'No shape'}")
+            return CURRENT_FILE["data"]
+        else:
+            print("Cache entry exists but data is None")
+            return None
+    else:
+        print("No matching filepath in cache")
+        return None
+
 
 
 """

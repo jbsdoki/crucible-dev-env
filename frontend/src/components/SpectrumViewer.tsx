@@ -341,7 +341,7 @@ function SpectrumViewer({
                 },
                 xaxis: {
                   title: {
-                    text: 'Energy (eV)',
+                    text: 'Energy (keV)',
                     standoff: 10
                   },
                   showgrid: true,

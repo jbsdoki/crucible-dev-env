@@ -135,169 +135,6 @@ def get_signal_capabilities(signal):
     return capabilities
 
 
-
-
-"""Get all signals from a file.
-
-Args:
-    filename (str): Name of the file to get signals from
-    
-Returns:
-    list: List of signal information dictionaries containing:
-        - index: Signal index in the file
-        - title: Signal title if available
-        - type: Signal type (e.g., 'Signal1D', 'Signal2D', etc.)
-        - shape: Data shape as a tuple
-        - capabilities: Dictionary of what the signal can be used for
-"""
-
-# # def get_signal_titles_from_file(filename):
-
-#     try:
-#         print(f"\n=== Starting get_signals_from_file() in file_service.py ===")
-        
-#         # Construct full file path and load the file
-#         filepath = os.path.join(DATA_DIR, filename)
-#         print(f"Loading file from: {filepath}")
-
-
-#         signal = load_current_file_signals(filepath)
-#         if not signal:
-#             signal = try_load_file(filepath)
-        
-#         signals_info = []
-        
-#         # HyperSpy can return either a single signal or a list of signals
-#         # Convert single signal to list for consistent processing
-#         if not isinstance(signal, list):
-#             print("File contains a single signal - converting to list")
-#             signal = [signal]
-
-        
-#         print(f"\nFound {len(signal)} signals in file")
-            
-#         # Extract info from each signal
-#         for idx, sig in enumerate(signal):
-#             try:
-#                 # print(f"\nProcessing signal {idx}:")
-#                 # print(f"Signal object type: {type(sig)}")
-                
-#                 # Get title with fallback
-#                 title = "Signal " + str(idx)  # Default title
-#                 try:
-#                     if hasattr(sig, 'metadata'):
-#                         # print("Has metadata attribute")
-#                         if hasattr(sig.metadata, 'General'):
-#                             # print("Has General metadata")
-#                             if hasattr(sig.metadata.General, 'title'):
-#                                 title = sig.metadata.General.title
-#                                 # print(f"Found title in metadata: {title}")
-#                             else:
-#                                 print("No title in General metadata")
-#                         else:
-#                             print("No General section in metadata")
-#                     else:
-#                         print("No metadata attribute")
-#                 except Exception as e:
-#                     print(f"Error accessing metadata: {str(e)}")
-                
-#                 # Get shape with fallback
-#                 shape = None
-#                 try:
-#                     if hasattr(sig, 'data'):
-#                         # print("Has data attribute")
-#                         shape = sig.data.shape
-#                         # print(f"Data shape: {shape} ({len(shape)}D signal)")
-#                     else:
-#                         print("No data attribute")
-#                 except Exception as e:
-#                     print(f"Error accessing data shape: {str(e)}")
-                
-#                 # Get signal type
-#                 try:
-#                     sig_type = type(sig).__name__
-#                     # print(f"Signal type: {sig_type}")
-#                 except Exception as e:
-#                     print(f"Error getting signal type: {str(e)}")
-#                     sig_type = "Unknown"
-                
-#                 # Get signal capabilities
-#                 capabilities = get_signal_capabilities(sig)
-                
-#                 # Create info dictionary for this signal
-#                 signal_info = {
-#                     "index": idx,
-#                     "title": title,
-#                     "type": sig_type,
-#                     "shape": shape,
-#                     "capabilities": capabilities
-#                 }
-#                 # print("Added signal info:", signal_info)
-#                 signals_info.append(signal_info)
-                
-#             except Exception as e:
-#                 print(f"Error processing signal {idx}: {str(e)}")
-#                 # Continue with next signal instead of failing completely
-#                 continue
-            
-#         print(f"\n=== Processed {len(signals_info)} signals successfully ===")
-        
-
-#         # Update Current File for further use
-#         set_current_file(filename, signals_info)
-
-#         return signals_info
-        
-#     except Exception as e:
-#         print(f"\nERROR getting signals from {filename}: {str(e)}")
-#         import traceback
-#         traceback.print_exc()
-#         raise  # Re-raise the exception to let FastAPI handle it
-
-
-
-"""
-Direct data retrieval function that loads EMD files using HyperSpy.
-This is the core function that actually reads the raw EMD file data from disk.
-
-How it works:
-1. Attempts to load the EMD file using different signal types (EMD, EDS_TEM, EDS_SEM, EELS)
-2. Uses HyperSpy's hs.load() function which directly reads the binary EMD file
-3. Returns the loaded signal object containing the raw spectrum data
-
-Args:
-    filepath (str): Full path to the EMD file to load
-    
-Returns:
-    hyperspy.signals.Signal: A HyperSpy signal object containing the loaded data
-    
-Raises:
-    ValueError: If the file cannot be loaded with any of the supported signal types
-"""
-# def try_load_signal(filepath):
-
-
-    # print(f"\n=== Starting try_load_signal() ===")
-    # """Try loading the signal with different signal types"""
-    # signal_types = [None, 'EMD', 'EDS_TEM', 'EDS_SEM', 'EELS', None]  # None means try without specifying type
-    
-    # for signal_type in signal_types:
-    #     try:
-    #         print(f"Trying to load with signal_type: {signal_type}")
-    #         if signal_type:
-    #             signal = hs.load(filepath, reader=signal_type)
-    #         else:
-    #             signal = hs.load(filepath)
-    #         print("=== Ending try_load_signal() successfully ===\n")
-    #         return signal
-    #     except Exception as e:
-    #         print(f"Failed with signal_type {signal_type}: {str(e)}")
-    #         continue
-    
-    # print("=== Ending try_load_signal() with error ===\n")
-    # raise ValueError("Could not load file with any signal type")
-
-
 def find_haadf_signal(signal_list):
     
     """
@@ -318,3 +155,32 @@ def find_haadf_signal(signal_list):
                 return idx, sig
     print(f"No HAADF signal found in the file, end find_haadf_signal() in signal_functions.py")
     return None, None
+
+
+def find_3d_signals(signal_list):
+    
+    """
+    Find all 3D signals from a list of hyperspy signals.
+
+    Args:
+        signal_list (list): List of hyperspy signals
+        
+    Returns:
+        list: List of tuples [(index, signal), ...] for all 3D signals found, or empty list if none found
+    """
+    print(f"\n=== Starting find_3d_signals() in signal_functions.py ===")
+    found_signals = []
+    for idx, sig in enumerate(signal_list):
+        if hasattr(sig, 'data'):
+            if len(sig.data.shape) == 3:
+                print(f"Found 3D signal at index {idx} with shape {sig.data.shape}")
+                found_signals.append((idx, sig))
+    
+    if found_signals:
+        print(f"Found {len(found_signals)} 3D signals in the file")
+    else:
+        print("No 3D signals found in the file")
+    
+    print(f"=== Ending find_3d_signals() in signal_functions.py ===")
+    
+    return found_signals
