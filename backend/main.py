@@ -252,6 +252,31 @@ async def get_metadata(filename: str = Query(...), signal_idx: int = Query(...))
         print("=== Ending get_metadata() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+"""
+Gets axes data from a specific signal in a file
+Args:
+    filename: Name of the file (required)
+    signal_idx: Index of the signal in the file (required)
+Returns: Dictionary containing axes data for the specific signal
+Called by: Frontend getAxesData() function
+"""
+@app.get("/axes-data")
+async def get_axes_data(filename: str = Query(...), signal_idx: int = Query(...)):
+    try:
+        print("\n=== Starting get_axes_data() in main.py ===")
+        print(f"Requested axes data for file: {filename}, signal: {signal_idx}")
+        
+        axes_data = signal_service.get_axes_data(filename, signal_idx)
+        print("=== Ending get_axes_data() successfully ===\n")
+        return axes_data
+        
+    except Exception as e:
+        print(f"ERROR in get_axes_data(): {str(e)}")
+        print("=== Ending get_axes_data() with error ===\n")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 ################################################################################
 #################### API Endpoints for manipulating data #######################
 ################################################################################

@@ -294,7 +294,7 @@ class SignalService:
             return None
 
     #############################################################################
-    #                             Metadata Methods                              #
+    #                             Dataata Methods                              #
     #############################################################################
 
     def get_metadata(self, filename, signal_idx):
@@ -337,5 +337,50 @@ class SignalService:
             import traceback
             traceback.print_exc()
             print("=== Ending get_metadata() with error ===\n")
+            return None
+
+    def get_axes_data(self, filename, signal_idx):
+        """
+        Gets axes data from a file.
+        Args:
+            filename (str): Name of the file to get axes data from
+            signal_idx (int): Index of the signal to get axes data from
+        Returns:
+            dict: Dictionary containing axes data
+        """
+        print(f"\n=== Starting get_axes_data() in SignalService ===")
+        try:
+            print(f"Getting axes data for file: {filename}, signal index: {signal_idx}")
+            filepath = os.path.join(constants.DATA_DIR, filename)
+            
+            # Load the file (will use cache if available)
+            signal = file_functions.load_file(filepath)
+            print(f"\nLoaded signal type: {type(signal)}")
+            
+
+            if signal_idx >= len(signal):
+                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
+            signal_data = signal[signal_idx]
+            print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
+
+            if signal_data.data.ndim != 3:
+                print(f"Error getting axes data, incorrect number of dimensions: {signal_data.data.ndim}")
+                return None
+            
+            # Get the axes data
+            if hasattr(signal_data, 'axes_manager'):
+                axes_data = data_functions.load_axes_manager(signal_data)
+                print("\nAxes data extracted successfully")
+                print("=== Ending get_axes_data() successfully ===\n")
+                return axes_data
+            else:
+                print("No axes data found in signal")
+                return {}
+            
+        except Exception as e:
+            print(f"Error getting axes data: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            print("=== Ending get_axes_data() with error ===\n")
             return None
             

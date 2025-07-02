@@ -39,9 +39,16 @@ const api = axios.create({
   withCredentials: false
 });
 
-/****************** API Endpoint Functions ******************/
+/**************************************************************************/
+/********************** API Endpoint Functions ****************************/
  // These functions make HTTP requests to the FastAPI backend endpoints.
  // Each function corresponds to a specific endpoint in backend/main.py
+/*************************************************************************/
+/**************************************************************************/
+
+/**************************************************************************/
+/********************** File Retrieval Functions **************************/
+/**************************************************************************/
 
 /**
  * Fetches list of all .emd files from the backend
@@ -58,25 +65,32 @@ export const getFiles = async () => {
   }
 };
 
+
+
 /**
- * Fetches metadata for a specific signal in a file
- * Calls: GET http://localhost:8000/metadata?filename=<filename>&signal_idx=<signal_idx>
- * @param filename - Name of the file
- * @param signalIdx - Index of the signal in the file
- * Returns: Object containing axes, shape, and metadata information
+ * Fetches all signals from a specific file
+ * Calls: GET http://localhost:8000/signals?filename=<filename>
+ * @param filename - Name of the file to get signals from
+ * Returns: Object containing array of signal information
  */
-export const getMetadata = async (filename: string, signalIdx: number) => {
+export const getSignals = async (filename: string) => {
   try {
-    // console.log('Fetching metadata:', { filename, signalIdx });
-    const response = await api.get('/metadata', {
-      params: { filename, signal_idx: signalIdx }
+    const response = await api.get('/signals', {
+      params: { filename }
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching metadata:', error);
+    console.error('Error fetching signals:', error);
     throw error;
   }
 };
+
+
+/**************************************************************************/
+/*****************Image/Spectrum/HAADF Retrieval Functions*****************/
+/**************************************************************************/
+
+
 
 /**
  * Fetches spectrum data from a specific signal in a file
@@ -141,23 +155,7 @@ export const getHAADFData = async (filename: string ) => {
 };
 
 
-/**
- * Fetches all signals from a specific file
- * Calls: GET http://localhost:8000/signals?filename=<filename>
- * @param filename - Name of the file to get signals from
- * Returns: Object containing array of signal information
- */
-export const getSignals = async (filename: string) => {
-  try {
-    const response = await api.get('/signals', {
-      params: { filename }
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching signals:', error);
-    throw error;
-  }
-};
+
 
 /**
  * Fetches spectrum data from a selected region of a signal
@@ -218,5 +216,54 @@ export const getEnergyRangeSpectrum = async (
     throw error;
   }
 };
+
+
+/**************************************************************************/
+/***************** Data Retrieval Functions *******************************/
+/**************************************************************************/
+
+/**
+ * Fetches metadata for a specific signal in a file
+ * Calls: GET http://localhost:8000/metadata?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing axes, shape, and metadata information
+ */
+export const getMetadata = async (filename: string, signalIdx: number) => {
+  try {
+    // console.log('Fetching metadata:', { filename, signalIdx });
+    const response = await api.get('/metadata', {
+      params: { filename, signal_idx: signalIdx }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching metadata:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches Axes manager data for a specific signal in a file
+ * Calls: GET http://localhost:8000/axes-data?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing axes, shape, and metadata information
+ */
+export const getAxesData = async (filename: string, signalIdx: number) => {
+  try {
+    // console.log('Fetching Axes Data:', { filename, signalIdx });
+    const response = await api.get('/axes-data', {
+      params: { filename, signal_idx: signalIdx }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Axes Data:', error);
+    throw error;
+  }
+};
+
+/**************************************************************************/
+/***************** Periodic Table Functions *******************************/
+/**************************************************************************/
 
 export default api; 

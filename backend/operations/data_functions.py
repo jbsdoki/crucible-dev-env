@@ -106,7 +106,7 @@ def load_axes_manager(signal):
         axes_info = {}
         
         # Access axes manager information
-        if hasattr(signal, 'axes_manager') and len(signal.axes_manager) > 0:
+        if hasattr(signal, 'axes_manager'):
             print("\nExtracting axes manager information...")
             try:
                 first_axis = signal.axes_manager[2]
