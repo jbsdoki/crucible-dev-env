@@ -1,4 +1,4 @@
-from operations import file_functions, signal_functions, spectrum_functions, image_viewer_functions
+from operations import file_functions, signal_functions, spectrum_functions, image_viewer_functions, data_functions
 from utils import constants
 import os
 import numpy as np
@@ -84,6 +84,7 @@ class SignalService:
         print(f"\n=== Starting get_spectrum_from_region() in SignalService ===")
         try:
             filepath = os.path.join(constants.DATA_DIR, filename)
+
             signal = file_functions.load_file(filepath)
             
             if isinstance(signal, list):
@@ -95,33 +96,7 @@ class SignalService:
             if len(signal.data.shape) != 3:
                 raise ValueError("Selected signal must be 3D for region selection")
 
-            # Extract coordinates
-            x1, y1 = region['x1'], region['y1']
-            x2, y2 = region['x2'], region['y2']
-            
-            print(f"\nReceived coordinates from frontend:")
-            print(f"x1, y1: ({x1}, {y1})")
-            print(f"x2, y2: ({x2}, {y2})")
-            
-            # Ensure coordinates are within bounds
-            height, width, _ = signal.data.shape
-            print(f"\nSignal data shape: {signal.data.shape}")
-            print(f"Height x Width: {height} x {width}")
-            
-            x1 = max(0, min(x1, width - 1))
-            x2 = max(0, min(x2, width - 1))
-            y1 = max(0, min(y1, height - 1))
-            y2 = max(0, min(y2, height - 1))
-            
-            # Ensure x1 < x2 and y1 < y2
-            x1, x2 = min(x1, x2), max(x1, x2)
-            y1, y2 = min(y1, y2), max(y1, y2)
-            
-            region_data = signal.data[y1:y2+1, x1:x2+1, :]
-            
-            summed_spectrum = np.sum(region_data, axis=(0, 1))
-            
-            return summed_spectrum.tolist()
+            return spectrum_functions.extract_spectrum_range(signal, region)
             
         except Exception as e:
             print(f"Error in get_spectrum_from_region: {str(e)}")
@@ -144,7 +119,6 @@ class SignalService:
         filepath = constants.full_filepath(filename)
 
         signal = file_functions.load_file(filepath)
-        print(f"\nLoaded signal type: {type(signal)}")
         
         if isinstance(signal, list):
             # print(f"Signal is a list with {len(signal)} items")
@@ -153,7 +127,8 @@ class SignalService:
             signal = signal[signal_idx]
             # print(f"Selected signal {signal_idx}, type: {type(signal)}")
 
-        return spectrum_functions.extract_spectrum_data(signal)
+        return spectrum_functions.extract_whole_spectrum_data(signal)
+
       
     #############################################################################
     #                               Image Methods                                 #
@@ -364,42 +339,3 @@ class SignalService:
             print("=== Ending get_metadata() with error ===\n")
             return None
             
-    # def _convert_metadata_to_serializable(self, metadata_dict):
-    #     """
-    #     Converts metadata dictionary to a JSON-serializable format.
-    #     Args:
-    #         metadata_dict (dict): Dictionary containing metadata
-    #     Returns:
-    #         dict: JSON-serializable dictionary
-    #     """
-    #     result = {}
-        
-    #     # If it's a DictionaryBrowser, convert to dict
-    #     if hasattr(metadata_dict, 'as_dictionary'):
-    #         metadata_dict = metadata_dict.as_dictionary()
-            
-    #     for key, value in metadata_dict.items():
-    #         # Skip private keys
-    #         if key.startswith('_'):
-    #             continue
-                
-    #         try:
-    #             # Handle nested dictionaries
-    #             if hasattr(value, 'as_dictionary') or isinstance(value, dict):
-    #                 result[key] = self._convert_metadata_to_serializable(value)
-    #             # Handle numpy arrays
-    #             elif hasattr(value, 'tolist'):
-    #                 result[key] = value.tolist()
-    #             # Handle basic types
-    #             elif isinstance(value, (str, int, float, bool, list)):
-    #                 result[key] = value
-    #             # Convert other types to string representation
-    #             else:
-    #                 result[key] = str(value)
-    #         except Exception as e:
-    #             print(f"Warning: Could not convert metadata key {key}: {str(e)}")
-    #             result[key] = str(value)
-                
-    #     return result
-
-

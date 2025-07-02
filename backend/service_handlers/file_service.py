@@ -31,57 +31,6 @@ class FileService:
             print(f"Error listing files: {str(e)}")
             raise e
 
-    # def load_file(self, filename: str):
-    #     """
-    #     Load a file and cache it for future use.
-        
-    #     Args:
-    #         filename (str): Name of the file to load
-            
-    #     Returns:
-    #         The loaded file data
-            
-    #     Raises:
-    #         ValueError: If file is invalid or cannot be loaded
-    #     """
-    #     try:
-    #         filepath = os.path.join(DATA_DIR, filename)
-    #         print(f"\n=== Starting load_file in FileService ===")
-    #         print(f"Loading file: {filename}")
-            
-    #         # Return cached file if already loaded
-    #         if self._current_file["filepath"] == filepath:
-    #             return self._current_file["data"]
-                
-    #         # TODO: Implement using file_functions
-            
-    #         print("=== Ending load_file in FileService ===\n")
-    #         return None
-    #     except Exception as e:
-    #         print(f"Error loading file: {str(e)}")
-    #         raise e
-
-    def get_file_metadata(self, filename: str) -> dict:
-        """
-        Get metadata for a specific file.
-        
-        Args:
-            filename (str): Name of the file to get metadata from
-            
-        Returns:
-            dict: Dictionary containing file metadata
-            
-        Raises:
-            ValueError: If file is invalid or metadata cannot be extracted
-        """
-        try:
-            print(f"\n=== Starting get_file_metadata in FileService ===")
-            # TODO: Implement using file_functions
-            print("=== Ending get_file_metadata in FileService ===\n")
-            return {}
-        except Exception as e:
-            print(f"Error getting file metadata: {str(e)}")
-            raise e
 
     def validate_file(self, filename: str) -> bool:
         """

@@ -131,6 +131,10 @@ main.tsx (Starts app)
    |
    -> App.tsx (Calls components, organizes them into sections on the screen)
             |
+            -> Contexts: (Provide data for the components)
+            |           - ElementContext.tsx
+            |           - FileContext.tst
+            |              
             -> Components: (Control what is displayed to screen, only displays in one section)
                          - FileSelector.tsx
                          - ImageViewer.tsx
