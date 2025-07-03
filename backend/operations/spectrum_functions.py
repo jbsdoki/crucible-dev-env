@@ -3,6 +3,7 @@ import numpy as np
 
 
 """Extract whole spectrum data from a signal.
+   This function uses the 4096 original indices
 
 Args:
     signal: A HyperSpy signal object

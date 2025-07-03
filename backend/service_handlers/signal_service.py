@@ -164,7 +164,7 @@ class SignalService:
             return None
 
 
-    async def get_energy_range_spectrum(
+    async def spectrum_to_2d(
         self,
         filename: str,
         signal_idx: int,
@@ -184,7 +184,7 @@ class SignalService:
         Returns:
             List[List[float]]: 2D array representing the summed image over the energy range
         """
-        print(f"=== Starting get_energy_range_spectrum() ===")
+        print(f"=== Starting spectrum_to_2d() ===")
         print(f"Parameters: filename={filename}, signal_idx={signal_idx}, start={start}, end={end}")
         
         try:
@@ -198,7 +198,15 @@ class SignalService:
             # Get the full 3D data
             signal_data = signal.data
             print(f"Full signal data shape: {signal_data.shape}")
-            
+
+            # print(f"original start: {start}, original end: {end}")
+
+            # #Convert the start and end indices to the original energy values
+            # axes_data = data_functions.load_axes_manager(signal)
+            # start_energy = data_functions.calculate_original_index(axes_data, start)
+            # end_energy = data_functions.calculate_original_index(axes_data, end)
+            # print(f"Start energy: {start_energy}, End energy: {end_energy}")
+
             # Validate range indices
             if start < 0 or end >= signal_data.shape[2] or start > end:
                 raise ValueError(f"Invalid range: start={start}, end={end}, spectrum_length={signal_data.shape[2]}")
@@ -208,12 +216,12 @@ class SignalService:
             summed_image = np.sum(range_data, axis=2)
             print(f"Summed image shape: {summed_image.shape}")
             
-            print("=== Ending get_energy_range_spectrum() successfully ===\n")
+            print("=== Ending spectrum_to_2d() successfully ===\n")
             return summed_image.tolist()
             
         except Exception as e:
-            print(f"Error in get_energy_range_spectrum: {str(e)}")
-            print("=== Ending get_energy_range_spectrum() with error ===\n")
+            print(f"Error in spectrum_to_2d: {str(e)}")
+            print("=== Ending spectrum_to_2d() with error ===\n")
             raise e
 
     #############################################################################

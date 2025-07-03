@@ -326,6 +326,6 @@ async def energy_range_spectrum(
 ):
 
     try:
-        return await signal_service.get_energy_range_spectrum(filename, signal_idx, start, end)
+        return await signal_service.spectrum_to_2d(filename, signal_idx, start, end)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
