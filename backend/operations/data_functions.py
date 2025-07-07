@@ -229,6 +229,8 @@ def get_spectrum_data(signal):
             - 'x_label': string label for x-axis (e.g., 'Energy')
             - 'x_units': string units for x-axis (e.g., 'keV')
             - 'y_label': string label for y-axis (e.g., 'Counts')
+            - 'zero_index': index where energy = 0 (or None if not found)
+            - 'fwhm_index': index at FWHM point after zero peak (or None if not found)
     """
     # Get the signal axis (usually energy for EDS)
     signal_axis = signal.axes_manager.signal_axes[0]
@@ -236,16 +238,42 @@ def get_spectrum_data(signal):
     # Convert NumPy arrays to lists for JSON serialization
     x_values = signal_axis.axis.tolist() if hasattr(signal_axis.axis, 'tolist') else list(signal_axis.axis)
     y_values = signal.sum().data.tolist() if hasattr(signal.sum().data, 'tolist') else list(signal.sum().data)
+
+    # Get zero peak information
+    zero_index = get_zero_index(signal)
     
-    return {
+    # Calculate FWHM index if we found a zero peak
+    fwhm_index = None
+    if zero_index is not None:
+        half_zero_height = get_half_zero_height(signal, zero_index)
+        if half_zero_height is not None:
+            # Find FWHM point
+            tolerance = half_zero_height * 0.05  # 5% tolerance
+            for i in range(zero_index + 1, len(y_values)):
+                if abs(y_values[i] - half_zero_height) <= tolerance:
+                    fwhm_index = i
+                    break
+                elif y_values[i] < half_zero_height:
+                    # If we've gone below half max, use the closer of this point or previous point
+                    if i > zero_index + 1:
+                        prev_diff = abs(y_values[i-1] - half_zero_height)
+                        curr_diff = abs(y_values[i] - half_zero_height)
+                        fwhm_index = i if curr_diff < prev_diff else i-1
+                    else:
+                        fwhm_index = i
+                    break
+
+    spectrum_data = {
         'x': x_values,
         'y': y_values,
         'x_label': signal_axis.name,
         'x_units': signal_axis.units,
         'y_label': 'Counts' if signal.metadata.Signal.signal_type == "EDS_TEM" else 'Intensity',
-        'zero_index': None,
-        'fwhm_index': None
+        'zero_index': zero_index,
+        'fwhm_index': fwhm_index
     }
+    
+    return spectrum_data
 
 
 def get_zero_index(signal):
@@ -297,7 +325,7 @@ def get_half_zero_height(signal, zero_index):
         print(f"Error calculating half zero height: {str(e)}")
         return None
 
-def remove_zero_peak(spectrum_data, half_zero_height, zero_index):
+def get_fwhm_index(spectrum_data, half_zero_height, zero_index):
     """
     Zeros out the spectrum data from the beginning up to the FWHM point.
     

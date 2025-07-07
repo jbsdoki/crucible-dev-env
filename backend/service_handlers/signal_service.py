@@ -74,7 +74,7 @@ class SignalService:
     def get_spectrum_data(self, filename, signal_idx):
         """
         Gets spectrum data in the new format that includes both x and y values with units.
-        The zero peak is automatically removed from the spectrum data.
+        The data includes zero peak and FWHM indices for frontend visualization.
         
         Args:
             filename (str): Name of the file to get spectrum data from
@@ -82,12 +82,14 @@ class SignalService:
         Returns:
             dict: Dictionary containing:
                 - x: array of energy values
-                - y: array of intensity values (with zero peak removed)
+                - y: array of intensity values
                 - x_label: label for x-axis
                 - x_units: units for x-axis
                 - y_label: label for y-axis
+                - zero_index: index where energy = 0 (or None if not found)
+                - fwhm_index: index at FWHM point after zero peak (or None if not found)
         """
-        print(f"\n=== Starting get_new_spectrum_data() in SignalService ===")
+        print(f"\n=== Starting get_spectrum_data() in SignalService ===")
         
         # Construct full filepath
         filepath = constants.full_filepath(filename)
@@ -101,7 +103,7 @@ class SignalService:
                 raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
             signal = signal[signal_idx]
 
-        # Get the spectrum data
+        # Get the spectrum data with indices
         spectrum_data = data_functions.get_spectrum_data(signal)
         
         print("\nSpectrum Data Analysis:")
@@ -109,46 +111,8 @@ class SignalService:
         print(f"Y-axis length: {len(spectrum_data['y'])}")
         print(f"First 5 X values (keV): {spectrum_data['x'][:5]}")
         print(f"X-axis range: {min(spectrum_data['x'])} to {max(spectrum_data['x'])} {spectrum_data['x_units']}")
-        
-        # Get axes information for converter
-        signal_axis = signal.axes_manager.signal_axes[0]
-        axes_data = {
-            'offset': signal_axis.offset,
-            'scale': signal_axis.scale,
-            'units': signal_axis.units
-        }
-        print("\nAxes Information:")
-        print(f"Offset: {axes_data['offset']}")
-        print(f"Scale: {axes_data['scale']}")
-        print(f"Units: {axes_data['units']}")
-        
-        # Create converter and get zero peak information
-        # from operations.conversion_functions import SpectrumConverter
-        # converter = SpectrumConverter(axes_data)
-        
-        # Get zero peak information
-        zero_index = data_functions.get_zero_index(signal)
-        print(f"\nZero peak found at index: {zero_index}")
-        
-        if zero_index is not None:
-            half_zero_height = data_functions.get_half_zero_height(signal, zero_index)
-            print(f"Half zero height: {half_zero_height}")
-            
-            # Remove zero peak
-            modified_data = data_functions.remove_zero_peak(spectrum_data, half_zero_height, zero_index)
-            if modified_data:
-                spectrum_data['y'] = modified_data
-                print("Zero peak removed successfully")
-            else:
-                print("Zero peak removal failed")
-        else:
-            print("No zero peak found or zero peak removal not needed")
-        
-        # Convert NumPy arrays to lists for JSON serialization
-        if isinstance(spectrum_data['x'], np.ndarray):
-            spectrum_data['x'] = spectrum_data['x'].tolist()
-        if isinstance(spectrum_data['y'], np.ndarray):
-            spectrum_data['y'] = spectrum_data['y'].tolist()
+        print(f"Zero index: {spectrum_data['zero_index']}")
+        print(f"FWHM index: {spectrum_data['fwhm_index']}")
             
         return spectrum_data
 

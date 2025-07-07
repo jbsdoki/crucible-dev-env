@@ -34,6 +34,8 @@ interface SpectrumData {
   x_label: string;
   x_units: string;
   y_label: string;
+  zero_index: number | null;
+  fwhm_index: number | null;
 }
 
 interface SpectrumViewerProps {
@@ -78,6 +80,7 @@ function SpectrumViewer({
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
   const [layoutRange, setLayoutRange] = useState<AxisRange>({});
   const [isZoomMode, setIsZoomMode] = useState(true);
+  const [showFWHM, setShowFWHM] = useState(false);
 
   useEffect(() => {
     const fetchSpectrum = async () => {
@@ -248,6 +251,23 @@ function SpectrumViewer({
     name: 'Full Spectrum',
   });
 
+  // Add FWHM line if enabled and index exists
+  if (showFWHM && spectrumData.fwhm_index !== null) {
+    const fwhmX = spectrumData.x[spectrumData.fwhm_index];
+    plotData.push({
+      x: [fwhmX, fwhmX],
+      y: [0, Math.max(...spectrumData.y)],
+      type: 'scatter',
+      mode: 'lines',
+      name: 'FWHM',
+      line: {
+        color: 'red',
+        width: 2,
+        dash: 'dash',
+      },
+    });
+  }
+
   // Add selected range markers if range is selected
   if (selectedRange) {
     // Add start marker
@@ -296,14 +316,13 @@ function SpectrumViewer({
   }
 
   // Add region spectrum if available
-  if (regionSpectrumData && showRegion) {
+  if (showRegion && regionSpectrumData) {
     plotData.push({
       x: regionSpectrumData.x,
       y: regionSpectrumData.y,
       type: 'scatter',
       mode: 'lines',
       name: 'Region Spectrum',
-      line: { color: '#ff7f0e' },
     });
   }
 
@@ -338,9 +357,19 @@ function SpectrumViewer({
                   <IconButton 
                     onClick={handleZoomModeToggle} 
                     color={isZoomMode ? "primary" : "default"}
-                    sx={{ position: 'relative' }}
+                    sx={{ position: 'relative', '&.disabled': { color: 'grey.500' } }}
+                    disabled={isSelectingRange}
                   >
                     {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
+                    {isSelectingRange && (
+                      <BlockIcon 
+                        sx={{ 
+                          position: 'absolute',
+                          color: 'red',
+                          opacity: 0.7,
+                        }} 
+                      />
+                    )}
                   </IconButton>
                 </Tooltip>
               )}
@@ -388,6 +417,23 @@ function SpectrumViewer({
                 </IconButton>
               </Tooltip>
             </Stack>
+            {spectrumData.fwhm_index !== null && (
+              <Tooltip title={showFWHM ? "Hide FWHM Line" : "Show FWHM Line"}>
+                <IconButton 
+                  onClick={() => setShowFWHM(!showFWHM)}
+                  color={showFWHM ? "primary" : "default"}
+                >
+                  <Box component="span" sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: '0.875rem',
+                    fontWeight: 'bold'
+                  }}>
+                    FWHM
+                  </Box>
+                </IconButton>
+              </Tooltip>
+            )}
           </Stack>
         </Box>
       </Box>
