@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { useState, useEffect, useCallback } from 'react';
 import Plot from 'react-plotly.js';
-import type { PlotData } from 'plotly.js';
+import type { PlotData, Layout } from 'plotly.js';
+import { debounce } from 'lodash';
 import { getSpectrum, getEnergyRangeSpectrum } from '../services/api';
 import { Box, CircularProgress, Typography, IconButton, Tooltip, Stack, Grid } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CropIcon from '@mui/icons-material/Crop';
 import ScaleIcon from '@mui/icons-material/Scale';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import PanToolIcon from '@mui/icons-material/PanTool';
+import BlockIcon from '@mui/icons-material/Block';
 
 interface SignalCapabilities {
   hasSpectrum: boolean;
@@ -21,62 +28,68 @@ interface SignalInfo {
   capabilities: SignalCapabilities;
 }
 
+interface SpectrumData {
+  x: number[];
+  y: number[];
+  x_label: string;
+  x_units: string;
+  y_label: string;
+}
+
 interface SpectrumViewerProps {
   selectedFile: string;
   selectedSignal: SignalInfo;
-  regionSpectrumData?: number[] | null;
+  regionSpectrumData?: SpectrumData | null;
   selectedRegion?: {x1: number, y1: number, x2: number, y2: number} | null;
+}
+
+interface AxisRange {
+  x?: [number, number];
+  y?: [number, number];
 }
 
 /**
  * SpectrumViewer Component
  * 
- * This component handles the visualization of spectrum data from .emd files.
- * It can display:
- * - 1D signals directly as spectra
- * - Extracted spectra from 3D signals
- * 
- * The component checks the signal's capabilities before attempting to display.
+ * This component handles the visualization of spectrum data using the new data format
+ * that includes both x and y values with proper units.
  * 
  * Props:
  * @param selectedFile - Name of the currently selected file
  * @param selectedSignal - Information about the selected signal
+ * @param regionSpectrumData - Optional spectrum data for a selected region
+ * @param selectedRegion - Optional region coordinates
  */
 function SpectrumViewer({ 
   selectedFile, 
-  selectedSignal, 
+  selectedSignal,
   regionSpectrumData,
   selectedRegion 
 }: SpectrumViewerProps) {
-  // console.log('=== Starting SpectrumViewer component ===');
-  const [fullSpectrumData, setFullSpectrumData] = useState<number[]>([]);  // Full signal spectrum
+  const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showRegion, setShowRegion] = useState<boolean>(true);
-  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  const [isLogScale, setIsLogScale] = useState<boolean>(false);
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
   const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const [isLogScale, setIsLogScale] = useState<boolean>(false);
+  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  const [layoutRange, setLayoutRange] = useState<AxisRange>({});
+  const [isZoomMode, setIsZoomMode] = useState(true);
 
-  /**
-   * Fetch spectrum data when selectedFile or selectedSignal changes
-   */
   useEffect(() => {
     const fetchSpectrum = async () => {
-      // console.log('=== Starting fetchSpectrum ===');
       if (!selectedFile || !selectedSignal) {
-        setFullSpectrumData([]);
+        setSpectrumData(null);
         setError('');
-        console.log('=== Ending fetchSpectrum - no file or signal selected ===');
         return;
       }
 
       if (!selectedSignal.capabilities.hasSpectrum) {
         setError('Selected signal cannot be displayed as a spectrum');
-        setFullSpectrumData([]);
-        console.log('=== Ending fetchSpectrum - signal cannot be displayed as spectrum ===');
+        setSpectrumData(null);
         return;
       }
       
@@ -84,50 +97,79 @@ function SpectrumViewer({
         setLoading(true);
         setError('');
         
-        // console.log('Fetching spectrum data for:', {
-        //   file: selectedFile,
-        //   signal: selectedSignal.title,
-        //   type: selectedSignal.type,
-        //   shape: selectedSignal.shape
-        // });
-        
         const data = await getSpectrum(selectedFile, selectedSignal.index);
-        
-        if (!Array.isArray(data)) {
-          console.log('=== Ending fetchSpectrum - invalid data format ===');
-          throw new Error(`Expected array but received ${typeof data}`);
-        }
-        
-        setFullSpectrumData(data);
-        // console.log('=== Ending fetchSpectrum successfully ===');
+        setSpectrumData(data);
       } catch (err) {
         console.error('Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
-        setFullSpectrumData([]);
-        console.log('=== Ending fetchSpectrum with error ===');
+        setSpectrumData(null);
       } finally {
         setLoading(false);
       }
     };
 
-    if (selectedFile && selectedSignal && selectedSignal.capabilities.hasSpectrum) {
-      fetchSpectrum();
-    } else {
-      setFullSpectrumData([]);
-      setError('');
-    }
+    fetchSpectrum();
   }, [selectedFile, selectedSignal]);
 
+  // Debounced relayout handler for zoom/pan
+  const handleRelayout = useCallback(
+    debounce((event: any) => {
+      if (!event) return;
+      
+      // Only update ranges if they've changed
+      if (event['xaxis.range[0]'] !== undefined && event['xaxis.range[1]'] !== undefined) {
+        setLayoutRange(prev => ({
+          ...prev,
+          x: [event['xaxis.range[0]'], event['xaxis.range[1]']]
+        }));
+      }
+      
+      if (event['yaxis.range[0]'] !== undefined && event['yaxis.range[1]'] !== undefined) {
+        setLayoutRange(prev => ({
+          ...prev,
+          y: [event['yaxis.range[0]'], event['yaxis.range[1]']]
+        }));
+      }
+    }, 150),
+    []
+  );
+
+  // Handle zoom mode toggle
+  const handleZoomModeToggle = () => {
+    setIsZoomMode(!isZoomMode);
+  };
+
+  // Handle selection mode toggle
+  const handleSelectionModeToggle = () => {
+    if (isSelectingRange) {
+      setSelectedRange(null);
+    }
+    setIsSelectingRange(!isSelectingRange);
+  };
+
   // Handle selection events
-  const handleSelection = async (event: any) => {
-    if (!isSelectingRange || !event?.range?.x) return;
+  const handleSelection = async (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (!isSelectingRange || !event?.range?.x || !spectrumData) return;
 
     const [start, end] = event.range.x;
-    const rangeStart = Math.max(0, Math.round(start));
-    const rangeEnd = Math.min(fullSpectrumData.length - 1, Math.round(end));
-
-    // console.log('Selection range:', { start: rangeStart, end: rangeEnd });
-    setSelectedRange({ start: rangeStart, end: rangeEnd });
+    // Find the closest x values in our data
+    const xValues = spectrumData.x;
+    const startIdx = xValues.findIndex(x => x >= start);
+    const endIdx = xValues.findIndex(x => x >= end);
+    
+    console.log('Selection range:', {
+      start_x: start,
+      end_x: end,
+      start_idx: startIdx,
+      end_idx: endIdx,
+      start_energy: xValues[startIdx],
+      end_energy: xValues[endIdx]
+    });
+    
+    setSelectedRange({ 
+      start: startIdx >= 0 ? startIdx : 0, 
+      end: endIdx >= 0 ? endIdx : xValues.length - 1 
+    });
 
     try {
       setImageLoading(true);
@@ -137,7 +179,7 @@ function SpectrumViewer({
       const imageData = await getEnergyRangeSpectrum(
         selectedFile,
         selectedSignal.index,
-        { start: rangeStart, end: rangeEnd }
+        { start: startIdx, end: endIdx }
       );
       
       setEnergyFilteredImage(imageData);
@@ -150,209 +192,280 @@ function SpectrumViewer({
     }
   };
 
-  // Reset selection when toggling mode off
-  const handleSelectionModeToggle = () => {
-    if (isSelectingRange) {
-      setSelectedRange(null);
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  if (!spectrumData) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography>No spectrum data available</Typography>
+      </Box>
+    );
+  }
+
+  // Create static layout object
+  const baseLayout: Partial<Layout> = {
+    showlegend: true,
+    height: 500,
+    xaxis: {
+      title: spectrumData ? {
+        text: `${spectrumData.x_label} (${spectrumData.x_units})`
+      } : undefined,
+      type: 'linear',
+      range: layoutRange.x
+    },
+    yaxis: {
+      title: spectrumData ? {
+        text: spectrumData.y_label
+      } : undefined,
+      type: isLogScale ? 'log' : 'linear',
+      range: layoutRange.y
     }
-    setIsSelectingRange(!isSelectingRange);
   };
 
-  const result = (
+  // Prepare plot data
+  const plotData: Array<Partial<PlotData>> = [];
+
+  // Add main spectrum
+  plotData.push({
+    x: spectrumData.x,
+    y: spectrumData.y,
+    type: 'scatter',
+    mode: 'lines',
+    name: 'Full Spectrum',
+  });
+
+  // Add selected range markers if range is selected
+  if (selectedRange) {
+    // Add start marker
+    plotData.push({
+      x: [spectrumData.x[selectedRange.start]],
+      y: [spectrumData.y[selectedRange.start]],
+      type: 'scatter',
+      mode: 'markers',
+      marker: { 
+        size: 10,
+        color: 'green',
+        symbol: 'circle'
+      },
+      name: 'Selection Start',
+      showlegend: false
+    });
+
+    // Add end marker
+    plotData.push({
+      x: [spectrumData.x[selectedRange.end]],
+      y: [spectrumData.y[selectedRange.end]],
+      type: 'scatter',
+      mode: 'markers',
+      marker: { 
+        size: 10,
+        color: 'green',
+        symbol: 'circle'
+      },
+      name: 'Selection End',
+      showlegend: false
+    });
+
+    // Add highlighted region
+    plotData.push({
+      x: spectrumData.x.slice(selectedRange.start, selectedRange.end + 1),
+      y: spectrumData.y.slice(selectedRange.start, selectedRange.end + 1),
+      type: 'scatter',
+      mode: 'lines',
+      line: { 
+        color: 'rgba(0, 255, 0, 0.3)',
+        width: 2
+      },
+      fill: 'tonexty',
+      name: 'Selected Region'
+    });
+  }
+
+  // Add region spectrum if available
+  if (regionSpectrumData && showRegion) {
+    plotData.push({
+      x: regionSpectrumData.x,
+      y: regionSpectrumData.y,
+      type: 'scatter',
+      mode: 'lines',
+      name: 'Region Spectrum',
+      line: { color: '#ff7f0e' },
+    });
+  }
+
+  return (
     <Box sx={{ p: 3 }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6">
-              {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
-              {selectedRegion && ' (Region Selected)'}
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              {regionSpectrumData && (
-                <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">
+            {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
+            {selectedRegion && ' (Region Selected)'}
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            {regionSpectrumData && (
+              <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+                <IconButton 
+                  onClick={() => setShowRegion(!showRegion)}
+                  color={showRegion ? "warning" : "default"}
+                  sx={{ 
+                    bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'rgba(0, 0, 0, 0.04)'
+                    }
+                  }}
+                >
+                  {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              </Tooltip>
+            )}
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              {!isSelectingRange && (
+                <Tooltip title={isZoomMode ? "Switch to Pan Mode" : "Switch to Zoom Mode"}>
                   <IconButton 
-                    onClick={() => setShowRegion(!showRegion)}
-                    color={showRegion ? "warning" : "default"}
-                    sx={{ 
-                      bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
-                      '&:hover': {
-                        bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'action.hover',
-                      },
-                      color: showRegion ? '#ff7f0e' : 'default',
-                    }}
+                    onClick={handleZoomModeToggle} 
+                    color={isZoomMode ? "primary" : "default"}
+                    sx={{ position: 'relative' }}
                   >
-                    {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                    {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
+              {isSelectingRange && (
+                <Tooltip title="Zoom/Pan disabled during selection">
+                  <span>
+                    <IconButton 
+                      disabled
+                      sx={{ 
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '-10%',
+                          width: '120%',
+                          height: '2px',
+                          backgroundColor: 'red',
+                          transform: 'rotate(-45deg)',
+                        }
+                      }}
+                    >
+                      {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+              <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
                 <IconButton 
-                  onClick={() => setIsLogScale(!isLogScale)}
-                  color={isLogScale ? "info" : "default"}
-                  sx={{ 
-                    bgcolor: isLogScale ? 'rgba(33, 150, 243, 0.1)' : 'transparent',
-                    '&:hover': {
-                      bgcolor: isLogScale ? 'rgba(33, 150, 243, 0.2)' : 'action.hover',
-                    },
-                    color: isLogScale ? '#2196f3' : 'default',
-                  }}
-                >
-                  <ScaleIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={isSelectingRange ? "Cancel Selection" : "Isolate Spectrum Region"}>
-                <IconButton 
-                  onClick={handleSelectionModeToggle}
+                  onClick={handleSelectionModeToggle} 
                   color={isSelectingRange ? "success" : "default"}
                   sx={{ 
                     bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
                     '&:hover': {
-                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'action.hover',
-                    },
-                    color: isSelectingRange ? '#4caf50' : 'default',
+                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
+                    }
                   }}
                 >
                   <CropIcon />
                 </IconButton>
               </Tooltip>
+              <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
+                <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
+                  <ScaleIcon />
+                </IconButton>
+              </Tooltip>
             </Stack>
-          </Box>
-        </Grid>
+          </Stack>
+        </Box>
+      </Box>
+      <Box>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <Plot
+          data={plotData}
+          layout={{
+            ...baseLayout,
+            dragmode: isSelectingRange ? 'select' : (isZoomMode ? 'zoom' : 'pan'),
+            title: {
+              text: selectedSignal.title
+            }
+          }}
+          config={{
+            displayModeBar: true,
+            scrollZoom: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
+          }}
+          onSelected={handleSelection}
+          onRelayout={handleRelayout}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </Box>
 
-        <Grid item xs={12}>
-          {/* Error message display */}
-          {error && (
-            <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-              <Typography>{error}</Typography>
-            </Box>
-          )}
-
-          {/* Loading spinner */}
-          {loading && (
+      {/* Energy-filtered image section */}
+      {selectedRange && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Energy-Filtered Image (Channels {selectedRange.start} - {selectedRange.end})
+          </Typography>
+          
+          {imageLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
             </Box>
           )}
-
-          {/* No selection message */}
-          {!loading && !error && (!selectedFile || !selectedSignal) && (
-            <Typography>Select a file and signal to view spectrum</Typography>
+          
+          {imageError && (
+            <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+              <Typography>{imageError}</Typography>
+            </Box>
           )}
-
-          {/* Spectrum plot */}
-          {!loading && !error && (fullSpectrumData.length > 0 || (regionSpectrumData && regionSpectrumData.length > 0)) && (
+          
+          {energyFilteredImage && !imageLoading && !imageError && (
             <Plot
-              data={[
-                // Full spectrum trace
-                {
-                  x: Array.from({ length: fullSpectrumData.length }, (_, i) => i),
-                  y: fullSpectrumData,
-                  type: 'scatter' as const,
-                  mode: 'lines' as const,
-                  name: 'Full Spectrum',
-                  line: {
-                    color: regionSpectrumData && showRegion ? '#1f77b480' : '#1f77b4',
-                    width: 2
+              data={[{
+                z: energyFilteredImage,
+                type: 'heatmap',
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                  title: {
+                    text: 'Intensity',
+                    side: 'right'
                   }
                 },
-                // Region spectrum trace (orange)
-                ...(regionSpectrumData && showRegion ? [{
-                  x: Array.from({ length: regionSpectrumData.length }, (_, i) => i),
-                  y: regionSpectrumData,
-                  type: 'scatter' as const,
-                  mode: 'lines' as const,
-                  name: 'Region Spectrum',
-                  line: {
-                    color: '#ff7f0e',
-                    width: 2
-                  }
-                }] : []),
-                // Selected range highlight (green)
-                ...(selectedRange ? [{
-                  x: Array.from({ length: fullSpectrumData.length }, (_, i) => i)
-                    .filter(i => i >= selectedRange.start && i <= selectedRange.end),
-                  y: fullSpectrumData
-                    .filter((_, i) => i >= selectedRange.start && i <= selectedRange.end),
-                  type: 'scatter' as const,
-                  mode: 'lines' as const,
-                  name: 'Selected Range',
-                  line: {
-                    color: '#4caf50',
-                    width: 2
-                  },
-                  showlegend: false,
-                  hoverinfo: 'skip' as const
-                },
-                // Start point marker (green)
-                {
-                  x: [selectedRange.start],
-                  y: [fullSpectrumData[selectedRange.start]],
-                  type: 'scatter' as const,
-                  mode: 'markers' as const,
-                  marker: {
-                    color: '#4caf50',
-                    size: 10,
-                    line: {
-                      color: 'white',
-                      width: 2
-                    }
-                  },
-                  name: 'Selection Start',
-                  showlegend: false,
-                  hovertemplate: 'Start: %{x}<br>Count: %{y}<extra></extra>'
-                },
-                // End point marker (green)
-                {
-                  x: [selectedRange.end],
-                  y: [fullSpectrumData[selectedRange.end]],
-                  type: 'scatter' as const,
-                  mode: 'markers' as const,
-                  marker: {
-                    color: '#4caf50',
-                    size: 10,
-                    line: {
-                      color: 'white',
-                      width: 2
-                    }
-                  },
-                  name: 'Selection End',
-                  showlegend: false,
-                  hovertemplate: 'End: %{x}<br>Count: %{y}<extra></extra>'
-                }] : [])
-              ]}
+                zsmooth: 'best'
+              }]}
               layout={{
-                width: 800,
+                width: 600,
                 height: 400,
-                margin: { t: 10, r: 50, b: 50, l: 70 },
-                showlegend: true,
-                legend: {
-                  x: 1,
-                  xanchor: 'right',
-                  y: 1
+                margin: { t: 10, r: 80, b: 10, l: 10 },
+                xaxis: { 
+                  visible: false,
+                  showgrid: false,
+                  scaleanchor: 'y',
+                  constrain: 'domain'
                 },
-                xaxis: {
-                  title: {
-                    text: 'Energy (keV)',
-                    standoff: 10
-                  },
-                  showgrid: true,
-                  gridcolor: '#e1e1e1',
-                  zeroline: false
+                yaxis: { 
+                  visible: false,
+                  showgrid: false,
+                  constrain: 'domain',
+                  autorange: "reversed"
                 },
-                yaxis: {
-                  title: {
-                    text: 'Count',
-                    standoff: 10
-                  },
-                  showgrid: true,
-                  gridcolor: '#e1e1e1',
-                  zeroline: false,
-                  type: isLogScale ? 'log' : 'linear'
-                },
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white',
-                dragmode: isSelectingRange ? 'select' : 'zoom', // Toggle between select and zoom modes
-                selectdirection: 'h' // Only allow horizontal selection
+                plot_bgcolor: 'transparent',
+                paper_bgcolor: 'transparent'
               }}
               config={{
                 responsive: true,
@@ -361,97 +474,19 @@ function SpectrumViewer({
                 scrollZoom: true,
                 toImageButtonOptions: {
                   format: 'svg',
-                  filename: 'spectrum_plot',
+                  filename: 'energy_filtered_image',
                   height: 800,
-                  width: 1200,
+                  width: 800,
                   scale: 2
                 }
               }}
-              onSelected={handleSelection}
               style={{ width: '100%', height: '100%' }}
             />
           )}
-        </Grid>
-
-        {/* Energy-filtered image section */}
-        {selectedRange && (
-          <Grid item xs={12}>
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Energy-Filtered Image (Channels {selectedRange.start} - {selectedRange.end})
-              </Typography>
-              
-              {imageLoading && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                  <CircularProgress />
-                </Box>
-              )}
-              
-              {imageError && (
-                <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-                  <Typography>{imageError}</Typography>
-                </Box>
-              )}
-              
-              {energyFilteredImage && !imageLoading && !imageError && (
-                <Plot
-                  data={[{
-                    z: energyFilteredImage,
-                    type: 'heatmap',
-                    colorscale: 'Viridis',
-                    showscale: true,
-                    colorbar: {
-                      title: {
-                        text: 'Intensity',
-                        side: 'right'
-                      }
-                    },
-                    zsmooth: 'best'
-                  }]}
-                  layout={{
-                    width: 600,
-                    height: 400,
-                    margin: { t: 10, r: 80, b: 10, l: 10 },
-                    xaxis: { 
-                      visible: false,
-                      showgrid: false,
-                      scaleanchor: 'y',
-                      constrain: 'domain'
-                    },
-                    yaxis: { 
-                      visible: false,
-                      showgrid: false,
-                      constrain: 'domain',
-                      autorange: "reversed"
-                    },
-                    plot_bgcolor: 'transparent',
-                    paper_bgcolor: 'transparent'
-                  }}
-                  config={{
-                    responsive: true,
-                    displayModeBar: true,
-                    displaylogo: false,
-                    scrollZoom: true,
-                    toImageButtonOptions: {
-                      format: 'svg',
-                      filename: 'energy_filtered_image',
-                      height: 800,
-                      width: 800,
-                      scale: 2
-                    }
-                  }}
-                  style={{ width: '100%', height: '100%' }}
-                />
-              )}
-            </Box>
-          </Grid>
-        )}
-      </Grid>
+        </Box>
+      )}
     </Box>
   );
-
-  // console.log('=== Ending SpectrumViewer component ===');
-  return result;
 }
 
 export default SpectrumViewer; 

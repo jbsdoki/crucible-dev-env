@@ -242,7 +242,9 @@ def get_spectrum_data(signal):
         'y': y_values,
         'x_label': signal_axis.name,
         'x_units': signal_axis.units,
-        'y_label': 'Counts' if signal.metadata.Signal.signal_type == "EDS_TEM" else 'Intensity'
+        'y_label': 'Counts' if signal.metadata.Signal.signal_type == "EDS_TEM" else 'Intensity',
+        'zero_index': None,
+        'fwhm_index': None
     }
 
 

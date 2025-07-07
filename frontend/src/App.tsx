@@ -24,7 +24,7 @@
 
 import { useState } from 'react'
 // import SpectrumViewer from './components/SpectrumViewer'
-import TestSpectrumViewer from './components/TestSpectrumViewer'
+import SpectrumViewer from './components/SpectrumViewer'
 import ImageViewer from './components/ImageViewer'
 import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
@@ -195,7 +195,7 @@ function App() {
           </Typography>
           <Box sx={{ flex: 1, position: 'relative' }}>
             {selectedSignal?.capabilities.hasSpectrum && (
-              <TestSpectrumViewer 
+              <SpectrumViewer 
                 selectedFile={selectedFile}
                 selectedSignal={selectedSignal}
                 regionSpectrumData={regionSpectrumData}

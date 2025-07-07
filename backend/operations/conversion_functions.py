@@ -30,7 +30,7 @@ class SpectrumConverter:
         """Calculate the index where real values start (where energy = 0)."""
         return (-self.offset / self.scale)
         
-    def calculate_fwhm(self, spectrum_data):
+    def calculate_fwhm(self, spectrum_data, zero_index):
         """
         Calculate the Full Width at Half Maximum (FWHM) index after the zero peak.
         This expects the spectrum data to be in the original index space (0-4095)

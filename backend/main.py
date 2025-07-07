@@ -136,66 +136,6 @@ async def get_signals(filename: str = Query(...)):
 
 
 """
-Gets spectrum data from a specific signal in a file (1d list returned)
-Args:
-    filename: Name of the file (required)
-    signal_idx: Index of the signal in the file (required)
-Returns: List of spectrum data points (1d list from numpy.tolist())
-Called by: Frontend getSpectrum() function
-@deprecated Use /new-spectrum endpoint instead which provides proper energy calibration
-"""
-# @app.get("/spectrum")
-# async def get_spectrum(
-#     filename: str = Query(...), 
-#     signal_idx: int = Query(...)
-# ):
-#     print("\n=== Starting get_spectrum() in main.py ===")
-#     print(f"Filename: {filename}, Signal Index: {signal_idx}")
-#     log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx})
-#     try:
-#         spectrum_data = signal_service.get_spectrum_data(filename, signal_idx)
-#         print("=== Ending get_spectrum() in main.py ===\n")
-#         return JSONResponse(content=spectrum_data)
-#     except Exception as e:
-#         print(f"ERROR in get_spectrum() in main.py: {str(e)}")
-#         print("=== Ending get_spectrum() with error in main.py ===\n")
-#         return JSONResponse(
-#             status_code=500,
-#             content={"error": str(e)}
-#         )
-
-
-"""
-Gets spectrum data from a specific signal in a file (1d list returned)
-Args:
-    filename: Name of the file (required)
-    signal_idx: Index of the signal in the file (required)
-Returns: List of spectrum data points (1d list from numpy.tolist())
-Called by: Frontend getSpectrum() function
-@deprecated Use /new-spectrum endpoint instead which provides proper energy calibration
-"""
-# @app.get("/test_spectrum")
-# async def test_get_spectrum(
-#     filename: str = Query(...), 
-#     signal_idx: int = Query(...)
-# ):
-#     print("\n=== Starting test_get_spectrum() in main.py ===")
-#     print(f"Filename: {filename}, Signal Index: {signal_idx}")
-#     log_call("/test_spectrum", {"filename": filename, "signal_idx": signal_idx})
-#     try:
-#         spectrum_data = signal_service.get_spectrum_data(filename, signal_idx)
-#         print("=== Ending get_spectrum() in main.py ===\n")
-#         return JSONResponse(content=spectrum_data)
-#     except Exception as e:
-#         print(f"ERROR in get_spectrum() in main.py: {str(e)}")
-#         print("=== Ending get_spectrum() with error in main.py ===\n")
-#         return JSONResponse(
-#             status_code=500,
-#             content={"error": str(e)}
-#         )
-
-
-"""
 Gets image data from a specific signal in a file
 Args:
     filename: Name of the file (required)
@@ -224,6 +164,40 @@ async def get_image_data(
             status_code=500,
             content={"error": str(e)}
         )
+
+@app.get("/spectrum")
+async def get_spectrum(
+    filename: str = Query(...), 
+    signal_idx: int = Query(...)
+):
+    """
+    Gets spectrum data in the new format that includes both x and y values with units
+    Args:
+        filename: Name of the file (required)
+        signal_idx: Index of the signal in the file (required)
+    Returns: Dictionary containing:
+        - x: array of energy values
+        - y: array of intensity values
+        - x_label: label for x-axis
+        - x_units: units for x-axis
+        - y_label: label for y-axis
+    Called by: Frontend getNewSpectrum() function
+    """
+    print("\n=== Starting get_spectrum() in main.py ===")
+    print(f"Filename: {filename}, Signal Index: {signal_idx}")
+    log_call("/spectrum", {"filename": filename, "signal_idx": signal_idx})
+    try:
+        spectrum_data = signal_service.get_spectrum_data(filename, signal_idx)
+        print("=== Ending get_spectrum() in main.py ===\n")
+        return JSONResponse(content=spectrum_data)
+    except Exception as e:
+        print(f"ERROR in get_spectrum() in main.py: {str(e)}")
+        print("=== Ending get_spectrum() with error in main.py ===\n")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
+
 
 """
 Gets HAADF data from a specific signal in a file
@@ -359,35 +333,3 @@ async def energy_range_spectrum(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/new-spectrum")
-async def get_new_spectrum(
-    filename: str = Query(...), 
-    signal_idx: int = Query(...)
-):
-    """
-    Gets spectrum data in the new format that includes both x and y values with units
-    Args:
-        filename: Name of the file (required)
-        signal_idx: Index of the signal in the file (required)
-    Returns: Dictionary containing:
-        - x: array of energy values
-        - y: array of intensity values
-        - x_label: label for x-axis
-        - x_units: units for x-axis
-        - y_label: label for y-axis
-    Called by: Frontend getNewSpectrum() function
-    """
-    print("\n=== Starting get_new_spectrum() in main.py ===")
-    print(f"Filename: {filename}, Signal Index: {signal_idx}")
-    log_call("/new-spectrum", {"filename": filename, "signal_idx": signal_idx})
-    try:
-        spectrum_data = signal_service.get_new_spectrum_data(filename, signal_idx)
-        print("=== Ending get_new_spectrum() in main.py ===\n")
-        return JSONResponse(content=spectrum_data)
-    except Exception as e:
-        print(f"ERROR in get_new_spectrum() in main.py: {str(e)}")
-        print("=== Ending get_new_spectrum() with error in main.py ===\n")
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)}
-        )
