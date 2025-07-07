@@ -71,20 +71,19 @@ class SignalService:
     #                              Spectrum Methods                               #
     #############################################################################
 
-    def get_spectrum_from_region(self, filename: str, signal_idx: int, region: dict):
+    def get_spectrum_from_2d(self, filename: str, signal_idx: int, region: dict):
         """
         Gets spectrum data from a specific region of a 3D signal.
         Args:
             filename (str): Name of the file
             signal_idx (int): Index of the signal
-            region (dict): Dictionary containing x1, y1, x2, y2 coordinates
+            region (dict): Dictionary containing x1, y1, x2, y2 coordinates as floats
         Returns:
             list: Averaged spectrum data from the selected region
         """
-        print(f"\n=== Starting get_spectrum_from_region() in SignalService ===")
+        print(f"\n=== Starting get_spectrum_from_2d() in SignalService ===")
         try:
             filepath = os.path.join(constants.DATA_DIR, filename)
-
             signal = file_functions.load_file(filepath)
             
             if isinstance(signal, list):
@@ -96,7 +95,35 @@ class SignalService:
             if len(signal.data.shape) != 3:
                 raise ValueError("Selected signal must be 3D for region selection")
 
-            return spectrum_functions.extract_spectrum_range(signal, region)
+            # Get axes information to identify the spectrum axis
+            axes_data = data_functions.load_axes_manager(signal)
+            if not axes_data:
+                raise ValueError("Could not load axes information")
+
+            # Extract coordinates as floats
+            x1, y1 = float(region['x1']), float(region['y1'])
+            x2, y2 = float(region['x2']), float(region['y2'])
+            
+            # Ensure coordinates are within bounds
+            height, width, _ = signal.data.shape
+            x1 = max(0.0, min(x1, float(width)))
+            x2 = max(0.0, min(x2, float(width)))
+            y1 = max(0.0, min(y1, float(height)))
+            y2 = max(0.0, min(y2, float(height)))
+            
+            # Ensure x1 < x2 and y1 < y2
+            x1, x2 = min(x1, x2), max(x1, x2)
+            y1, y2 = min(y1, y2), max(y1, y2)
+            
+            # Use isig to get the region and sum over spatial dimensions
+            # The [:, :] at the end ensures we get all spectrum values
+            region_signal = signal.isig[:, :][y1:y2, x1:x2]
+            
+            # Sum over the spatial dimensions to get the average spectrum
+            summed_spectrum = region_signal.sum(axis=(0, 1))
+            
+            # Convert to list for JSON serialization
+            return summed_spectrum.data.tolist()
             
         except Exception as e:
             print(f"Error in get_spectrum_from_region: {str(e)}")
@@ -128,6 +155,110 @@ class SignalService:
             # print(f"Selected signal {signal_idx}, type: {type(signal)}")
 
         return spectrum_functions.extract_whole_spectrum_data(signal)
+
+    def test_get_spectrum_data(self, filename, signal_idx):
+        """
+        Gets spectrum data from a file.
+        Args:
+            filename (str): Name of the file to get spectrum data from
+            signal_idx (int): Index of the signal to get spectrum data from
+        Returns:
+            list: List of spectrum data points
+        """
+        print(f"\n=== Starting get_spectrum_data() in SignalService ===")
+        
+        # Construct full filepath
+        filepath = constants.full_filepath(filename)
+
+        signal = file_functions.load_file(filepath)
+        
+        if isinstance(signal, list):
+            # print(f"Signal is a list with {len(signal)} items")
+            if signal_idx >= len(signal):
+                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
+            signal = signal[signal_idx]
+            # print(f"Selected signal {signal_idx}, type: {type(signal)}")
+
+        return data_functions.get_spectrum_data(signal)
+
+    def get_new_spectrum_data(self, filename, signal_idx):
+        """
+        Gets spectrum data in the new format that includes both x and y values with units.
+        The zero peak is automatically removed from the spectrum data.
+        
+        Args:
+            filename (str): Name of the file to get spectrum data from
+            signal_idx (int): Index of the signal to get spectrum data from
+        Returns:
+            dict: Dictionary containing:
+                - x: array of energy values
+                - y: array of intensity values (with zero peak removed)
+                - x_label: label for x-axis
+                - x_units: units for x-axis
+                - y_label: label for y-axis
+        """
+        print(f"\n=== Starting get_new_spectrum_data() in SignalService ===")
+        
+        # Construct full filepath
+        filepath = constants.full_filepath(filename)
+        print(f"Constructed filepath: {filepath}")
+        print(f"File exists: {os.path.exists(filepath)}")
+
+        signal = file_functions.load_file(filepath)
+        
+        if isinstance(signal, list):
+            if signal_idx >= len(signal):
+                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
+            signal = signal[signal_idx]
+
+        # Get the spectrum data
+        spectrum_data = data_functions.get_spectrum_data(signal)
+        
+        print("\nSpectrum Data Analysis:")
+        print(f"X-axis length: {len(spectrum_data['x'])}")
+        print(f"Y-axis length: {len(spectrum_data['y'])}")
+        print(f"First 5 X values (keV): {spectrum_data['x'][:5]}")
+        print(f"X-axis range: {min(spectrum_data['x'])} to {max(spectrum_data['x'])} {spectrum_data['x_units']}")
+        
+        # Get axes information for converter
+        signal_axis = signal.axes_manager.signal_axes[0]
+        axes_data = {
+            'offset': signal_axis.offset,
+            'scale': signal_axis.scale,
+            'units': signal_axis.units
+        }
+        print("\nAxes Information:")
+        print(f"Offset: {axes_data['offset']}")
+        print(f"Scale: {axes_data['scale']}")
+        print(f"Units: {axes_data['units']}")
+        
+        # Create converter and get zero peak information
+        from operations.conversion_functions import SpectrumConverter
+        converter = SpectrumConverter(axes_data)
+        
+        # Get zero peak information
+        zero_index = data_functions.get_zero_index(signal)
+        print(f"\nZero peak found at index: {zero_index}")
+        
+        if zero_index is not None:
+            half_zero_height = data_functions.get_half_zero_height(signal, zero_index)
+            print(f"Half zero height: {half_zero_height}")
+            
+            # Remove zero peak
+            modified_data = data_functions.remove_zero_peak(spectrum_data, half_zero_height, zero_index)
+            if modified_data:
+                spectrum_data['y'] = modified_data
+                print("Zero peak removed successfully")
+        else:
+            print("No zero peak found or zero peak removal not needed")
+        
+        # Convert NumPy arrays to lists for JSON serialization
+        if isinstance(spectrum_data['x'], np.ndarray):
+            spectrum_data['x'] = spectrum_data['x'].tolist()
+        if isinstance(spectrum_data['y'], np.ndarray):
+            spectrum_data['y'] = spectrum_data['y'].tolist()
+            
+        return spectrum_data
 
       
     #############################################################################

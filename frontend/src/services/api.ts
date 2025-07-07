@@ -98,15 +98,60 @@ export const getSignals = async (filename: string) => {
  * @param filename - Name of the file
  * @param signalIdx - Index of the signal in the file
  * Returns: Array of spectrum data points
+ * @deprecated Use getNewSpectrum instead which provides proper energy calibration
  */
-export const getSpectrum = async (filename: string, signalIdx: number) => {
+// export const getSpectrum = async (filename: string, signalIdx: number) => {
+//   try {
+//     const response = await api.get('/spectrum', {
+//       params: { filename, signal_idx: signalIdx }
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching spectrum:', error);
+//     throw error;
+//   }
+// };
+
+/**
+ * Fetches spectrum data from a specific signal in a file
+ * Calls: GET http://localhost:8000/spectrum?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Array of spectrum data points
+ * @deprecated Use getNewSpectrum instead which provides proper energy calibration
+ */
+// export const test_getSpectrum = async (filename: string, signalIdx: number) => {
+//   try {
+//     const response = await api.get('/test_spectrum', {
+//       params: { filename, signal_idx: signalIdx }
+//     });
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching spectrum:', error);
+//     throw error;
+//   }
+// };
+
+/**
+ * Fetches spectrum data using the new format that includes both x and y values with units
+ * Calls: GET http://localhost:8000/new-spectrum?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing:
+ *  - x: array of energy values
+ *  - y: array of intensity values
+ *  - x_label: label for x-axis
+ *  - x_units: units for x-axis
+ *  - y_label: label for y-axis
+ */
+export const getNewSpectrum = async (filename: string, signalIdx: number) => {
   try {
-    const response = await api.get('/spectrum', {
+    const response = await api.get('/new-spectrum', {
       params: { filename, signal_idx: signalIdx }
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching spectrum:', error);
+    console.error('Error fetching new spectrum format:', error);
     throw error;
   }
 };
