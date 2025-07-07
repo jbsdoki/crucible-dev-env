@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Plot from 'react-plotly.js';
-import type { PlotData } from 'plotly.js';
+import type { PlotData, Layout } from 'plotly.js';
+import { debounce } from 'lodash';
 import { getNewSpectrum, getEnergyRangeSpectrum } from '../services/api';
 import { Box, CircularProgress, Typography, IconButton, Tooltip, Stack, Grid } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CropIcon from '@mui/icons-material/Crop';
 import ScaleIcon from '@mui/icons-material/Scale';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import PanToolIcon from '@mui/icons-material/PanTool';
+import BlockIcon from '@mui/icons-material/Block';
 
 interface SignalCapabilities {
   hasSpectrum: boolean;
@@ -34,6 +38,11 @@ interface TestSpectrumViewerProps {
   selectedSignal: SignalInfo;
   regionSpectrumData?: SpectrumData | null;
   selectedRegion?: {x1: number, y1: number, x2: number, y2: number} | null;
+}
+
+interface AxisRange {
+  x?: [number, number];
+  y?: [number, number];
 }
 
 /**
@@ -64,6 +73,8 @@ function TestSpectrumViewer({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  const [layoutRange, setLayoutRange] = useState<AxisRange>({});
+  const [isZoomMode, setIsZoomMode] = useState(true);
 
   useEffect(() => {
     const fetchSpectrum = async () => {
@@ -96,6 +107,34 @@ function TestSpectrumViewer({
 
     fetchSpectrum();
   }, [selectedFile, selectedSignal]);
+
+  // Debounced relayout handler for zoom/pan
+  const handleRelayout = useCallback(
+    debounce((event: any) => {
+      if (!event) return;
+      
+      // Only update ranges if they've changed
+      if (event['xaxis.range[0]'] !== undefined && event['xaxis.range[1]'] !== undefined) {
+        setLayoutRange(prev => ({
+          ...prev,
+          x: [event['xaxis.range[0]'], event['xaxis.range[1]']]
+        }));
+      }
+      
+      if (event['yaxis.range[0]'] !== undefined && event['yaxis.range[1]'] !== undefined) {
+        setLayoutRange(prev => ({
+          ...prev,
+          y: [event['yaxis.range[0]'], event['yaxis.range[1]']]
+        }));
+      }
+    }, 150),
+    []
+  );
+
+  // Handle zoom mode toggle
+  const handleZoomModeToggle = () => {
+    setIsZoomMode(!isZoomMode);
+  };
 
   // Handle selection mode toggle
   const handleSelectionModeToggle = () => {
@@ -174,8 +213,28 @@ function TestSpectrumViewer({
     );
   }
 
+  // Create static layout object
+  const baseLayout: Partial<Layout> = {
+    showlegend: true,
+    height: 500,
+    xaxis: {
+      title: spectrumData ? {
+        text: `${spectrumData.x_label} (${spectrumData.x_units})`
+      } : undefined,
+      type: 'linear',
+      range: layoutRange.x
+    },
+    yaxis: {
+      title: spectrumData ? {
+        text: spectrumData.y_label
+      } : undefined,
+      type: isLogScale ? 'log' : 'linear',
+      range: layoutRange.y
+    }
+  };
+
   // Prepare plot data
-  const plotData: Array<Partial<Plotly.PlotData>> = [];
+  const plotData: Array<Partial<PlotData>> = [];
 
   // Add main spectrum
   plotData.push({
@@ -270,28 +329,62 @@ function TestSpectrumViewer({
                 </IconButton>
               </Tooltip>
             )}
-            <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
-              <IconButton
-                onClick={() => setIsLogScale(!isLogScale)}
-                color={isLogScale ? "primary" : "default"}
-              >
-                <ScaleIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={isSelectingRange ? "Cancel Selection" : "Select Energy Range"}>
-              <IconButton 
-                onClick={handleSelectionModeToggle}
-                color={isSelectingRange ? "success" : "default"}
-                sx={{ 
-                  bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-                  '&:hover': {
-                    bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
-                  }
-                }}
-              >
-                <CropIcon />
-              </IconButton>
-            </Tooltip>
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              {!isSelectingRange && (
+                <Tooltip title={isZoomMode ? "Switch to Pan Mode" : "Switch to Zoom Mode"}>
+                  <IconButton 
+                    onClick={handleZoomModeToggle} 
+                    color={isZoomMode ? "primary" : "default"}
+                    sx={{ position: 'relative' }}
+                  >
+                    {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
+                  </IconButton>
+                </Tooltip>
+              )}
+              {isSelectingRange && (
+                <Tooltip title="Zoom/Pan disabled during selection">
+                  <span>
+                    <IconButton 
+                      disabled
+                      sx={{ 
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '-10%',
+                          width: '120%',
+                          height: '2px',
+                          backgroundColor: 'red',
+                          transform: 'rotate(-45deg)',
+                        }
+                      }}
+                    >
+                      {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+              <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
+                <IconButton 
+                  onClick={handleSelectionModeToggle} 
+                  color={isSelectingRange ? "success" : "default"}
+                  sx={{ 
+                    bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
+                    }
+                  }}
+                >
+                  <CropIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
+                <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
+                  <ScaleIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
           </Stack>
         </Box>
       </Box>
@@ -299,31 +392,20 @@ function TestSpectrumViewer({
         <Plot
           data={plotData}
           layout={{
+            ...baseLayout,
+            dragmode: isSelectingRange ? 'select' : (isZoomMode ? 'zoom' : 'pan'),
             title: {
               text: selectedSignal.title
-            },
-            xaxis: {
-              title: {
-                text: `${spectrumData.x_label} (${spectrumData.x_units})`
-              },
-              type: 'linear'
-            },
-            yaxis: {
-              title: {
-                text: spectrumData.y_label
-              },
-              type: isLogScale ? 'log' : 'linear'
-            },
-            dragmode: isSelectingRange ? 'select' : 'zoom',
-            showlegend: true,
-            height: 500
+            }
           }}
           config={{
             displayModeBar: true,
             scrollZoom: true,
-            displaylogo: false
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
           }}
           onSelected={handleSelection}
+          onRelayout={handleRelayout}
           style={{ width: '100%', height: '100%' }}
         />
       </Box>
