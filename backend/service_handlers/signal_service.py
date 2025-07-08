@@ -21,34 +21,14 @@ class SignalService:
         try:
             print("\n=== Starting get_signal_list in SignalService ===")
             print(f"Input filename: {filename}")
-            print(f"DATA_DIR: {constants.DATA_DIR}")
             
-            # Construct full filepath
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            print(f"Constructed filepath: {filepath}")
-            print(f"File exists: {os.path.exists(filepath)}")
-            
-            print("\nChecking cached signals...")
-            # First check if we have cached signals
-            cached_signals = signal_functions.get_cached_signals(filepath)
-            print(f"Cached signals found: {cached_signals is not None}")
-            if cached_signals:
-                print("Returning cached signals")
-                return cached_signals
-            
-            print("\nLoading file...")
-            # If not cached, load the file
-            try:
-                file_data = file_functions.load_file(filepath)
-                print(f"File loaded successfully: {file_data is not None}")
-            except Exception as e:
-                print(f"Error loading file: {str(e)}")
-                raise
+            #Get all signals from file
+            signals = file_functions.get_or_load_file(filename)
             
             print("\nGetting signal titles...")
             # Get signal list
             try:
-                signal_list = signal_functions.extract_signal_list(file_data)
+                signal_list = signal_functions.extract_signal_list(signals)
                 print(f"Signal titles retrieved: {signal_list is not None}")
                 if signal_list:
                     print(f"Number of signals found: {len(signal_list)}")
@@ -91,30 +71,28 @@ class SignalService:
         """
         print(f"\n=== Starting get_spectrum_data() in SignalService ===")
         
-        # Construct full filepath
-        filepath = constants.full_filepath(filename)
-        print(f"Constructed filepath: {filepath}")
-        print(f"File exists: {os.path.exists(filepath)}")
+        try:
+            # Get signal from cache or load it
+            signal = file_functions.get_or_load_file(filename, signal_idx)
 
-        signal = file_functions.load_file(filepath)
-        
-        if isinstance(signal, list):
-            if signal_idx >= len(signal):
-                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
-            signal = signal[signal_idx]
-
-        # Get the spectrum data with indices
-        spectrum_data = data_functions.get_spectrum_data(signal)
-        
-        print("\nSpectrum Data Analysis:")
-        print(f"X-axis length: {len(spectrum_data['x'])}")
-        print(f"Y-axis length: {len(spectrum_data['y'])}")
-        print(f"First 5 X values (keV): {spectrum_data['x'][:5]}")
-        print(f"X-axis range: {min(spectrum_data['x'])} to {max(spectrum_data['x'])} {spectrum_data['x_units']}")
-        print(f"Zero index: {spectrum_data['zero_index']}")
-        print(f"FWHM index: {spectrum_data['fwhm_index']}")
+            # Get the spectrum data with indices
+            spectrum_data = data_functions.get_spectrum_data(signal)
             
-        return spectrum_data
+            print("\nSpectrum Data Analysis:")
+            print(f"X-axis length: {len(spectrum_data['x'])}")
+            print(f"Y-axis length: {len(spectrum_data['y'])}")
+            print(f"First 5 X values (keV): {spectrum_data['x'][:5]}")
+            print(f"X-axis range: {min(spectrum_data['x'])} to {max(spectrum_data['x'])} {spectrum_data['x_units']}")
+            print(f"Zero index: {spectrum_data['zero_index']}")
+            print(f"FWHM index: {spectrum_data['fwhm_index']}")
+                
+            return spectrum_data
+            
+        except Exception as e:
+            print(f"Error in get_spectrum_data: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     def get_spectrum_from_2d(self, filename: str, signal_idx: int, region: dict):
         """
@@ -128,13 +106,8 @@ class SignalService:
         """
         print(f"\n=== Starting get_spectrum_from_2d() in SignalService ===")
         try:
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            signal = file_functions.load_file(filepath)
-            
-            if isinstance(signal, list):
-                if signal_idx >= len(signal):
-                    raise ValueError(f"Signal index {signal_idx} out of range")
-                signal = signal[signal_idx]
+            # Get signal from cache or load it
+            signal = file_functions.get_or_load_file(filename, signal_idx)
 
             # Ensure we have a 3D signal
             if len(signal.data.shape) != 3:
@@ -195,16 +168,10 @@ class SignalService:
         """
         print(f"\n=== Starting get_image_data() from signal_service.py ===")
         try:
-            filepath = constants.full_filepath(filename)
-            
-            signal = file_functions.load_file(filepath)
-            print(f"\nLoaded signal type: {type(signal)}")
-
-            # Check if the signal index is within the range of the signal list
-            if signal_idx >= len(signal):
-                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
+            # Get signal from cache or load it
+            signal = file_functions.get_or_load_file(filename, signal_idx)
                 
-            return image_viewer_functions.extract_image_data(signal[signal_idx])
+            return image_viewer_functions.extract_image_data(signal)
             
         except Exception as e:
             print(f"Error extracting data from {filename}: {str(e)}")
@@ -239,11 +206,16 @@ class SignalService:
         
         try:
             # Load the signal
-            filepath = os.path.join(constants.DATA_DIR, filename)
+            filepath = constants.full_filepath(filename)
             
-            signal = file_functions.load_file(filepath)
 
-            signal = signal[signal_idx]
+            signal = file_functions.get_or_load_file(filename, signal_idx)
+
+            # signal = constants.get_cached_file(filepath, signal_idx)
+            # if signal is None:
+            #     signal = file_functions.load_file(filepath, signal_idx)
+
+            # signal = signal[signal_idx]
             
             # Get the full 3D data
             signal_data = signal.data
@@ -288,15 +260,8 @@ class SignalService:
         """
         print(f"\n=== Starting get_haadf_data() in SignalService ===")
         try:
-            print(f"\nExtracting data from {filename}")
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            print(f"Constructed filepath: {filepath}")
-            print(f"File exists: {os.path.exists(filepath)}")
-            
-            # Load all signals from the file
-            # signals = file_functions.get_signals_from_file(filepath)
-            signals = file_functions.load_file(filepath)
-            print(f"\nLoaded signals type: {type(signals)}")
+            # Get signals from cache or load it
+            signals = file_functions.get_or_load_file(filename)
             
             # Get the signal list to find HAADF
             signal_list = signal_functions.extract_signal_list(signals)
@@ -366,18 +331,8 @@ class SignalService:
         """
         print(f"\n=== Starting get_metadata() in SignalService ===")
         try:
-            print(f"Getting metadata for file: {filename}, signal index: {signal_idx}")
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            
-            # Load the file (will use cache if available)
-            signal = file_functions.load_file(filepath)
-            print(f"\nLoaded signal type: {type(signal)}")
-            
-
-            if signal_idx >= len(signal):
-                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
-            signal_data = signal[signal_idx]
-            print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
+            # Get signal from cache or load it
+            signal = file_functions.get_or_load_file(filename, signal_idx)
             
             # Get the metadata
             if hasattr(signal_data, 'metadata'):
@@ -408,18 +363,8 @@ class SignalService:
         """
         print(f"\n=== Starting get_axes_data() in SignalService ===")
         try:
-            print(f"Getting axes data for file: {filename}, signal index: {signal_idx}")
-            filepath = os.path.join(constants.DATA_DIR, filename)
-            
-            # Load the file (will use cache if available)
-            signal = file_functions.load_file(filepath)
-            print(f"\nLoaded signal type: {type(signal)}")
-            
-
-            if signal_idx >= len(signal):
-                raise ValueError(f"Signal index {signal_idx} out of range (max {len(signal)-1})")
-            signal_data = signal[signal_idx]
-            print(f"Selected signal {signal_idx}, type: {type(signal_data)}")
+            # Get signal from cache or load it
+            signal = file_functions.get_or_load_file(filename, signal_idx)
 
             if signal_data.data.ndim != 3:
                 print(f"Error getting axes data, incorrect number of dimensions: {signal_data.data.ndim}")

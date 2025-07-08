@@ -1,15 +1,19 @@
-# from .constants import DATA_DIR, CURRENT_FILE
-# from ..utils.constants import DATA_DIR, CURRENT_FILE
-from utils.constants import DATA_DIR, CURRENT_FILE
+from utils import constants
 import hyperspy.api as hs
 import os
 import time
+import gc
+from typing import Any
 
 
-"""
+
+def list_files():
+    """
 Lists all supported microscopy files in the sample_data directory.
 
 Supported formats:
+https://hyperspy.org/hyperspy-doc/v1.0/user_guide/io.html#supported-formats
+Includes:
 - .emd (EMD files)
 - .tif (TIFF files)
 - .dm3 (Digital Micrograph 3)
@@ -20,18 +24,78 @@ Supported formats:
 Returns:
     list: List of filenames with supported extensions
 """
-def list_files():
     print(f"\n=== Starting list_files() in file_functions.py ===")
-    try:
-        supported_extensions = ('.emd', '.tif', '.dm3', '.dm4', '.ser', '.emi')
+    try: # below is not full list of supported extensions
+         # all supported extensions: https://hyperspy.org/hyperspy-doc/v1.0/user_guide/io.html#supported-formats
+        supported_extensions = ('.emd', '.tif', '.dm3', '.dm4', '.ser', '.emi') 
         print("\nReturning list from list_files() in file_functions.py")
-        files = [f for f in os.listdir(DATA_DIR) if f.lower().endswith(supported_extensions)]
+        files = [f for f in os.listdir(constants.DATA_DIR) if f.lower().endswith(supported_extensions)]
         print("=== Ending list_files() in file_functions.py ===\n")
         return files
     except Exception as e:
-        print(f"Error accessing directory {DATA_DIR}: {str(e)}")
+        print(f"Error accessing directory {constants.DATA_DIR}: {str(e)}")
         print("\nReturning empty list from list_files() in file_functions.py")
         return []
+
+
+def get_or_load_file(filename: str, signal_idx: int = None) -> Any:
+    """
+    Helper function that handles the common pattern of:
+    1. Getting the full filepath
+    2. Checking the cache
+    3. Loading the file if not cached
+    4. Handling any errors in the process
+    
+    Args:
+        filename (str): Name of the file to load
+        signal_idx (int, optional): Index of the specific signal to return
+        
+    Returns:
+        Any: The loaded signal(s) from the file
+        
+    Raises:
+        ValueError: If the file cannot be loaded
+    """
+    try:
+        filepath = constants.full_filepath(filename)
+        print(f"Full filepath: {filepath}")
+        
+        if not os.path.exists(filepath):
+            raise ValueError(f"File does not exist: {filepath}")
+    
+        signal = get_cached_file(filepath, signal_idx)
+        
+        if signal is None:
+            signal = load_file(filepath, signal_idx)
+            
+        return signal
+        
+    except Exception as e:
+        print(f"Error loading file {filename}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+
+
+def get_cached_file(file_path, signal_idx=None):
+    print("\n=== Starting get_cached_file() in file_functions.py ===")
+    print(f"Checking cache for filepath: {file_path}")
+    print(f"Current cached filepath: {constants.CURRENT_FILE['filepath']}")
+    
+    if constants.CURRENT_FILE["filepath"] == file_path:
+        print("Filepath match found in cache")
+        if constants.CURRENT_FILE["data"] is not None:
+            if signal_idx is not None:
+                return constants.CURRENT_FILE["data"][signal_idx] # Most frontend functions call this function with signal_idx
+            else:
+                return constants.CURRENT_FILE["data"] # For get signal list return all signals
+        else:
+            print("Cache entry exists but data is None")
+            return None
+    else:
+        print("No matching filepath in cache")
+        return None
+
 
 
 """
@@ -52,17 +116,16 @@ Returns:
 Raises:
     ValueError: If the file cannot be loaded with any of the supported signal types
 """
-def load_file(filepath):
+def load_file(filepath, signal_idx=None):
     print(f"\n=== Starting load_file in file_functions.py ===")
     
-    # Check cache first
-    print("Checking cache...")
-    cached_data = get_cached_file(filepath)
-    if cached_data is not None:
-        print("Returning cached file data")
-        return cached_data
+    # Clear existing cache if loading a different file
+    if constants.CURRENT_FILE["filepath"] != filepath:
+        print("Clearing existing cache")
+        constants.CURRENT_FILE["data"] = None
+        gc.collect()  # Force garbage collection
         
-    signal_types = [None, 'EMD', 'EDS_TEM', 'EDS_SEM', 'EELS']  # None means try without specifying type
+    signal_types = [None, 'EMD', 'EDS_TEM', 'EDS_SEM']  # None means try without specifying type
     
     for signal_type in signal_types:
         try:
@@ -85,11 +148,14 @@ def load_file(filepath):
             # Return a list of signals for standardization, all functions that call
             # this function expect a list of signals
             if not isinstance(signal, list):
-                signal = [signal]
+                if signal_idx is not None:
+                    signal = signal[signal_idx]
+                else:
+                    signal = [signal]
             
             # Update cache
-            CURRENT_FILE["filepath"] = filepath
-            CURRENT_FILE["data"] = signal
+            constants.CURRENT_FILE["filepath"] = filepath
+            constants.CURRENT_FILE["data"] = signal
             
             print("=== Ending load_file in file_functions.py ===\n")
             return signal
@@ -103,70 +169,4 @@ def load_file(filepath):
 
 
 
-def get_cached_file(file_path):
-    print("\n=== Starting get_cached_file() in file_functions.py ===")
-    print(f"Checking cache for filepath: {file_path}")
-    print(f"Current cached filepath: {CURRENT_FILE['filepath']}")
-    
-    if CURRENT_FILE["filepath"] == file_path:
-        print("Filepath match found in cache")
-        if CURRENT_FILE["data"] is not None:
-            # print(f"Cache has data: {type(CURRENT_FILE['data'])}")
-            # if isinstance(CURRENT_FILE["data"], list):
-                # print(f"Number of signals in cache: {len(CURRENT_FILE['data'])}")
-                # for idx, sig in enumerate(CURRENT_FILE["data"]):
-                    # print(f"Signal {idx} type: {type(sig)}")
-                    # print(f"Signal {idx} has data attribute: {hasattr(sig, 'data')}")
-                    # if hasattr(sig, 'data'):
-                        # print(f"Signal {idx} data shape: {sig.data.shape if hasattr(sig.data, 'shape') else 'No shape'}")
-            return CURRENT_FILE["data"]
-        else:
-            print("Cache entry exists but data is None")
-            return None
-    else:
-        print("No matching filepath in cache")
-        return None
 
-
-
-"""
-Gets the signals from a file if it's already loaded, otherwise loads it.
-
-Args:
-    filename (str): Name of the file to get signals from
-    
-Returns:
-    list: List of signals from the file
-"""
-def get_signals_from_file(filename):
-    print(f"\n=== Starting get_signals_from_file() in file_functions.py ===")
-    try:
-        filepath = os.path.join(DATA_DIR, filename)
-        print(f"Loading file from: {filepath}")
-        
-        # Load the file (will use cache if available)
-        signals = load_file(filepath)
-        
-        if not isinstance(signals, list):
-            signals = [signals]
-            
-        return signals
-    except Exception as e:
-        print(f"ERROR getting signals from {filename}: {str(e)}")
-        raise e
-
-
-def load_current_file_signals(filepath):
-    if CURRENT_FILE["filepath"] == filepath:
-        return CURRENT_FILE["signals"]
-    else:
-        return False
-
-
-def set_current_file(filepath, signals):
-    CURRENT_FILE["filepath"] = filepath
-    CURRENT_FILE["signals"] = signals
-    
-        
-        
-        
