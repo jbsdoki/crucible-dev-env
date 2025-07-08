@@ -2,25 +2,6 @@ from utils.constants import DATA_DIR, CURRENT_FILE
 import os
 
 
-# def get_cached_signals(file_path):
-#     """
-#     Get cached signals for a file path.
-#     Args:
-#         file_path (str): Path to the file
-#     Returns:
-#         list: List of signal information dictionaries, or None if not cached
-#     """
-#     print(f"\n=== Starting get_cached_signals() in signal_functions.py ===")
-#     if CURRENT_FILE["filepath"] == file_path and CURRENT_FILE["data"] is not None:
-#         # Extract signal list from cached data
-#         return extract_signal_list(CURRENT_FILE["data"])
-#     return None
-
-#STILL NEED TO IMPLEMENT
-# def load_signal(signal_list, signal_idx):
-
-
-
 def extract_signal_list(signal_list):
     """
     Extracts signal information from a list of hyperspy signals.

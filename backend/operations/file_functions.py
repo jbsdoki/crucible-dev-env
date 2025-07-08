@@ -38,43 +38,6 @@ Returns:
         return []
 
 
-def get_or_load_file(filename: str, signal_idx: int = None) -> Any:
-    """
-    Helper function that handles the common pattern of:
-    1. Getting the full filepath
-    2. Checking the cache
-    3. Loading the file if not cached
-    4. Handling any errors in the process
-    
-    Args:
-        filename (str): Name of the file to load
-        signal_idx (int, optional): Index of the specific signal to return
-        
-    Returns:
-        Any: The loaded signal(s) from the file
-        
-    Raises:
-        ValueError: If the file cannot be loaded
-    """
-    try:
-        filepath = constants.full_filepath(filename)
-        print(f"Full filepath: {filepath}")
-        
-        if not os.path.exists(filepath):
-            raise ValueError(f"File does not exist: {filepath}")
-    
-        signal = get_cached_file(filepath, signal_idx)
-        
-        if signal is None:
-            signal = load_file(filepath, signal_idx)
-            
-        return signal
-        
-    except Exception as e:
-        print(f"Error loading file {filename}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
 
 
 def get_cached_file(file_path, signal_idx=None):

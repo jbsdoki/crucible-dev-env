@@ -1,11 +1,17 @@
-from operations import file_functions, signal_functions, spectrum_functions, image_viewer_functions, data_functions
+from operations import signal_functions, spectrum_functions, image_viewer_functions, data_functions
+from service_handlers.file_service import FileService
 from utils import constants
 import os
 import numpy as np
 import hyperspy.api as hs
 from typing import List, Dict, Any, Tuple
 
+# FileService is a class that handles file operations
+
 class SignalService:
+    def __init__(self):
+        self.file_service = FileService()
+
     #############################################################################
     #                              Signal List Methods                            #
     #############################################################################
@@ -23,7 +29,7 @@ class SignalService:
             print(f"Input filename: {filename}")
             
             #Get all signals from file
-            signals = file_functions.get_or_load_file(filename)
+            signals = self.file_service.get_or_load_file(filename)
             
             print("\nGetting signal titles...")
             # Get signal list
@@ -73,7 +79,7 @@ class SignalService:
         
         try:
             # Get signal from cache or load it
-            signal = file_functions.get_or_load_file(filename, signal_idx)
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
 
             # Get the spectrum data with indices
             spectrum_data = data_functions.get_spectrum_data(signal)
@@ -107,7 +113,7 @@ class SignalService:
         print(f"\n=== Starting get_spectrum_from_2d() in SignalService ===")
         try:
             # Get signal from cache or load it
-            signal = file_functions.get_or_load_file(filename, signal_idx)
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
 
             # Ensure we have a 3D signal
             if len(signal.data.shape) != 3:
@@ -169,7 +175,7 @@ class SignalService:
         print(f"\n=== Starting get_image_data() from signal_service.py ===")
         try:
             # Get signal from cache or load it
-            signal = file_functions.get_or_load_file(filename, signal_idx)
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
                 
             return image_viewer_functions.extract_image_data(signal)
             
@@ -209,25 +215,11 @@ class SignalService:
             filepath = constants.full_filepath(filename)
             
 
-            signal = file_functions.get_or_load_file(filename, signal_idx)
-
-            # signal = constants.get_cached_file(filepath, signal_idx)
-            # if signal is None:
-            #     signal = file_functions.load_file(filepath, signal_idx)
-
-            # signal = signal[signal_idx]
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
             
             # Get the full 3D data
             signal_data = signal.data
             print(f"Full signal data shape: {signal_data.shape}")
-
-            # print(f"original start: {start}, original end: {end}")
-
-            # #Convert the start and end indices to the original energy values
-            # axes_data = data_functions.load_axes_manager(signal)
-            # start_energy = data_functions.calculate_original_index(axes_data, start)
-            # end_energy = data_functions.calculate_original_index(axes_data, end)
-            # print(f"Start energy: {start_energy}, End energy: {end_energy}")
 
             # Validate range indices
             if start < 0 or end >= signal_data.shape[2] or start > end:
@@ -261,7 +253,7 @@ class SignalService:
         print(f"\n=== Starting get_haadf_data() in SignalService ===")
         try:
             # Get signals from cache or load it
-            signals = file_functions.get_or_load_file(filename)
+            signals = self.file_service.get_or_load_file(filename)
             
             # Get the signal list to find HAADF
             signal_list = signal_functions.extract_signal_list(signals)
@@ -317,7 +309,7 @@ class SignalService:
             return None
 
     #############################################################################
-    #                             Dataata Methods                              #
+    #                             Data Methods                                  #
     #############################################################################
 
     def get_metadata(self, filename, signal_idx):
@@ -332,12 +324,11 @@ class SignalService:
         print(f"\n=== Starting get_metadata() in SignalService ===")
         try:
             # Get signal from cache or load it
-            signal = file_functions.get_or_load_file(filename, signal_idx)
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
             
             # Get the metadata
-            if hasattr(signal_data, 'metadata'):
-                # metadata = self._convert_metadata_to_serializable(signal_data.metadata)
-                metadata = data_functions._convert_metadata_to_serializable(signal_data.metadata)
+            if hasattr(signal, 'metadata'):
+                metadata = data_functions._convert_metadata_to_serializable(signal.metadata)
                 print("\nMetadata extracted successfully")
                 print("=== Ending get_metadata() successfully ===\n")
                 return metadata
@@ -364,7 +355,7 @@ class SignalService:
         print(f"\n=== Starting get_axes_data() in SignalService ===")
         try:
             # Get signal from cache or load it
-            signal = file_functions.get_or_load_file(filename, signal_idx)
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
 
             if signal_data.data.ndim != 3:
                 print(f"Error getting axes data, incorrect number of dimensions: {signal_data.data.ndim}")

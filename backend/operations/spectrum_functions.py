@@ -27,13 +27,13 @@ def extract_whole_spectrum_data(signal):
     if dims == 1:
         # For 1D signals, use data directly as spectrum
         print("=== Ending extract_spectrum_data() in spectrum_viewer_functions.py successfully ===\n")
-        return signal.data.tolist()
+        return signal.data.tolist() #Returns the data from the numpy array as a list
     elif dims == 3:
         # For 3D signals, sum along both spatial dimensions (0 and 1) to get a 1D spectrum
         print("Original shape: ", signal.data.shape)
         summed_data = np.sum(signal.data, axis=(0, 1))
         print("Shape after summing: ", summed_data.shape)
-        return summed_data.tolist()
+        return summed_data.tolist() #Returns the data from the numpy array as a list
     else:
         print("=== Ending extract_spectrum_data() in spectrum_viewer_functions.py with error ===\n")
         raise ValueError(f"Signal with {dims} dimensions cannot be displayed as spectrum")
@@ -60,6 +60,8 @@ def extract_spectrum_range(signal, region: dict):
         raise ValueError("Signal has no data or shape")
         
     # Extract coordinates
+
+    
     x1, y1 = region['x1'], region['y1']
     x2, y2 = region['x2'], region['y2']
     
