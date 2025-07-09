@@ -143,26 +143,26 @@ main.tsx (Starts app)
                          - SpectrumViewer.tsx
                                 |
                                 v
-                            api.ts (File that calls backend API)
-                                ^
-                                |
-                                |
-Backend:                        |
-                                |
-                                v
-                             main.py (File that returns data to frontend, calls service functions)
-                                |
-                                v
-                        Service Handlers: (Organizes and calls individual functions)
-                           - file_service.py
-                           - signal_service.py
-                                    |
-                                    v
-                           Operations: (Individual data manipulating functions stored here)
-                              - file_functions.py
-                              - image_viewer_functions.py
-                              - metadata_functions.py
-                              - signal_functions.py
-                              - spectrum_viewer_functions.py
+                           api.ts (File that calls backend API)
+                                 ^
+                                 |
+                                 |
+Backend:                         |
+                                 |   
+                                 v
+                           main.py (File that returns data to frontend, calls service functions)
+                                 |
+                                 v
+                  Service Handlers: (Organizes and calls individual functions)
+                     - file_service.py
+                     - signal_service.py
+                                 |
+                                 v     
+                  Operations: (Individual data manipulating functions stored here)
+                     - file_functions.py
+                     - image_viewer_functions.py
+                     - metadata_functions.py
+                     - signal_functions.py
+                     - spectrum_viewer_functions.py
                            ```
 

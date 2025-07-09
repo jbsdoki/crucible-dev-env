@@ -172,7 +172,6 @@ class SignalService:
             print(f"  Total sum: {summed_spectrum.sum()}")
             print(f"  Max value: {summed_spectrum.max()}")
             print(f"  Min value: {summed_spectrum.min()}")
-            print(f"  Mean value: {summed_spectrum.mean()}")
             print(f"  Number of non-zero values: {(summed_spectrum != 0).sum()}")
             
             print("Successfully extracted region spectrum")
