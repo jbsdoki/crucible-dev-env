@@ -1,3 +1,4 @@
+# Ignore Microscopy Files (Extremely large / may not want to be shared or committed)
 *.emd
 *.h5
 *.ser
@@ -5,8 +6,11 @@
 *.dm3
 *.dm4
 
+# Ignore Python Cache Files (made when code is run locally, specific to the machine, not meant to be uploaded/shared/used)
 *.pyc
 
+# Ignore Cursor Files, used for development only
 .cursor/
 
+# Ignore files made as backups, development files, etc.
 backup_files/

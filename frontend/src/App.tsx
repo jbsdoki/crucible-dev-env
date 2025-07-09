@@ -5,7 +5,7 @@
  * It serves as the entry point for the application's component tree.
  * 
  * Component Structure:
- * - App (You are here)
+ * - App.tsx (You are here)
  *   ├─ FileSelector (./components/FileSelector.tsx)
  *   │   - Handles file selection
  *   │   - Shared between components
