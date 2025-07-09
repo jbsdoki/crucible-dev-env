@@ -9,14 +9,31 @@ CURRENT_FILE = {
 }
 
 def full_filepath(filename):
-    # Construct full filepath
-    filepath = os.path.join(DATA_DIR, filename)
+    print("utils/constants.py: full_filepath()")
+    print(f"filename: {filename}")
     
+    # Replace underscores with spaces if the file doesn't exist with underscores
+    filepath = os.path.join(DATA_DIR, filename)
+    if not os.path.exists(filepath):
+        # Try replacing underscores with spaces
+        filename_with_spaces = filename.replace('_', ' ')
+        filepath = os.path.join(DATA_DIR, filename_with_spaces)
+        
     print(f"Constructed filepath: {filepath}")
     print(f"File exists: {os.path.exists(filepath)}")
 
     return filepath
-    
 
+def get_cached_file(filepath, signal_idx=None):
+    print("utils/constants.py: get_cached_file()")
+    print(f"filepath: {filepath}")
+    print(f"signal_idx: {signal_idx}")
+
+    if CURRENT_FILE["filepath"] == filepath and CURRENT_FILE["data"] is not None:
+        if signal_idx is not None:
+            return CURRENT_FILE["data"][signal_idx]
+        return CURRENT_FILE["data"]
+    print("No cached file found")
+    return None
 
 

@@ -17,46 +17,6 @@
     - Install micromamba from: https://mamba.readthedocs.io/en/latest/installation.html
 
 
-- Python Version: 3.10
-- Key Packages: 
-   - fastapi==0.109.2
-   - uvicorn==0.27.1
-   - hyperspy==1.7.5
-   - python-multipart==0.0.9
-   - numpy==1.23.5
-   - scikit-image==0.19.3
-   - scipy==1.10.1
-   - matplotlib==3.5.1
-
--frontend npm library list: (automatically installed with bash npm "install" command)
-frontend@0.0.0 \react-explorers\frontend
-├── @emotion/react@11.14.0
-├── @emotion/styled@11.14.0
-├── @eslint/js@9.28.0
-├── @kurkle/color@0.3.4 extraneous
-├── @mui/icons-material@7.1.1
-├── @mui/material@7.1.1
-├── @types/react-dom@19.1.6
-├── @types/react@19.1.7
-├── @vitejs/plugin-react@4.5.2
-├── axios@1.9.0
-├── chart.js@4.5.0 extraneous
-├── eslint-plugin-react-hooks@5.2.0
-├── eslint-plugin-react-refresh@0.4.20
-├── eslint@9.28.0
-├── globals@16.2.0
-├── react-chartjs-2@5.3.0 extraneous
-├── react-dom@19.1.0
-├── react@19.1.0
-├── recharts@2.15.3
-├── typescript-eslint@8.34.0
-├── typescript@5.8.3
-└── vite@6.3.5
-
-   
-(Specific build type should not matter)
-
-(These package names are stored in backend/requirements.txt for easy install)
 
 # Setup Steps
 
@@ -167,36 +127,42 @@ In backend/main.py any source or credential is allowed to connect. This is a dev
 This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations. 
 Frontend:
 
-main.tsx <-> App.tsx <-> Components:
+main.tsx (Starts app)
+   |
+   -> App.tsx (Calls components, organizes them into sections on the screen)
+            |
+            -> Contexts: (Provide data for the components)
+            |           - ElementContext.tsx
+            |           - FileContext.tst
+            |              
+            -> Components: (Control what is displayed to screen, only displays in one section)
                          - FileSelector.tsx
                          - ImageViewer.tsx
                          - MetadataViewer.tsx
                          - SignalSelector.tsx
                          - SpectrumViewer.tsx
-                         - TestConnection.tsx
                                 |
                                 v
-                            api.ts
+                            api.ts (File that calls backend API)
+                                ^
+                                |
+                                |
+Backend:                        |
                                 |
                                 v
-                        main.py in the backend
-
-
-Backend:
-
-                        api.ts in the frontend
-                           ^ 
-                           |
-                        main.py <-> Service Handlers:
-                                    - file_service.py
-                                    - signal_service.py
-                                          |
-                                          v
-                                    Operations:
-                                    - file_functions.py
-                                    - image_viewer_functions.py
-                                    - metadata_functions.py
-                                    - signal_functions.py
-                                    - spectrum_viewer_functions.py
-                        ```
+                             main.py (File that returns data to frontend, calls service functions)
+                                |
+                                v
+                        Service Handlers: (Organizes and calls individual functions)
+                           - file_service.py
+                           - signal_service.py
+                                    |
+                                    v
+                           Operations: (Individual data manipulating functions stored here)
+                              - file_functions.py
+                              - image_viewer_functions.py
+                              - metadata_functions.py
+                              - signal_functions.py
+                              - spectrum_viewer_functions.py
+                           ```
 

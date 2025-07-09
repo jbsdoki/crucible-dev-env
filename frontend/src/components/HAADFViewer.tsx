@@ -14,7 +14,7 @@ interface HAADFViewerProps {
  * as it automatically finds and displays the HAADF signal.
  */
 function HAADFViewer({ selectedFile }: HAADFViewerProps) {
-  console.log('=== Starting HAADFViewer component ===');
+  // console.log('=== Starting HAADFViewer component ===');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,7 +27,7 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
   // Effect to fetch HAADF data when file changes
   useEffect(() => {
     const fetchHAADFData = async () => {
-      console.log('=== Starting fetchHAADFData ===');
+      // console.log('=== Starting fetchHAADFData ===');
       if (!selectedFile) {
         setError(null);
         setImageData(null);
@@ -38,28 +38,28 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
       try {
         setLoading(true);
         setError(null);
-        console.log('Fetching HAADF data for:', { file: selectedFile });
+        // console.log('Fetching HAADF data for:', { file: selectedFile });
         
         const data = await getHAADFData(selectedFile);
-        console.log('Received raw data:', {
-          type: typeof data,
-          keys: Object.keys(data),
-          dataShape: data.data_shape,
-          imageDataType: typeof data.image_data,
-          imageDataIsArray: Array.isArray(data.image_data),
-          imageDataLength: data.image_data?.length,
-          sampleRow: data.image_data?.[0]?.slice(0, 5),  // First 5 pixels of first row
-        });
+        // console.log('Received raw data:', {
+        //   type: typeof data,
+        //   keys: Object.keys(data),
+        //   dataShape: data.data_shape,
+        //   imageDataType: typeof data.image_data,
+        //   imageDataIsArray: Array.isArray(data.image_data),
+        //   imageDataLength: data.image_data?.length,
+        //   sampleRow: data.image_data?.[0]?.slice(0, 5),  // First 5 pixels of first row
+        // });
         
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
           setError('No HAADF Image Found');
-          console.log('=== Ending fetchHAADFData - invalid data ===');
+          // console.log('=== Ending fetchHAADFData - invalid data ===');
           return;
         }
 
         const [height, width] = data.data_shape;
-        console.log('Image dimensions:', width, 'x', height);
+        // console.log('Image dimensions:', width, 'x', height);
         
         setImageData({
           data: data.image_data,
@@ -67,21 +67,21 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
           height: height
         });
 
-        console.log('Processed image data:', {
-          dimensions: `${width} x ${height}`,
-          totalPixels: width * height,
-          samplePixelValues: {
-            topLeft: data.image_data[0][0],
-            topRight: data.image_data[0][width-1],
-            bottomLeft: data.image_data[height-1][0],
-            bottomRight: data.image_data[height-1][width-1],
-          }
-        });
-        console.log('=== Ending fetchHAADFData successfully ===');
+        // console.log('Processed image data:', {
+        //   dimensions: `${width} x ${height}`,
+        //   totalPixels: width * height,
+        //   samplePixelValues: {
+        //     topLeft: data.image_data[0][0],
+        //     topRight: data.image_data[0][width-1],
+        //     bottomLeft: data.image_data[height-1][0],
+        //     bottomRight: data.image_data[height-1][width-1],
+        //   }
+        // });
+        // console.log('=== Ending fetchHAADFData successfully ===');
       } catch (err) {
         console.error('Error fetching HAADF data:', err);
         setError('No HAADF Image Found');
-        console.log('=== Ending fetchHAADFData with error ===');
+        console.log(`${err}`);
       } finally {
         setLoading(false);
       }
@@ -95,8 +95,8 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
     if (!imageData) return;
 
     const drawImage = () => {
-      console.log('=== Starting drawImage ===');
-      console.log('Attempting to draw image...');
+      // console.log('=== Starting drawImage ===');
+      // console.log('Attempting to draw image...');
       const canvas = canvasRef.current;
       if (!canvas) {
         console.log('Canvas not ready yet, waiting...');
@@ -104,12 +104,12 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
         return;
       }
 
-      console.log('Canvas found, dimensions:', canvas.width, 'x', canvas.height);
+      // console.log('Canvas found, dimensions:', canvas.width, 'x', canvas.height);
       
       // Set canvas dimensions to match image dimensions
       canvas.width = imageData.width;
       canvas.height = imageData.height;
-      console.log('Set canvas dimensions to:', canvas.width, 'x', canvas.height);
+      // console.log('Set canvas dimensions to:', canvas.width, 'x', canvas.height);
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -134,14 +134,14 @@ function HAADFViewer({ selectedFile }: HAADFViewerProps) {
       
       const imageDataObj = new ImageData(data, imageData.width, imageData.height);
       ctx.putImageData(imageDataObj, 0, 0);
-      console.log('Canvas rendering details:', {
-        canvasDimensions: `${canvas.width} x ${canvas.height}`,
-        dataBufferSize: data.length,
-        firstFewPixels: Array.from(data.slice(0, 20)),  // Show first 5 RGBA values
-        imageDataSize: `${imageDataObj.width} x ${imageDataObj.height}`
-      });
-      console.log('Image drawn to canvas successfully');
-      console.log('=== Ending drawImage successfully ===');
+      // console.log('Canvas rendering details:', {
+      //   canvasDimensions: `${canvas.width} x ${canvas.height}`,
+      //   dataBufferSize: data.length,
+      //   firstFewPixels: Array.from(data.slice(0, 20)),  // Show first 5 RGBA values
+      //   imageDataSize: `${imageDataObj.width} x ${imageDataObj.height}`
+      // });
+      // console.log('Image drawn to canvas successfully');
+      // console.log('=== Ending drawImage successfully ===');
     };
 
     // Try to draw immediately

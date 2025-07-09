@@ -1,106 +1,136 @@
-import { useState, useEffect } from 'react';
-import { getFiles, getMetadata, getSpectrum } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { getFiles } from '../services/api';
+import { useFileContext } from '../contexts/fileContext';
+import { Box, Typography, Select, MenuItem, Button, CircularProgress, Paper } from '@mui/material';
 
-function TestConnection() {
-  console.log('=== Starting TestConnection component ===');
+const TestConnection: React.FC = () => {
+  // Get everything from FileContext
+  const {
+    selectedFile,
+    setSelectedFile,
+    selectedSignal,
+    setSelectedSignal,
+    metadata,
+    error,
+    loading
+  } = useFileContext();
+
+  // Local state just for available files list
   const [files, setFiles] = useState<string[]>([]);
-  const [selectedFile, setSelectedFile] = useState<string>('');
-  const [metadata, setMetadata] = useState<any>(null);
-  const [spectrum, setSpectrum] = useState<number[]>([]);
-  const [error, setError] = useState<string>('');
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Test file list endpoint
+  // Fetch available files on mount
   useEffect(() => {
-    const fetchFiles = async () => {
-      console.log('=== Starting fetchFiles ===');
-      try {
-        const fileList = await getFiles();
-        setFiles(fileList);
-        setError('');
-        console.log('=== Ending fetchFiles successfully ===');
-      } catch (err) {
-        setError('Error fetching files: ' + (err as Error).message);
-        console.log('=== Ending fetchFiles with error ===');
-      }
-    };
     fetchFiles();
   }, []);
 
-  // Test metadata endpoint when a file is selected
-  const handleFileSelect = async (filename: string) => {
-    console.log('=== Starting handleFileSelect ===');
+  const fetchFiles = async () => {
     try {
-      setSelectedFile(filename);
-      const fileMetadata = await getMetadata(filename);
-      setMetadata(fileMetadata);
-      setError('');
-      console.log('=== Ending handleFileSelect successfully ===');
+      const fileList = await getFiles();
+      setFiles(fileList);
+      setFetchError(null);
     } catch (err) {
-      setError('Error fetching metadata: ' + (err as Error).message);
-      console.log('=== Ending handleFileSelect with error ===');
+      setFetchError('Failed to fetch files');
+      console.error('Error fetching files:', err);
     }
   };
 
-  // Test spectrum endpoint
-  const handleGetSpectrum = async () => {
-    console.log('=== Starting handleGetSpectrum ===');
-    if (!selectedFile) {
-      console.log('=== Ending handleGetSpectrum - no file selected ===');
-      return;
-    }
-    try {
-      const spectrumData = await getSpectrum(selectedFile, 0, 0);
-      setSpectrum(spectrumData);
-      setError('');
-      console.log('=== Ending handleGetSpectrum successfully ===');
-    } catch (err) {
-      setError('Error fetching spectrum: ' + (err as Error).message);
-      console.log('=== Ending handleGetSpectrum with error ===');
-    }
+  // Test signal selection
+  const testSignalSelection = () => {
+    // Create a test signal
+    const testSignal = {
+      index: 0,
+      title: "Test Signal",
+      type: "spectrum",
+      shape: [100, 100],
+      capabilities: {
+        hasSpectrum: true,
+        hasImage: true
+      }
+    };
+    setSelectedSignal(testSignal);
   };
 
-  const result = (
-    <div style={{ padding: '20px' }}>
-      <h2>API Connection Test</h2>
-      
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      
-      <div>
-        <h3>Available Files:</h3>
-        <ul>
-          {files.map((file) => (
-            <li key={file}>
-              <button onClick={() => handleFileSelect(file)}>{file}</button>
-            </li>
+  return (
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        FileContext Test Panel
+      </Typography>
+
+      {/* File Selection Test */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          File Selection Test
+        </Typography>
+        <Select
+          fullWidth
+          value={selectedFile}
+          onChange={(e) => setSelectedFile(e.target.value)}
+          sx={{ mb: 2 }}
+        >
+          {files.map(file => (
+            <MenuItem key={file} value={file}>{file}</MenuItem>
           ))}
-        </ul>
-      </div>
+        </Select>
+        {fetchError && (
+          <Typography color="error" sx={{ mb: 1 }}>
+            {fetchError}
+          </Typography>
+        )}
+      </Paper>
 
-      {selectedFile && (
-        <div>
-          <h3>Selected File: {selectedFile}</h3>
-          <button onClick={handleGetSpectrum}>Get Spectrum at (0,0)</button>
-        </div>
-      )}
+      {/* Signal Selection Test */}
+      <Paper sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Signal Selection Test
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={testSignalSelection}
+          disabled={!selectedFile}
+          sx={{ mb: 1 }}
+        >
+          Set Test Signal
+        </Button>
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="subtitle1">Current Signal:</Typography>
+          <pre>
+            {selectedSignal ? JSON.stringify(selectedSignal, null, 2) : 'No signal selected'}
+          </pre>
+        </Box>
+      </Paper>
 
-      {metadata && (
-        <div>
-          <h3>Metadata:</h3>
-          <pre>{JSON.stringify(metadata, null, 2)}</pre>
-        </div>
-      )}
+      {/* Metadata Display */}
+      <Paper sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Metadata Test
+        </Typography>
+        
+        {loading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-      {spectrum.length > 0 && (
-        <div>
-          <h3>Spectrum Data (first 5 points):</h3>
-          <pre>{JSON.stringify(spectrum.slice(0, 5), null, 2)}</pre>
-        </div>
-      )}
-    </div>
+        {error && (
+          <Typography color="error" sx={{ mb: 1 }}>
+            {error}
+          </Typography>
+        )}
+
+        {metadata && (
+          <Box>
+            <Typography variant="subtitle1">Metadata Result:</Typography>
+            <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
+              <pre>
+                {JSON.stringify(metadata, null, 2)}
+              </pre>
+            </Box>
+          </Box>
+        )}
+      </Paper>
+    </Box>
   );
-
-  console.log('=== Ending TestConnection component ===');
-  return result;
-}
+};
 
 export default TestConnection; 
