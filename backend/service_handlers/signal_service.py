@@ -108,46 +108,97 @@ class SignalService:
             signal_idx (int): Index of the signal
             region (dict): Dictionary containing x1, y1, x2, y2 coordinates as floats
         Returns:
-            list: Averaged spectrum data from the selected region
+            dict: Dictionary containing:
+                - x: array of energy values
+                - y: array of intensity values
+                - x_label: label for x-axis
+                - x_units: units for x-axis
+                - y_label: label for y-axis
         """
         print(f"\n=== Starting get_spectrum_from_2d() in SignalService ===")
         try:
             # Get signal from cache or load it
-            signal = self.file_service.get_or_load_file(filename, signal_idx)
+            signals = self.file_service.get_or_load_file(filename, signal_idx)
+            
+            # Extract the specific signal if we got a list
+            signal = signals[0] if isinstance(signals, list) else signals
+            
+            # Print some stats about the original signal data
+            print(f"Original signal data stats:")
+            print(f"  Shape: {signal.data.shape}")
+            print(f"  Total sum: {signal.data.sum()}")
+            print(f"  Max value: {signal.data.max()}")
+            print(f"  Min value: {signal.data.min()}")
+            print(f"  Mean value: {signal.data.mean()}")
 
             # Ensure we have a 3D signal
             if len(signal.data.shape) != 3:
-                raise ValueError("Selected signal must be 3D for region selection")
+                raise ValueError(f"Selected signal must be 3D for region selection. Got shape {signal.data.shape}")
 
-            # Get axes information to identify the spectrum axis
-            axes_data = data_functions.load_axes_manager(signal)
-            if not axes_data:
-                raise ValueError("Could not load axes information")
-
-            # Extract coordinates as floats
-            x1, y1 = float(region['x1']), float(region['y1'])
-            x2, y2 = float(region['x2']), float(region['y2'])
+            # Extract coordinates as floats and convert to integers
+            x1 = int(float(region['x1']))
+            x2 = int(float(region['x2']))
+            y1 = int(float(region['y1']))
+            y2 = int(float(region['y2']))
             
             # Ensure coordinates are within bounds
-            height, width, _ = signal.data.shape
-            x1 = max(0.0, min(x1, float(width)))
-            x2 = max(0.0, min(x2, float(width)))
-            y1 = max(0.0, min(y1, float(height)))
-            y2 = max(0.0, min(y2, float(height)))
+            height, width, spectrum_size = signal.data.shape
+            print(f"Signal dimensions - Height: {height}, Width: {width}, Spectrum: {spectrum_size}")
+            print(f"Requested region - X: {x1} to {x2}, Y: {y1} to {y2}")
             
-            # Ensure x1 < x2 and y1 < y2
+            # Bound check and ensure correct order
+            x1 = max(0, min(x1, width))
+            x2 = max(0, min(x2, width))
+            y1 = max(0, min(y1, height))
+            y2 = max(0, min(y2, height))
             x1, x2 = min(x1, x2), max(x1, x2)
             y1, y2 = min(y1, y2), max(y1, y2)
             
-            # Use isig to get the region and sum over spatial dimensions
-            # The [:, :] at the end ensures we get all spectrum values
-            region_signal = signal.isig[:, :][y1:y2, x1:x2]
+            print(f"Adjusted region - X: {x1} to {x2}, Y: {y1} to {y2}")
             
-            # Sum over the spatial dimensions to get the average spectrum
-            summed_spectrum = region_signal.sum(axis=(0, 1))
+            # Extract the region directly from the numpy array
+            region_data = signal.data[y1:y2, x1:x2, :]
+            print(f"Extracted region shape: {region_data.shape}")
+            print(f"Region data stats:")
+            print(f"  Total sum: {region_data.sum()}")
+            print(f"  Max value: {region_data.max()}")
+            print(f"  Min value: {region_data.min()}")
+            print(f"  Mean value: {region_data.mean()}")
             
-            # Convert to list for JSON serialization
-            return summed_spectrum.data.tolist()
+            # Sum over the spatial dimensions (height, width)
+            summed_spectrum = region_data.sum(axis=(0, 1))
+            print(f"Summed spectrum shape: {summed_spectrum.shape}")
+            print(f"Summed spectrum stats:")
+            print(f"  Total sum: {summed_spectrum.sum()}")
+            print(f"  Max value: {summed_spectrum.max()}")
+            print(f"  Min value: {summed_spectrum.min()}")
+            print(f"  Mean value: {summed_spectrum.mean()}")
+            print(f"  Number of non-zero values: {(summed_spectrum != 0).sum()}")
+            
+            print("Successfully extracted region spectrum")
+            
+            # Get the x-axis values and labels from the signal's axes manager
+            axes_info = data_functions.load_spectrum_axes(signal)
+            if not axes_info:
+                raise ValueError("Could not load axes information")
+            
+            # Get the energy axis (should be the only signal axis)
+            energy_axis = axes_info[0]
+            
+            # Generate x values using axis parameters
+            x_values = np.arange(energy_axis['size']) * energy_axis['scale'] + energy_axis['offset']
+            x_label = energy_axis['name'] or "Energy"
+            x_units = energy_axis['units'] or "keV"
+            y_label = "Intensity"
+            
+            # Return both x and y values along with axis information
+            return {
+                'x': x_values.tolist(),
+                'y': summed_spectrum.tolist(),
+                'x_label': x_label,
+                'x_units': x_units,
+                'y_label': y_label
+            }
             
         except Exception as e:
             print(f"Error in get_spectrum_from_region: {str(e)}")
@@ -357,13 +408,13 @@ class SignalService:
             # Get signal from cache or load it
             signal = self.file_service.get_or_load_file(filename, signal_idx)
 
-            if signal_data.data.ndim != 3:
-                print(f"Error getting axes data, incorrect number of dimensions: {signal_data.data.ndim}")
+            if signal.data.ndim != 3:
+                print(f"Error getting axes data, incorrect number of dimensions: {signal.data.ndim}")
                 return None
             
             # Get the axes data
-            if hasattr(signal_data, 'axes_manager'):
-                axes_data = data_functions.load_axes_manager(signal_data)
+            if hasattr(signal, 'axes_manager'):
+                axes_data = data_functions.load_axes_manager(signal)
                 print("\nAxes data extracted successfully")
                 print("=== Ending get_axes_data() successfully ===\n")
                 return axes_data

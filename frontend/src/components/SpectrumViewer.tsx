@@ -249,6 +249,10 @@ function SpectrumViewer({
     type: 'scatter',
     mode: 'lines',
     name: 'Full Spectrum',
+    line: {
+      color: '#1f77b4',  // Consistent blue color
+      width: 2
+    }
   });
 
   // Add FWHM line if enabled and index exists
@@ -261,7 +265,7 @@ function SpectrumViewer({
       mode: 'lines',
       name: 'FWHM',
       line: {
-        color: 'red',
+        color: '#d62728',  // Consistent red color
         width: 2,
         dash: 'dash',
       },
@@ -278,7 +282,7 @@ function SpectrumViewer({
       mode: 'markers',
       marker: { 
         size: 10,
-        color: 'green',
+        color: '#2ca02c',  // Consistent green color
         symbol: 'circle'
       },
       name: 'Selection Start',
@@ -293,7 +297,7 @@ function SpectrumViewer({
       mode: 'markers',
       marker: { 
         size: 10,
-        color: 'green',
+        color: '#2ca02c',  // Same green color
         symbol: 'circle'
       },
       name: 'Selection End',
@@ -307,10 +311,11 @@ function SpectrumViewer({
       type: 'scatter',
       mode: 'lines',
       line: { 
-        color: 'rgba(0, 255, 0, 0.3)',
+        color: '#2ca02c',  // Same green color
         width: 2
       },
       fill: 'tonexty',
+      fillcolor: 'rgba(44, 160, 44, 0.3)',  // Semi-transparent green
       name: 'Selected Region'
     });
   }
@@ -323,6 +328,10 @@ function SpectrumViewer({
       type: 'scatter',
       mode: 'lines',
       name: 'Region Spectrum',
+      line: {
+        color: '#ff7f0e',  // Consistent orange color
+        width: 2
+      }
     });
   }
 
