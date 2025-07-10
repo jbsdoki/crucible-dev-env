@@ -15,6 +15,9 @@ interface SpectrumContextValue {
   // Plot interaction mode
   isZoomMode: boolean;
   setIsZoomMode: (value: boolean) => void;
+  // Region spectrum visibility
+  showRegion: boolean;
+  setShowRegion: (value: boolean) => void;
 }
 
 // Create the context with undefined as initial value
@@ -31,6 +34,7 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
   const [isLogScale, setIsLogScale] = useState<boolean>(false);
   const [showFWHM, setShowFWHM] = useState<boolean>(false);
   const [isZoomMode, setIsZoomMode] = useState<boolean>(true);
+  const [showRegion, setShowRegion] = useState<boolean>(true);
 
   const value: SpectrumContextValue = {
     fwhm_index,
@@ -40,7 +44,9 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
     showFWHM,
     setShowFWHM,
     isZoomMode,
-    setIsZoomMode
+    setIsZoomMode,
+    showRegion,
+    setShowRegion
   };
 
   return (

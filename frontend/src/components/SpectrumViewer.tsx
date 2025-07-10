@@ -78,13 +78,15 @@ function SpectrumViewer({
     showFWHM,
     setShowFWHM,
     isZoomMode,
-    setIsZoomMode
+    setIsZoomMode,
+    showRegion,
+    setShowRegion
   } = useSpectrumContext();
   
   const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [showRegion, setShowRegion] = useState<boolean>(true);
+  // const [showRegion, setShowRegion] = useState<boolean>(true);
   // Comment out local showFWHM state as it's now in context
   // const [showFWHM, setShowFWHM] = useState(false);
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
