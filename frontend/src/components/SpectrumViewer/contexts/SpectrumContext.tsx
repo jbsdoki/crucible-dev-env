@@ -1,111 +1,34 @@
-/**
- * SpectrumContext
- * 
- * This context will manage the shared state and functionality for the SpectrumViewer component tree.
- * It will eventually handle:
- * - Spectrum data and visualization state
- * - Toolbar interactions (zoom, pan, selection modes)
- * - Plot configuration and layout
- * - Region selection and energy filtered image data
- * 
- * Current Status:
- * This is a minimal implementation that will be built up incrementally.
- * 
- * Usage:
- * ```typescript
- * // Wrap your component tree with the provider
- * function ParentComponent() {
- *   return (
- *     <SpectrumProvider>
- *       <ChildComponents />
- *     </SpectrumProvider>
- *   );
- * }
- * 
- * // Access the context in child components
- * function ChildComponent() {
- *   const context = useSpectrum();
- *   // ... use context values
- * }
- * ```
- */
-
 import React, { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
-/**
- * The type definition for our context value
- * Currently only contains FWHM index as a test
- */
+// Define the shape of our context value
 interface SpectrumContextValue {
   fwhm_index: number | null;
   setFwhmIndex: (index: number | null) => void;
+  isLogScale: boolean;
+  setIsLogScale: (value: boolean) => void;
 }
 
-// Create context with our new type
+// Create the context with undefined as initial value
 const SpectrumContext = createContext<SpectrumContextValue | undefined>(undefined);
 
-/**
- * Props interface for the SpectrumProvider
- * 
- * @property children - ReactNode that represents all the components that will be wrapped by this provider
- *                     These components will have access to the context values
- * 
- * Example of how children works:
- * ```typescript
- * // This is how you use the SpectrumProvider:
- * <SpectrumProvider>
- *   <div>This is a child</div>
- *   <SpectrumViewer data={spectrumData} />
- *   <ToolbarComponent />
- * </SpectrumProvider>
- * 
- * // The above components become the 'children' prop:
- * function SpectrumProvider({ children }) {
- *   // children = [
- *   //   <div>This is a child</div>,
- *   //   <SpectrumViewer data={spectrumData} />,
- *   //   <ToolbarComponent />
- *   // ]
- *   
- *   return (
- *     <SpectrumContext.Provider value={{}}>
- *       {children} // This renders all the components above
- *     </SpectrumContext.Provider>
- *   );
- * }
- * ```
- * 
- * The children components can then use the useSpectrum hook to access
- * any values or functions that the SpectrumProvider makes available.
- */
+// Props type for the provider component
 interface SpectrumProviderProps {
   children: ReactNode;
 }
 
-/**
- * SpectrumProvider Component
- * 
- * This is a wrapper component that provides the Spectrum context to all its children.
- * It uses React's Context.Provider to make values available to any child component
- * that uses the useSpectrum hook.
- * @param children - All components that need access to the spectrum context
- * @returns A Provider component wrapping its children
- */
+// Provider component that manages state and makes it available to children
 export function SpectrumProvider({ children }: SpectrumProviderProps) {
-  // Add state for FWHM index
   const [fwhm_index, setFwhmIndex] = useState<number | null>(null);
+  const [isLogScale, setIsLogScale] = useState<boolean>(false);
 
-  // Create our context value object
   const value: SpectrumContextValue = {
     fwhm_index,
-    setFwhmIndex
+    setFwhmIndex,
+    isLogScale,
+    setIsLogScale
   };
 
-  // Return the Context.Provider component which:
-  // 1. Takes a 'value' prop containing all the data/functions we want to share
-  // 2. Wraps all child components ({children}) so they can access this value
-  // 3. Any component inside {children} can use useSpectrum() to get the value
   return (
     <SpectrumContext.Provider value={value}>
       {children}
@@ -113,30 +36,11 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
   );
 }
 
-/**
- * useSpectrum Hook
- * 
- * This is a custom hook that provides access to the spectrum context.
- * It uses React's useContext hook internally and adds error checking.
- * 
- * The hook must be used within a component that is wrapped by SpectrumProvider.
- * If it's not, it will throw an error.
- * 
- * Example usage:
- * ```typescript
- * function MyComponent() {
- *   const context = useSpectrum();
- *   // use context values here
- * }
- * ```
- * 
- * @throws Error if used outside of a SpectrumProvider
- * @returns The current context value (currently an empty object)
- */
-export function useSpectrum() {
+// Custom hook to access the spectrum context with type safety
+export function useSpectrumContext() {
   const context = useContext(SpectrumContext);
   if (context === undefined) {
-    throw new Error('useSpectrum must be used within a SpectrumProvider');
+    throw new Error('useSpectrumContext must be used within a SpectrumProvider');
   }
   return context;
 } 

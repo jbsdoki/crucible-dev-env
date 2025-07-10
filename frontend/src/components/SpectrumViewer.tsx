@@ -14,7 +14,7 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import BlockIcon from '@mui/icons-material/Block';
-import { useSpectrum } from './SpectrumViewer/contexts/SpectrumContext';
+import { useSpectrumContext } from './SpectrumViewer/contexts/SpectrumContext';
 
 interface SignalCapabilities {
   hasSpectrum: boolean;
@@ -69,14 +69,15 @@ function SpectrumViewer({
   regionSpectrumData,
   selectedRegion 
 }: SpectrumViewerProps) {
-  // Get both fwhm_index and setter from context
-  const { fwhm_index, setFwhmIndex } = useSpectrum();
+  // Get context values
+  const { fwhm_index, setFwhmIndex, isLogScale, setIsLogScale } = useSpectrumContext();
   
   const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showRegion, setShowRegion] = useState<boolean>(true);
-  const [isLogScale, setIsLogScale] = useState<boolean>(false);
+  // Comment out local isLogScale state as it's now in context
+  // const [isLogScale, setIsLogScale] = useState<boolean>(false);
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
   const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
