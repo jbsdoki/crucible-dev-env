@@ -70,14 +70,21 @@ function SpectrumViewer({
   selectedRegion 
 }: SpectrumViewerProps) {
   // Get context values
-  const { fwhm_index, setFwhmIndex, isLogScale, setIsLogScale } = useSpectrumContext();
+  const { 
+    fwhm_index, 
+    setFwhmIndex, 
+    isLogScale, 
+    setIsLogScale,
+    showFWHM,
+    setShowFWHM 
+  } = useSpectrumContext();
   
   const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showRegion, setShowRegion] = useState<boolean>(true);
-  // Comment out local isLogScale state as it's now in context
-  // const [isLogScale, setIsLogScale] = useState<boolean>(false);
+  // Comment out local showFWHM state as it's now in context
+  // const [showFWHM, setShowFWHM] = useState(false);
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
   const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
@@ -85,7 +92,7 @@ function SpectrumViewer({
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
   const [layoutRange, setLayoutRange] = useState<AxisRange>({});
   const [isZoomMode, setIsZoomMode] = useState(true);
-  const [showFWHM, setShowFWHM] = useState(false);
+  // const [showFWHM, setShowFWHM] = useState(false);
 
   useEffect(() => {
     const fetchSpectrum = async () => {
