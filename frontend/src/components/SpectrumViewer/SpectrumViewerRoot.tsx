@@ -3,6 +3,7 @@ import SpectrumViewer from '../SpectrumViewer';
 import type { SignalInfo } from '../SpectrumViewer';
 import { FWHMDisplay } from './components/FWHMDisplay';
 import { LogScaleDisplay } from './components/LogScaleDisplay';
+import { ZoomModeDisplay } from './components/ZoomModeDisplay';
 
 /**
  * SpectrumViewerRoot Component
@@ -35,6 +36,8 @@ function SpectrumViewerRoot(props: SpectrumViewerRootProps) {
       {/* Test components to verify context values */}
       <FWHMDisplay />
       <LogScaleDisplay />
+      <ZoomModeDisplay />
+      {/* Test components to verify context values */}
       <SpectrumViewer {...props} />
     </SpectrumProvider>
   );

@@ -3,16 +3,18 @@ import type { ReactNode } from 'react';
 
 // Define the shape of our context value
 interface SpectrumContextValue {
-
   // X axis FWHM index
   fwhm_index: number | null;
   setFwhmIndex: (index: number | null) => void;
   // Y axis log scale state
   isLogScale: boolean;
   setIsLogScale: (value: boolean) => void;
-  // Add FWHM visibility state
+  // FWHM visibility state
   showFWHM: boolean;
   setShowFWHM: (value: boolean) => void;
+  // Plot interaction mode
+  isZoomMode: boolean;
+  setIsZoomMode: (value: boolean) => void;
 }
 
 // Create the context with undefined as initial value
@@ -28,6 +30,7 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
   const [fwhm_index, setFwhmIndex] = useState<number | null>(null);
   const [isLogScale, setIsLogScale] = useState<boolean>(false);
   const [showFWHM, setShowFWHM] = useState<boolean>(false);
+  const [isZoomMode, setIsZoomMode] = useState<boolean>(true);
 
   const value: SpectrumContextValue = {
     fwhm_index,
@@ -35,7 +38,9 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
     isLogScale,
     setIsLogScale,
     showFWHM,
-    setShowFWHM
+    setShowFWHM,
+    isZoomMode,
+    setIsZoomMode
   };
 
   return (

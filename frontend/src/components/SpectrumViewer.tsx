@@ -76,7 +76,9 @@ function SpectrumViewer({
     isLogScale, 
     setIsLogScale,
     showFWHM,
-    setShowFWHM 
+    setShowFWHM,
+    isZoomMode,
+    setIsZoomMode
   } = useSpectrumContext();
   
   const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
@@ -91,7 +93,7 @@ function SpectrumViewer({
   const [imageError, setImageError] = useState<string | null>(null);
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
   const [layoutRange, setLayoutRange] = useState<AxisRange>({});
-  const [isZoomMode, setIsZoomMode] = useState(true);
+  // const [isZoomMode, setIsZoomMode] = useState(true);
   // const [showFWHM, setShowFWHM] = useState(false);
 
   useEffect(() => {

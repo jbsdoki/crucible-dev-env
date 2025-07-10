@@ -1,3 +1,8 @@
+// /*#####################################################################################
+// ############ DEVELOPMENT FILE ONLY DO NOT COMMIT OR USE IN PRODUCTION ################
+// #####################################################################################*/
+
+
 import { Box, Typography } from '@mui/material';
 import { useSpectrumContext } from '../contexts/SpectrumContext';
 
