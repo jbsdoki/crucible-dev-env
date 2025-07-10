@@ -14,14 +14,14 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import BlockIcon from '@mui/icons-material/Block';
-import { SpectrumProvider } from './SpectrumViewer/contexts/SpectrumContext';
+import { useSpectrum } from './SpectrumViewer/contexts/SpectrumContext';
 
 interface SignalCapabilities {
   hasSpectrum: boolean;
   hasImage: boolean;
 }
 
-interface SignalInfo {
+export interface SignalInfo {
   index: number;
   title: string;
   type: string;
@@ -69,6 +69,9 @@ function SpectrumViewer({
   regionSpectrumData,
   selectedRegion 
 }: SpectrumViewerProps) {
+  // Get both fwhm_index and setter from context
+  const { fwhm_index, setFwhmIndex } = useSpectrum();
+  
   const [spectrumData, setSpectrumData] = useState<SpectrumData | null>(null);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
@@ -88,12 +91,16 @@ function SpectrumViewer({
       if (!selectedFile || !selectedSignal) {
         setSpectrumData(null);
         setError('');
+        // Clear FWHM index in context when no data
+        setFwhmIndex(null);
         return;
       }
 
       if (!selectedSignal.capabilities.hasSpectrum) {
         setError('Selected signal cannot be displayed as a spectrum');
         setSpectrumData(null);
+        // Clear FWHM index in context when error
+        setFwhmIndex(null);
         return;
       }
       
@@ -103,17 +110,21 @@ function SpectrumViewer({
         
         const data = await getSpectrum(selectedFile, selectedSignal.index);
         setSpectrumData(data);
+        // Update FWHM index in context
+        setFwhmIndex(data.fwhm_index);
       } catch (err) {
         console.error('Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
         setSpectrumData(null);
+        // Clear FWHM index in context on error
+        setFwhmIndex(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSpectrum();
-  }, [selectedFile, selectedSignal]);
+  }, [selectedFile, selectedSignal, setFwhmIndex]);
 
   // Debounced relayout handler for zoom/pan
   const handleRelayout = useCallback(
@@ -196,37 +207,67 @@ function SpectrumViewer({
     }
   };
 
+  // Function to process y-values for log scale
+  const processYValuesForLogScale = (yValues: number[]): number[] => {
+    if (!isLogScale) return yValues;
+    
+    // Find minimum non-zero value to use as floor
+    const minNonZero = yValues.reduce((min, val) => {
+      if (val > 0 && (min === null || val < min)) {
+        return val;
+      }
+      return min;
+    }, null as number | null) || 1e-10;  // default to 1e-10 if all values are 0/negative
+    
+    // Replace zeros/negatives with minimum/100 to avoid infinity
+    return yValues.map(val => val <= 0 ? minNonZero / 100 : val);
+  };
+
+  // Function to calculate y-axis range with buffer
+  const calculateYAxisRange = (yValues: number[]): [number, number] => {
+    const processedValues = processYValuesForLogScale(yValues);
+    const minY = Math.min(...processedValues);
+    const maxY = Math.max(...processedValues);
+    
+    if (isLogScale) {
+      // For log scale, add buffer in log space
+      const logMin = Math.log10(minY);
+      const logMax = Math.log10(maxY);
+      const logBuffer = (logMax - logMin) * 0.1; // 10% buffer
+      return [logMin - logBuffer, logMax + logBuffer];
+    } else {
+      // For linear scale, add buffer in linear space
+      const range = maxY - minY;
+      const buffer = range * 0.1; // 10% buffer
+      return [minY - buffer, maxY + buffer];
+    }
+  };
+
   if (loading) {
     return (
-      <SpectrumProvider>
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      </SpectrumProvider>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <SpectrumProvider>
-        <Box sx={{ p: 3 }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
-      </SpectrumProvider>
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">{error}</Typography>
+      </Box>
     );
   }
 
   if (!spectrumData) {
     return (
-      <SpectrumProvider>
-        <Box sx={{ p: 3 }}>
-          <Typography>No spectrum data available</Typography>
-        </Box>
-      </SpectrumProvider>
+      <Box sx={{ p: 3 }}>
+        <Typography>No spectrum data available</Typography>
+      </Box>
     );
   }
 
-  // Create static layout object
+  // Update layout to include reasonable ranges for log scale
   const baseLayout: Partial<Layout> = {
     showlegend: true,
     height: 500,
@@ -242,17 +283,18 @@ function SpectrumViewer({
         text: spectrumData.y_label
       } : undefined,
       type: isLogScale ? 'log' : 'linear',
-      range: layoutRange.y
+      // Use calculated range with buffer if no manual range is set
+      range: layoutRange.y || calculateYAxisRange(spectrumData.y)
     }
   };
 
   // Prepare plot data
   const plotData: Array<Partial<PlotData>> = [];
 
-  // Add main spectrum
+  // Add main spectrum with log scale handling
   plotData.push({
     x: spectrumData.x,
-    y: spectrumData.y,
+    y: processYValuesForLogScale(spectrumData.y),
     type: 'scatter',
     mode: 'lines',
     name: 'Full Spectrum',
@@ -263,11 +305,12 @@ function SpectrumViewer({
   });
 
   // Add FWHM line if enabled and index exists
-  if (showFWHM && spectrumData.fwhm_index !== null) {
-    const fwhmX = spectrumData.x[spectrumData.fwhm_index];
+  if (showFWHM && fwhm_index !== null) {
+    const fwhmX = spectrumData.x[fwhm_index];
+    const maxY = Math.max(...spectrumData.y);
     plotData.push({
       x: [fwhmX, fwhmX],
-      y: [0, Math.max(...spectrumData.y)],
+      y: processYValuesForLogScale([0, maxY]),  // Handle log scale for FWHM line
       type: 'scatter',
       mode: 'lines',
       name: 'FWHM',
@@ -343,213 +386,211 @@ function SpectrumViewer({
   }
 
   return (
-    <SpectrumProvider>
-      <Box sx={{ p: 3 }}>
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6">
-              {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
-              {selectedRegion && ' (Region Selected)'}
-            </Typography>
-            <Stack direction="row" spacing={1}>
-              {regionSpectrumData && (
-                <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6">
+            {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
+            {selectedRegion && ' (Region Selected)'}
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            {regionSpectrumData && (
+              <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
+                <IconButton 
+                  onClick={() => setShowRegion(!showRegion)}
+                  color={showRegion ? "warning" : "default"}
+                  sx={{ 
+                    bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'rgba(0, 0, 0, 0.04)'
+                    }
+                  }}
+                >
+                  {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                </IconButton>
+              </Tooltip>
+            )}
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              {!isSelectingRange && (
+                <Tooltip title={isZoomMode ? "Switch to Pan Mode" : "Switch to Zoom Mode"}>
                   <IconButton 
-                    onClick={() => setShowRegion(!showRegion)}
-                    color={showRegion ? "warning" : "default"}
-                    sx={{ 
-                      bgcolor: showRegion ? 'rgba(255, 127, 14, 0.1)' : 'transparent',
-                      '&:hover': {
-                        bgcolor: showRegion ? 'rgba(255, 127, 14, 0.2)' : 'rgba(0, 0, 0, 0.04)'
-                      }
-                    }}
+                    onClick={handleZoomModeToggle} 
+                    color={isZoomMode ? "primary" : "default"}
+                    sx={{ position: 'relative', '&.disabled': { color: 'grey.500' } }}
+                    disabled={isSelectingRange}
                   >
-                    {showRegion ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                    {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
+                    {isSelectingRange && (
+                      <BlockIcon 
+                        sx={{ 
+                          position: 'absolute',
+                          color: 'red',
+                          opacity: 0.7,
+                        }} 
+                      />
+                    )}
                   </IconButton>
                 </Tooltip>
               )}
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-                {!isSelectingRange && (
-                  <Tooltip title={isZoomMode ? "Switch to Pan Mode" : "Switch to Zoom Mode"}>
+              {isSelectingRange && (
+                <Tooltip title="Zoom/Pan disabled during selection">
+                  <span>
                     <IconButton 
-                      onClick={handleZoomModeToggle} 
-                      color={isZoomMode ? "primary" : "default"}
-                      sx={{ position: 'relative', '&.disabled': { color: 'grey.500' } }}
-                      disabled={isSelectingRange}
+                      disabled
+                      sx={{ 
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          position: 'absolute',
+                          top: '50%',
+                          left: '-10%',
+                          width: '120%',
+                          height: '2px',
+                          backgroundColor: 'red',
+                          transform: 'rotate(-45deg)',
+                        }
+                      }}
                     >
                       {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
-                      {isSelectingRange && (
-                        <BlockIcon 
-                          sx={{ 
-                            position: 'absolute',
-                            color: 'red',
-                            opacity: 0.7,
-                          }} 
-                        />
-                      )}
                     </IconButton>
-                  </Tooltip>
-                )}
-                {isSelectingRange && (
-                  <Tooltip title="Zoom/Pan disabled during selection">
-                    <span>
-                      <IconButton 
-                        disabled
-                        sx={{ 
-                          position: 'relative',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: '50%',
-                            left: '-10%',
-                            width: '120%',
-                            height: '2px',
-                            backgroundColor: 'red',
-                            transform: 'rotate(-45deg)',
-                          }
-                        }}
-                      >
-                        {isZoomMode ? <ZoomInIcon /> : <PanToolIcon />}
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                )}
-                <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
-                  <IconButton 
-                    onClick={handleSelectionModeToggle} 
-                    color={isSelectingRange ? "success" : "default"}
-                    sx={{ 
-                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-                      '&:hover': {
-                        bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
-                      }
-                    }}
-                  >
-                    <CropIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
-                  <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
-                    <ScaleIcon />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-              {spectrumData.fwhm_index !== null && (
-                <Tooltip title={showFWHM ? "Hide FWHM Line" : "Show FWHM Line"}>
-                  <IconButton 
-                    onClick={() => setShowFWHM(!showFWHM)}
-                    color={showFWHM ? "primary" : "default"}
-                  >
-                    <Box component="span" sx={{ 
-                      display: 'flex',
-                      alignItems: 'center',
-                      fontSize: '0.875rem',
-                      fontWeight: 'bold'
-                    }}>
-                      FWHM
-                    </Box>
-                  </IconButton>
+                  </span>
                 </Tooltip>
               )}
-            </Stack>
-          </Box>
-        </Box>
-        <Box>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <Plot
-            data={plotData}
-            layout={{
-              ...baseLayout,
-              dragmode: isSelectingRange ? 'select' : (isZoomMode ? 'zoom' : 'pan'),
-              title: {
-                text: selectedSignal.title
-              }
-            }}
-            config={{
-              displayModeBar: true,
-              scrollZoom: true,
-              displaylogo: false,
-              modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
-            }}
-            onSelected={handleSelection}
-            onRelayout={handleRelayout}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </Box>
-
-        {/* Energy-filtered image section */}
-        {selectedRange && (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Energy-Filtered Image (Channels {selectedRange.start} - {selectedRange.end})
-            </Typography>
-            
-            {imageLoading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress />
-              </Box>
-            )}
-            
-            {imageError && (
-              <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-                <Typography>{imageError}</Typography>
-              </Box>
-            )}
-            
-            {energyFilteredImage && !imageLoading && !imageError && (
-              <Plot
-                data={[{
-                  z: energyFilteredImage,
-                  type: 'heatmap',
-                  colorscale: 'Viridis',
-                  showscale: true,
-                  colorbar: {
-                    title: {
-                      text: 'Intensity',
-                      side: 'right'
+              <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
+                <IconButton 
+                  onClick={handleSelectionModeToggle} 
+                  color={isSelectingRange ? "success" : "default"}
+                  sx={{ 
+                    bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
                     }
-                  },
-                  zsmooth: 'best'
-                }]}
-                layout={{
-                  width: 600,
-                  height: 400,
-                  margin: { t: 10, r: 80, b: 10, l: 10 },
-                  xaxis: { 
-                    visible: false,
-                    showgrid: false,
-                    scaleanchor: 'y',
-                    constrain: 'domain'
-                  },
-                  yaxis: { 
-                    visible: false,
-                    showgrid: false,
-                    constrain: 'domain',
-                    autorange: "reversed"
-                  },
-                  plot_bgcolor: 'transparent',
-                  paper_bgcolor: 'transparent'
-                }}
-                config={{
-                  responsive: true,
-                  displayModeBar: true,
-                  displaylogo: false,
-                  scrollZoom: true,
-                  toImageButtonOptions: {
-                    format: 'svg',
-                    filename: 'energy_filtered_image',
-                    height: 800,
-                    width: 800,
-                    scale: 2
-                  }
-                }}
-                style={{ width: '100%', height: '100%' }}
-              />
+                  }}
+                >
+                  <CropIcon />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
+                <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
+                  <ScaleIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+            {fwhm_index !== null && (
+              <Tooltip title={showFWHM ? "Hide FWHM Line" : "Show FWHM Line"}>
+                <IconButton 
+                  onClick={() => setShowFWHM(!showFWHM)}
+                  color={showFWHM ? "primary" : "default"}
+                >
+                  <Box component="span" sx={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: '0.875rem',
+                    fontWeight: 'bold'
+                  }}>
+                    FWHM
+                  </Box>
+                </IconButton>
+              </Tooltip>
             )}
-          </Box>
-        )}
+          </Stack>
+        </Box>
       </Box>
-    </SpectrumProvider>
+      <Box>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <Plot
+          data={plotData}
+          layout={{
+            ...baseLayout,
+            dragmode: isSelectingRange ? 'select' : (isZoomMode ? 'zoom' : 'pan'),
+            title: {
+              text: selectedSignal.title
+            }
+          }}
+          config={{
+            displayModeBar: true,
+            scrollZoom: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
+          }}
+          onSelected={handleSelection}
+          onRelayout={handleRelayout}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </Box>
+
+      {/* Energy-filtered image section */}
+      {selectedRange && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Energy-Filtered Image (Channels {selectedRange.start} - {selectedRange.end})
+          </Typography>
+          
+          {imageLoading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+          
+          {imageError && (
+            <Box sx={{ color: 'error.main', mb: 2, p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
+              <Typography>{imageError}</Typography>
+            </Box>
+          )}
+          
+          {energyFilteredImage && !imageLoading && !imageError && (
+            <Plot
+              data={[{
+                z: energyFilteredImage,
+                type: 'heatmap',
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                  title: {
+                    text: 'Intensity',
+                    side: 'right'
+                  }
+                },
+                zsmooth: 'best'
+              }]}
+              layout={{
+                width: 600,
+                height: 400,
+                margin: { t: 10, r: 80, b: 10, l: 10 },
+                xaxis: { 
+                  visible: false,
+                  showgrid: false,
+                  scaleanchor: 'y',
+                  constrain: 'domain'
+                },
+                yaxis: { 
+                  visible: false,
+                  showgrid: false,
+                  constrain: 'domain',
+                  autorange: "reversed"
+                },
+                plot_bgcolor: 'transparent',
+                paper_bgcolor: 'transparent'
+              }}
+              config={{
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                scrollZoom: true,
+                toImageButtonOptions: {
+                  format: 'svg',
+                  filename: 'energy_filtered_image',
+                  height: 800,
+                  width: 800,
+                  scale: 2
+                }
+              }}
+              style={{ width: '100%', height: '100%' }}
+            />
+          )}
+        </Box>
+      )}
+    </Box>
   );
 }
 

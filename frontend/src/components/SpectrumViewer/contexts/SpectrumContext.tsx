@@ -30,11 +30,20 @@
  * ```
  */
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
-// Create empty context
-const SpectrumContext = createContext<unknown>(undefined);
+/**
+ * The type definition for our context value
+ * Currently only contains FWHM index as a test
+ */
+interface SpectrumContextValue {
+  fwhm_index: number | null;
+  setFwhmIndex: (index: number | null) => void;
+}
+
+// Create context with our new type
+const SpectrumContext = createContext<SpectrumContextValue | undefined>(undefined);
 
 /**
  * Props interface for the SpectrumProvider
@@ -80,19 +89,25 @@ interface SpectrumProviderProps {
  * This is a wrapper component that provides the Spectrum context to all its children.
  * It uses React's Context.Provider to make values available to any child component
  * that uses the useSpectrum hook.
- * 
- * Currently, it provides an empty object as the context value.
- * As we build the functionality, we'll add:
- * - State variables (zoom, selection, etc.)
- * - Handler functions
- * - Data management
- * 
  * @param children - All components that need access to the spectrum context
  * @returns A Provider component wrapping its children
  */
 export function SpectrumProvider({ children }: SpectrumProviderProps) {
+  // Add state for FWHM index
+  const [fwhm_index, setFwhmIndex] = useState<number | null>(null);
+
+  // Create our context value object
+  const value: SpectrumContextValue = {
+    fwhm_index,
+    setFwhmIndex
+  };
+
+  // Return the Context.Provider component which:
+  // 1. Takes a 'value' prop containing all the data/functions we want to share
+  // 2. Wraps all child components ({children}) so they can access this value
+  // 3. Any component inside {children} can use useSpectrum() to get the value
   return (
-    <SpectrumContext.Provider value={{}}>
+    <SpectrumContext.Provider value={value}>
       {children}
     </SpectrumContext.Provider>
   );
