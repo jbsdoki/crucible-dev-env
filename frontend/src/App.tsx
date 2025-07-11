@@ -30,7 +30,6 @@ import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
-import ContextTest from './components/ContextTest'
 import { Box, Typography, Paper, Button } from '@mui/material'
 import './App.css'
 
@@ -86,7 +85,7 @@ function App() {
         >
           Show Main App
         </Button>
-        <ContextTest />
+        {/* <ContextTest /> */}
       </Box>
     );
   }

@@ -94,7 +94,7 @@ function SpectrumViewer({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
-  const [layoutRange, setLayoutRange] = useState<AxisRange>({});
+  // const [layoutRange, setLayoutRange] = useState<AxisRange>({});
   // const [isZoomMode, setIsZoomMode] = useState(true);
   // const [showFWHM, setShowFWHM] = useState(false);
 
@@ -138,28 +138,27 @@ function SpectrumViewer({
     fetchSpectrum();
   }, [selectedFile, selectedSignal, setFwhmIndex]);
 
-  // Debounced relayout handler for zoom/pan
+  // ##################################################################################
+  // ############### PLOTLY EVENT HANDLER: RELAYOUT (ZOOM/PAN) ########################
+  // ##################################################################################
+  // This section handles zoom and pan events from the plot, updating the layout ranges
   const handleRelayout = useCallback(
     debounce((event: any) => {
       if (!event) return;
       
-      // Only update ranges if they've changed
-      if (event['xaxis.range[0]'] !== undefined && event['xaxis.range[1]'] !== undefined) {
-        setLayoutRange(prev => ({
-          ...prev,
-          x: [event['xaxis.range[0]'], event['xaxis.range[1]']]
-        }));
-      }
-      
+      // Only handle y-axis updates, let Plotly manage x-axis
       if (event['yaxis.range[0]'] !== undefined && event['yaxis.range[1]'] !== undefined) {
-        setLayoutRange(prev => ({
-          ...prev,
-          y: [event['yaxis.range[0]'], event['yaxis.range[1]']]
-        }));
+        // setLayoutRange({ // Removed as per edit hint
+        //   ...layoutRange,
+        //   y: [event['yaxis.range[0]'], event['yaxis.range[1]']]
+        // });
       }
     }, 150),
-    []
+    [] // Removed layoutRange from dependency array
   );
+  // ##################################################################################
+  // ############### END PLOTLY EVENT HANDLER: RELAYOUT ##############################
+  // ##################################################################################
 
   // Handle zoom mode toggle
   const handleZoomModeToggle = () => {
@@ -219,7 +218,10 @@ function SpectrumViewer({
     }
   };
 
-  // Function to process y-values for log scale
+  // ##################################################################################
+  // ############### PLOTLY DATA PROCESSING: LOG SCALE AND RANGE CALCULATION ##########
+  // ##################################################################################
+  // These functions process y-values for log scale and calculate appropriate axis ranges
   const processYValuesForLogScale = (yValues: number[]): number[] => {
     if (!isLogScale) return yValues;
     
@@ -254,6 +256,9 @@ function SpectrumViewer({
       return [minY - buffer, maxY + buffer];
     }
   };
+  // ##################################################################################
+  // ############### END PLOTLY DATA PROCESSING #####################################
+  // ##################################################################################
 
   if (loading) {
     return (
@@ -279,7 +284,10 @@ function SpectrumViewer({
     );
   }
 
-  // Update layout to include reasonable ranges for log scale
+  // ##################################################################################
+  // ############### PLOTLY LAYOUT CONFIGURATION ####################################
+  // ##################################################################################
+  // This section defines the base layout for the plot including axes configuration
   const baseLayout: Partial<Layout> = {
     showlegend: true,
     height: 500,
@@ -287,20 +295,25 @@ function SpectrumViewer({
       title: spectrumData ? {
         text: `${spectrumData.x_label} (${spectrumData.x_units})`
       } : undefined,
-      type: 'linear',
-      range: layoutRange.x
+      type: 'linear'
+      // Removed range constraint to test zoom functionality
     },
     yaxis: {
       title: spectrumData ? {
         text: spectrumData.y_label
       } : undefined,
       type: isLogScale ? 'log' : 'linear',
-      // Use calculated range with buffer if no manual range is set
-      range: layoutRange.y || calculateYAxisRange(spectrumData.y)
+      range: calculateYAxisRange(spectrumData.y) // Removed layoutRange.y
     }
   };
+  // ##################################################################################
+  // ############### END PLOTLY LAYOUT CONFIGURATION ###############################
+  // ##################################################################################
 
-  // Prepare plot data
+  // ##################################################################################
+  // ############### PLOTLY DATA PREPARATION #######################################
+  // ##################################################################################
+  // This section prepares all the traces that will be displayed on the plot
   const plotData: Array<Partial<PlotData>> = [];
 
   // Add main spectrum with log scale handling
@@ -396,7 +409,14 @@ function SpectrumViewer({
       }
     });
   }
+  // ##################################################################################
+  // ############### END PLOTLY DATA PREPARATION ##################################
+  // ##################################################################################
 
+  // ##################################################################################
+  // ############### PLOTLY COMPONENT RENDERING ###################################
+  // ##################################################################################
+  // This section renders the actual Plot component with all configurations
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 2 }}>
@@ -517,13 +537,20 @@ function SpectrumViewer({
             dragmode: isSelectingRange ? 'select' : (isZoomMode ? 'zoom' : 'pan'),
             title: {
               text: selectedSignal.title
+            },
+            // Add explicit zoom configuration
+            xaxis: {
+              ...baseLayout.xaxis,
+              autorange: true,  // Force autorange
+              fixedrange: false // Ensure axis is not fixed
             }
           }}
           config={{
             displayModeBar: true,
             scrollZoom: true,
             displaylogo: false,
-            modeBarButtonsToRemove: ['select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d', 'autoScale2d']
+            modeBarButtonsToRemove: ['select2d', 'lasso2d'],  // Keep zoom buttons
+            responsive: true
           }}
           onSelected={handleSelection}
           onRelayout={handleRelayout}
@@ -604,6 +631,9 @@ function SpectrumViewer({
       )}
     </Box>
   );
+  // ##################################################################################
+  // ############### END PLOTLY COMPONENT RENDERING ##############################
+  // ##################################################################################
 }
 
 export default SpectrumViewer; 
