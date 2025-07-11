@@ -5,6 +5,7 @@ import SpectrumRangeImage from './components/SpectrumRangeImage';
 import SpectrumToolbar from './components/SpectrumToolbar';
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { Box } from '@mui/material';
 
 /**
  * SpectrumViewerRoot Component
@@ -60,21 +61,39 @@ function SpectrumViewerRoot(props: SpectrumViewerRootProps) {
 
   return (
     <SpectrumProvider>
-      <SpectrumToolbar 
-        regionSpectrumData={props.regionSpectrumData}
-        onSelectionModeChange={handleSelectionModeChange}
-        isSelectingRange={isSelectingRange}
-      />
-      <SpectrumViewer 
-        {...props} 
-        onRangeSelect={handleRangeSelect}
-        isSelectingRange={isSelectingRange}
-      />
-      <SpectrumRangeImage 
-        selectedFile={props.selectedFile}
-        signalIndex={props.selectedSignal.index}
-        selectedRange={selectedRange}
-      />
+      <Box sx={{ width: '100%', p: 2 }}>
+        {/* Toolbar Row */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          width: '100%',
+          mb: 2
+        }}>
+          <SpectrumToolbar 
+            regionSpectrumData={props.regionSpectrumData}
+            onSelectionModeChange={handleSelectionModeChange}
+            isSelectingRange={isSelectingRange}
+          />
+        </Box>
+        
+        {/* Spectrum Viewer Row */}
+        <Box sx={{ width: '100%', mb: 2 }}>
+          <SpectrumViewer 
+            {...props} 
+            onRangeSelect={handleRangeSelect}
+            isSelectingRange={isSelectingRange}
+          />
+        </Box>
+        
+        {/* Range Image Row */}
+        <Box sx={{ width: '100%' }}>
+          <SpectrumRangeImage 
+            selectedFile={props.selectedFile}
+            signalIndex={props.selectedSignal.index}
+            selectedRange={selectedRange}
+          />
+        </Box>
+      </Box>
     </SpectrumProvider>
   );
 }
