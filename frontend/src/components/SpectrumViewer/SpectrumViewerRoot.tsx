@@ -1,10 +1,9 @@
 import { SpectrumProvider } from './contexts/SpectrumContext';
 import SpectrumViewer from '../SpectrumViewer';
 import type { SignalInfo } from '../SpectrumViewer';
-// import { FWHMDisplay } from './components/FWHMDisplay';
-// import { LogScaleDisplay } from './components/LogScaleDisplay';
-// import { ZoomModeDisplay } from './components/ZoomModeDisplay';
-// import { RegionDisplay } from './components/RegionDisplay';
+import SpectrumRangeImage from './components/SpectrumRangeImage';
+import { useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 /**
  * SpectrumViewerRoot Component
@@ -32,10 +31,24 @@ interface SpectrumViewerRootProps {
 }
 
 function SpectrumViewerRoot(props: SpectrumViewerRootProps) {
+  const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
+
+  // Log when range changes
+  const handleRangeSelect = (range: {start: number, end: number} | null) => {
+    console.log('SpectrumViewerRoot: Range selection changed:', range);
+    setSelectedRange(range);
+  };
+
+  console.log('SpectrumViewerRoot: Rendering with range:', selectedRange);
+
   return (
     <SpectrumProvider>
-      {/* Permanent components */}
-      <SpectrumViewer {...props} />
+      <SpectrumViewer {...props} onRangeSelect={handleRangeSelect} />
+      <SpectrumRangeImage 
+        selectedFile={props.selectedFile}
+        signalIndex={props.selectedSignal.index}
+        selectedRange={selectedRange}
+      />
     </SpectrumProvider>
   );
 }

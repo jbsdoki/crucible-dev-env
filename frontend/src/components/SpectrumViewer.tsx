@@ -44,6 +44,7 @@ interface SpectrumViewerProps {
   selectedSignal: SignalInfo;
   regionSpectrumData?: SpectrumData | null;
   selectedRegion?: {x1: number, y1: number, x2: number, y2: number} | null;
+  onRangeSelect?: (range: {start: number, end: number} | null) => void;
 }
 
 interface AxisRange {
@@ -62,12 +63,14 @@ interface AxisRange {
  * @param selectedSignal - Information about the selected signal
  * @param regionSpectrumData - Optional spectrum data for a selected region
  * @param selectedRegion - Optional region coordinates
+ * @param onRangeSelect - Optional callback for when a range is selected
  */
 function SpectrumViewer({ 
   selectedFile, 
   selectedSignal,
   regionSpectrumData,
-  selectedRegion 
+  selectedRegion,
+  onRangeSelect 
 }: SpectrumViewerProps) {
   // Get context values
   const { 
@@ -90,9 +93,10 @@ function SpectrumViewer({
   // Comment out local showFWHM state as it's now in context
   // const [showFWHM, setShowFWHM] = useState(false);
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
-  const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
-  const [imageLoading, setImageLoading] = useState(false);
-  const [imageError, setImageError] = useState<string | null>(null);
+  // Image state now handled by SpectrumRangeImage
+  // const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
+  // const [imageLoading, setImageLoading] = useState(false);
+  // const [imageError, setImageError] = useState<string | null>(null);
   const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
   // const [layoutRange, setLayoutRange] = useState<AxisRange>({});
   // const [isZoomMode, setIsZoomMode] = useState(true);
@@ -192,30 +196,37 @@ function SpectrumViewer({
       end_energy: xValues[endIdx]
     });
     
-    setSelectedRange({ 
+    // setSelectedRange({ 
+    const range = { 
       start: startIdx >= 0 ? startIdx : 0, 
       end: endIdx >= 0 ? endIdx : xValues.length - 1 
-    });
-
-    try {
-      setImageLoading(true);
-      setImageError(null);
-      
-      // Get the 2D image data for the selected energy range from the backend
-      const imageData = await getEnergyRangeSpectrum(
-        selectedFile,
-        selectedSignal.index,
-        { start: startIdx, end: endIdx }
-      );
-      
-      setEnergyFilteredImage(imageData);
-    } catch (error) {
-      console.error('Error fetching energy-filtered image:', error);
-      setImageError('Failed to load energy-filtered image');
-      setEnergyFilteredImage(null);
-    } finally {
-      setImageLoading(false);
+    };
+    
+    setSelectedRange(range);
+    if (onRangeSelect) {
+      onRangeSelect(range);
     }
+
+    // Comment out image fetching since it's now handled by SpectrumRangeImage
+    // try {
+    //   setImageLoading(true);
+    //   setImageError(null);
+    //   
+    //   // Get the 2D image data for the selected energy range from the backend
+    //   const imageData = await getEnergyRangeSpectrum(
+    //     selectedFile,
+    //     selectedSignal.index,
+    //     { start: startIdx, end: endIdx }
+    //   );
+    //   
+    //   setEnergyFilteredImage(imageData);
+    // } catch (error) {
+    //   console.error('Error fetching energy-filtered image:', error);
+    //   setImageError('Failed to load energy-filtered image');
+    //   setEnergyFilteredImage(null);
+    // } finally {
+    //   setImageLoading(false);
+    // }
   };
 
   // ##################################################################################
@@ -558,8 +569,8 @@ function SpectrumViewer({
         />
       </Box>
 
-      {/* Energy-filtered image section */}
-      {selectedRange && (
+      {/* Comment out Energy-filtered image section since it's now handled by SpectrumRangeImage */}
+      {/* {selectedRange && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6" gutterBottom>
             Energy-Filtered Image (Channels {selectedRange.start} - {selectedRange.end})
@@ -628,7 +639,7 @@ function SpectrumViewer({
             />
           )}
         </Box>
-      )}
+      )} */}
     </Box>
   );
   // ##################################################################################
