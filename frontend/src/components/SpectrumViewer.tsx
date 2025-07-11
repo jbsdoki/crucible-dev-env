@@ -45,6 +45,7 @@ interface SpectrumViewerProps {
   regionSpectrumData?: SpectrumData | null;
   selectedRegion?: {x1: number, y1: number, x2: number, y2: number} | null;
   onRangeSelect?: (range: {start: number, end: number} | null) => void;
+  isSelectingRange: boolean;
 }
 
 interface AxisRange {
@@ -64,13 +65,15 @@ interface AxisRange {
  * @param regionSpectrumData - Optional spectrum data for a selected region
  * @param selectedRegion - Optional region coordinates
  * @param onRangeSelect - Optional callback for when a range is selected
+ * @param isSelectingRange - Whether the component is in range selection mode
  */
 function SpectrumViewer({ 
   selectedFile, 
   selectedSignal,
   regionSpectrumData,
   selectedRegion,
-  onRangeSelect 
+  onRangeSelect,
+  isSelectingRange 
 }: SpectrumViewerProps) {
   // Get context values
   const { 
@@ -97,7 +100,7 @@ function SpectrumViewer({
   // const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   // const [imageLoading, setImageLoading] = useState(false);
   // const [imageError, setImageError] = useState<string | null>(null);
-  const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
+  // const [isSelectingRange, setIsSelectingRange] = useState<boolean>(false);
   // const [layoutRange, setLayoutRange] = useState<AxisRange>({});
   // const [isZoomMode, setIsZoomMode] = useState(true);
   // const [showFWHM, setShowFWHM] = useState(false);
@@ -164,18 +167,20 @@ function SpectrumViewer({
   // ############### END PLOTLY EVENT HANDLER: RELAYOUT ##############################
   // ##################################################################################
 
-  // Handle zoom mode toggle
-  const handleZoomModeToggle = () => {
-    setIsZoomMode(!isZoomMode);
-  };
+  /* BEGIN: Toolbar Handler Functions - To be moved to SpectrumToolbar.tsx */
+  // // Handle zoom mode toggle
+  // const handleZoomModeToggle = () => {
+  //   setIsZoomMode(!isZoomMode);
+  // };
 
-  // Handle selection mode toggle
-  const handleSelectionModeToggle = () => {
-    if (isSelectingRange) {
-      setSelectedRange(null);
-    }
-    setIsSelectingRange(!isSelectingRange);
-  };
+  // // Handle selection mode toggle
+  // const handleSelectionModeToggle = () => {
+  //   if (isSelectingRange) {
+  //     setSelectedRange(null);
+  //   }
+  //   setIsSelectingRange(!isSelectingRange);
+  // };
+  /* END: Toolbar Handler Functions */
 
   // Handle selection events
   const handleSelection = async (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -436,7 +441,9 @@ function SpectrumViewer({
             {selectedSignal ? selectedSignal.title : 'Spectrum Viewer'}
             {selectedRegion && ' (Region Selected)'}
           </Typography>
-          <Stack direction="row" spacing={1}>
+
+          {/* BEGIN: Toolbar/Controls Section - To be moved to SpectrumToolbar.tsx */}
+          {/* <Stack direction="row" spacing={1}>
             {regionSpectrumData && (
               <Tooltip title={showRegion ? "Hide Selected Region" : "Show Selected Region"}>
                 <IconButton 
@@ -457,7 +464,7 @@ function SpectrumViewer({
               {!isSelectingRange && (
                 <Tooltip title={isZoomMode ? "Switch to Pan Mode" : "Switch to Zoom Mode"}>
                   <IconButton 
-                    onClick={handleZoomModeToggle} 
+                    onClick={() => setIsZoomMode(!isZoomMode)} 
                     color={isZoomMode ? "primary" : "default"}
                     sx={{ position: 'relative', '&.disabled': { color: 'grey.500' } }}
                     disabled={isSelectingRange}
@@ -501,7 +508,7 @@ function SpectrumViewer({
               )}
               <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
                 <IconButton 
-                  onClick={handleSelectionModeToggle} 
+                  onClick={() => setIsSelectingRange(!isSelectingRange)} 
                   color={isSelectingRange ? "success" : "default"}
                   sx={{ 
                     bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
@@ -536,7 +543,8 @@ function SpectrumViewer({
                 </IconButton>
               </Tooltip>
             )}
-          </Stack>
+          </Stack> */}
+          {/* END: Toolbar/Controls Section */}
         </Box>
       </Box>
       <Box>

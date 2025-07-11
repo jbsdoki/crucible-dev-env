@@ -2,6 +2,7 @@ import { SpectrumProvider } from './contexts/SpectrumContext';
 import SpectrumViewer from '../SpectrumViewer';
 import type { SignalInfo } from '../SpectrumViewer';
 import SpectrumRangeImage from './components/SpectrumRangeImage';
+import SpectrumToolbar from './components/SpectrumToolbar';
 import { useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -32,6 +33,24 @@ interface SpectrumViewerRootProps {
 
 function SpectrumViewerRoot(props: SpectrumViewerRootProps) {
   const [selectedRange, setSelectedRange] = useState<{start: number, end: number} | null>(null);
+  const [isSelectingRange, setIsSelectingRange] = useState(false);
+
+  console.log('SpectrumViewerRoot: Rendering with:', {
+    selectedFile: props.selectedFile,
+    signalTitle: props.selectedSignal.title,
+    selectedRange,
+    hasRegionData: !!props.regionSpectrumData,
+    isSelectingRange
+  });
+
+  const handleSelectionModeChange = (isSelecting: boolean) => {
+    console.log('SpectrumViewerRoot: Selection mode changed to:', isSelecting);
+    setIsSelectingRange(isSelecting);
+    if (!isSelecting) {
+      console.log('SpectrumViewerRoot: Clearing selected range');
+      setSelectedRange(null);
+    }
+  };
 
   // Log when range changes
   const handleRangeSelect = (range: {start: number, end: number} | null) => {
@@ -39,11 +58,18 @@ function SpectrumViewerRoot(props: SpectrumViewerRootProps) {
     setSelectedRange(range);
   };
 
-  console.log('SpectrumViewerRoot: Rendering with range:', selectedRange);
-
   return (
     <SpectrumProvider>
-      <SpectrumViewer {...props} onRangeSelect={handleRangeSelect} />
+      <SpectrumToolbar 
+        regionSpectrumData={props.regionSpectrumData}
+        onSelectionModeChange={handleSelectionModeChange}
+        isSelectingRange={isSelectingRange}
+      />
+      <SpectrumViewer 
+        {...props} 
+        onRangeSelect={handleRangeSelect}
+        isSelectingRange={isSelectingRange}
+      />
       <SpectrumRangeImage 
         selectedFile={props.selectedFile}
         signalIndex={props.selectedSignal.index}
