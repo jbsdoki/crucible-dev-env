@@ -1,5 +1,5 @@
 import { SpectrumProvider } from './contexts/SpectrumContext';
-import type { SignalInfo } from './types';
+import type { SignalInfo, SpectrumData } from './types';
 import SpectrumRangeImage from './components/SpectrumRangeImage';
 import SpectrumToolbar from './components/SpectrumToolbar';
 import SpectrumPlot from './components/SpectrumPlot';
@@ -30,15 +30,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 interface SpectrumViewerProps {
   selectedFile: string;
   selectedSignal: SignalInfo;
-  regionSpectrumData?: {
-    x: number[];
-    y: number[];
-    x_label: string;
-    x_units: string;
-    y_label: string;
-    zero_index: number | null;
-    fwhm_index: number | null;
-  } | null;
+  regionSpectrumData?: SpectrumData | null;
   selectedRegion?: {x1: number, y1: number, x2: number, y2: number} | null;
 }
 
