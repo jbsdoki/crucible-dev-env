@@ -47,3 +47,21 @@ export interface AxisRange {
   x?: [number, number];
   y?: [number, number];
 } 
+
+// For the periodic table emission lines
+interface EmissionLine {
+  element: string;
+  energy: number;
+  intensity: number;
+  label: string;
+}
+
+// For getting the sum of a range
+interface Range {
+  id: string;
+  start: number;
+  end: number;
+  width: number; // in KeV
+  label?: string;
+  color?: string;
+}
