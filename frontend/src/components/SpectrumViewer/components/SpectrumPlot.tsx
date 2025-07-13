@@ -6,9 +6,12 @@ import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
 
 // Props needed for the Plot component
 interface SpectrumPlotProps {
+  // Main spectrum data from the originally selected signal
   spectrumData: SpectrumData;
   selectedSignal: SignalInfo;
+  // Data from image viewer region selection - separate from main spectrum
   regionSpectrumData?: SpectrumData | null;
+  // Range selection within this 1D spectrum plot (not from image viewer)
   selectedRange: {start: number, end: number} | null;
   isSelectingRange: boolean;
   onSelected: (event: any) => void;
@@ -24,7 +27,7 @@ function SpectrumPlot({
   onSelected,
   onRelayout
 }: SpectrumPlotProps) {
-  // Get context values
+  // Get context values - these apply to the main spectrum visualization
   const { 
     fwhm_index,
     isLogScale,
@@ -33,7 +36,7 @@ function SpectrumPlot({
     showRegion
   } = useSpectrumContext();
 
-  // Your existing code from SpectrumViewer.tsx goes here, unchanged
+  // Process y-values for log scale - applies to both main and region spectra
   const processYValuesForLogScale = (yValues: number[]): number[] => {
     if (!isLogScale) return yValues;
     
@@ -49,7 +52,7 @@ function SpectrumPlot({
     return yValues.map(val => val <= 0 ? minNonZero / 100 : val);
   };
 
-  // Function to calculate y-axis range with buffer
+  // Calculate y-axis range with buffer - applies to both spectra
   const calculateYAxisRange = (yValues: number[]): [number, number] => {
     const processedValues = processYValuesForLogScale(yValues);
     const minY = Math.min(...processedValues);
@@ -69,7 +72,7 @@ function SpectrumPlot({
     }
   };
 
-  // Base layout configuration
+  // Base layout configuration - applies to entire plot
   const baseLayout: Partial<Layout> = {
     showlegend: true,
     height: 500,
@@ -88,10 +91,10 @@ function SpectrumPlot({
     }
   };
 
-  // Plot data preparation
+  // Plot data preparation - builds array of traces to display
   const plotData: Array<Partial<PlotData>> = [];
 
-  // Add main spectrum with log scale handling
+  // Add main spectrum trace - this is from the original signal selection
   plotData.push({
     x: spectrumData.x,
     y: processYValuesForLogScale(spectrumData.y),
@@ -104,7 +107,8 @@ function SpectrumPlot({
     }
   });
 
-  // Add FWHM line if enabled and index exists
+  // Add FWHM line if enabled - this uses the main signal/spectrum's FWHM index
+  // Calculated in the backend
   if (showFWHM && fwhm_index !== null) {
     const fwhmX = spectrumData.x[fwhm_index];
     const maxY = Math.max(...spectrumData.y);
@@ -122,7 +126,9 @@ function SpectrumPlot({
     });
   }
 
-  // Add selected range markers if range is selected
+  // Add selected range markers if range is selected - this is from 1D spectrum selection
+  // When the uses drags to select a region on the 1D spectrum plot, the selectedRange is updated
+  // and this component is re-rendered with the new selectedRange.
   if (selectedRange) {
     // Add start marker
     plotData.push({
@@ -170,7 +176,9 @@ function SpectrumPlot({
     });
   }
 
-  // Add region spectrum if available
+  // Add region spectrum if available - this is from image viewer region selection
+  // When the user selects a region on the 2D image viewer, the regionSpectrumData is updated
+  // and this component is re-rendered with the new regionSpectrumData.
   if (showRegion && regionSpectrumData) {
     plotData.push({
       x: regionSpectrumData.x,
@@ -185,7 +193,7 @@ function SpectrumPlot({
     });
   }
 
-  // Plot component rendering
+  // Plot component rendering with all traces
   return (
     <Plot
       data={plotData}

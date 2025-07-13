@@ -15,8 +15,16 @@ interface UseSpectrumDataResult {
  * This hook is responsible for:
  * 1. Fetching spectrum data when selectedFile or selectedSignal changes
  * 2. Managing loading and error states during fetch
- * 3. Updating the FWHM index in the global context
+ * 3. Managing FWHM index state:
+ *    - Clears FWHM when starting new data fetch
+ *    - Sets new FWHM only when main spectrum data loads
+ *    - Handles error cases by clearing FWHM
  * 4. Handling edge cases (missing data, invalid signal)
+ * 
+ * Note: FWHM state is managed independently from region spectrum data.
+ * Region selections from the image viewer do not affect FWHM state.
+ * This is so when the user selects a region on the 1d graph (spectrum viewer plot) or
+ * the 2d image viewer, the FWHM line is not affected
  * 
  * The hook returns an object containing:
  * - spectrumData: The fetched spectrum data or null
@@ -46,14 +54,16 @@ export function useSpectrumData(
       signalIndex: selectedSignal.index
     });
 
+    // Clear FWHM immediately when starting new data fetch
+    setFwhmIndex(null);
+
     const fetchSpectrum = async () => {
       // Validate inputs
       if (!selectedFile || !selectedSignal) {
         console.log('useSpectrumData: Missing required data, clearing states');
         setSpectrumData(null);
         setError('');
-        setFwhmIndex(null);
-        return;
+        return; // FWHM already cleared above
       }
 
       // Check if signal can be displayed as spectrum
@@ -61,8 +71,7 @@ export function useSpectrumData(
         console.log('useSpectrumData: Signal cannot be displayed as spectrum');
         setError('Selected signal cannot be displayed as a spectrum');
         setSpectrumData(null);
-        setFwhmIndex(null);
-        return;
+        return; // FWHM already cleared above
       }
       
       try {
@@ -82,12 +91,13 @@ export function useSpectrumData(
 
         // Update states with fetched data
         setSpectrumData(data);
+        // Set new FWHM only after successful data fetch
         setFwhmIndex(data.fwhm_index);
       } catch (err) {
         console.error('useSpectrumData: Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
         setSpectrumData(null);
-        setFwhmIndex(null);
+        // FWHM already cleared at start of fetch
       } finally {
         console.log('useSpectrumData: Fetch operation completed');
         setLoading(false);
@@ -100,6 +110,8 @@ export function useSpectrumData(
     // Cleanup function for when component unmounts or dependencies change
     return () => {
       console.log('useSpectrumData: Cleaning up previous fetch operation');
+      // Clear FWHM when cleaning up
+      setFwhmIndex(null);
     };
   }, [selectedFile, selectedSignal, setFwhmIndex]); // Re-run when these dependencies change
 

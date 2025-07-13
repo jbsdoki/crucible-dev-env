@@ -7,13 +7,17 @@ interface UseSpectrumSelectionResult {
 }
 
 /**
- * Custom hook that manages spectrum range selection
+ * Custom hook that manages range selection within the 1D spectrum plot
  * 
  * This hook is responsible for:
- * 1. Managing the selected range state
+ * 1. Managing the selected range state when a user drags to select a region on the 1D spectrum plot
  * 2. Processing Plotly selection events into data indices
  * 3. Handling the conversion between plot coordinates and data indices
  * 4. Notifying parent components of selection changes
+ * 
+ * Note: This hook specifically handles selections made on the 1D spectrum plot itself,
+ * NOT selections made on the 2D image viewer. The image viewer selections are handled
+ * separately through different mechanisms.
  * 
  * The hook maintains the selected range as indices into the spectrum data array,
  * rather than raw x-axis values. This makes it easier to slice the data array

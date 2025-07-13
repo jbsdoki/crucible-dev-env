@@ -1,9 +1,26 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
+/**
+ * The SpectrumContext manages global state for spectrum visualization.
+ * 
+ * Note on FWHM Index Management:
+ * While SpectrumData (from types.ts) includes fwhm_index, the context maintains its own fwhm_index state.
+ * This separation allows:
+ * 1. Dynamic updates to FWHM visualization without modifying the source data
+ * 2. Independent control over FWHM display across different spectrum views
+ * 3. Persistence of FWHM selection even when spectrum data changes
+ * 
+ * The context's fwhm_index should be initialized from SpectrumData.fwhm_index when:
+ * - New spectrum data is loaded
+ * - The user switches to a different spectrum
+ * - The application needs to reset to the default FWHM point
+ */
+
 // Define the shape of our context value
 interface SpectrumContextValue {
-  // X axis FWHM index
+  // X axis FWHM index - This can differ from SpectrumData.fwhm_index as it represents
+  // the currently active/displayed FWHM point rather than the data's default FWHM
   fwhm_index: number | null;
   setFwhmIndex: (index: number | null) => void;
   // Y axis log scale state
