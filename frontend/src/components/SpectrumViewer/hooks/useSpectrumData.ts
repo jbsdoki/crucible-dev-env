@@ -12,24 +12,24 @@ interface UseSpectrumDataResult {
 /**
  * Custom hook that manages spectrum data fetching and state
  * 
- * This hook is responsible for:
- * 1. Fetching spectrum data when selectedFile or selectedSignal changes
- * 2. Managing loading and error states during fetch
- * 3. Managing FWHM index state:
- *    - Clears FWHM when starting new data fetch
- *    - Sets new FWHM only when main spectrum data loads
- *    - Handles error cases by clearing FWHM
- * 4. Handling edge cases (missing data, invalid signal)
+ * Data Flow Architecture:
+ * ---------------------
+ * 1. Main Spectrum Data:
+ *    - Fetched from API based on selectedFile and selectedSignal
+ *    - Represents the primary spectrum visualization
+ *    - Managed entirely within this hook
  * 
- * Note: FWHM state is managed independently from region spectrum data.
- * Region selections from the image viewer do not affect FWHM state.
- * This is so when the user selects a region on the 1d graph (spectrum viewer plot) or
- * the 2d image viewer, the FWHM line is not affected
+ * 2. Region Spectrum Data:
+ *    - Passed as prop from parent (typically from image viewer selections)
+ *    - Represents a subset or related spectrum data
+ *    - Visibility controlled by SpectrumContext.showRegion
+ *    - NOT managed by this hook - see SpectrumViewerRoot for region handling
  * 
- * The hook returns an object containing:
- * - spectrumData: The fetched spectrum data or null
- * - error: Any error message that occurred during fetch
- * - loading: Boolean indicating if data is being fetched
+ * State Management:
+ * ---------------
+ * - Loading/Error states only apply to main spectrum data
+ * - FWHM index is managed in SpectrumContext for persistence
+ * - Region data visibility is toggled via SpectrumContext.showRegion
  * 
  * @param selectedFile - The file to fetch spectrum data from
  * @param selectedSignal - Information about the selected signal
@@ -63,7 +63,7 @@ export function useSpectrumData(
         console.log('useSpectrumData: Missing required data, clearing states');
         setSpectrumData(null);
         setError('');
-        return; // FWHM already cleared above
+        return;
       }
 
       // Check if signal can be displayed as spectrum
@@ -71,7 +71,7 @@ export function useSpectrumData(
         console.log('useSpectrumData: Signal cannot be displayed as spectrum');
         setError('Selected signal cannot be displayed as a spectrum');
         setSpectrumData(null);
-        return; // FWHM already cleared above
+        return;
       }
       
       try {
@@ -97,7 +97,6 @@ export function useSpectrumData(
         console.error('useSpectrumData: Error fetching spectrum:', err);
         setError('Error fetching spectrum: ' + (err as Error).message);
         setSpectrumData(null);
-        // FWHM already cleared at start of fetch
       } finally {
         console.log('useSpectrumData: Fetch operation completed');
         setLoading(false);
@@ -110,11 +109,9 @@ export function useSpectrumData(
     // Cleanup function for when component unmounts or dependencies change
     return () => {
       console.log('useSpectrumData: Cleaning up previous fetch operation');
-      // Clear FWHM when cleaning up
       setFwhmIndex(null);
     };
-  }, [selectedFile, selectedSignal, setFwhmIndex]); // Re-run when these dependencies change
+  }, [selectedFile, selectedSignal, setFwhmIndex]);
 
-  // Return current state
   return { spectrumData, error, loading };
 } 

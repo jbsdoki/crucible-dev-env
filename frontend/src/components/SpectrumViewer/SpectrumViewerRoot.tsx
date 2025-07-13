@@ -10,6 +10,22 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 
 /**
  * Props shared by both Root and Inner components
+ * 
+ * Data Flow:
+ * ---------
+ * 1. selectedFile & selectedSignal:
+ *    - Used by useSpectrumData hook to fetch main spectrum data
+ *    - Changes trigger new data fetches
+ * 
+ * 2. regionSpectrumData:
+ *    - Optional data from parent (typically image viewer)
+ *    - Independent from main spectrum data
+ *    - Visibility controlled by SpectrumContext.showRegion
+ *    - Used for overlay/comparison with main spectrum
+ * 
+ * 3. selectedRegion:
+ *    - Optional region coordinates from parent
+ *    - Used to highlight corresponding area in spectrum
  */
 interface SpectrumViewerProps {
   selectedFile: string;
@@ -29,20 +45,28 @@ interface SpectrumViewerProps {
 /**
  * Inner component that uses the hooks and renders the UI
  * This component is wrapped by SpectrumProvider in the root component
+ * 
+ * Component Responsibilities:
+ * ------------------------
+ * 1. Fetch and manage main spectrum data via useSpectrumData
+ * 2. Handle range selection via useSpectrumSelection
+ * 3. Coordinate data display between main and region spectra
+ * 4. Manage loading and error states
  */
 function SpectrumViewerInner(props: SpectrumViewerProps) {
   const [isSelectingRange, setIsSelectingRange] = useState(false);
   
-  // Use the hooks - now safely within SpectrumProvider context
+  // Fetch main spectrum data
   const { spectrumData, error, loading } = useSpectrumData(
     props.selectedFile,
     props.selectedSignal
   );
   
+  // Handle range selection for the main spectrum
   const { selectedRange, handleSelection } = useSpectrumSelection(
     spectrumData,
     isSelectingRange,
-    undefined // We'll handle range selection internally
+    undefined
   );
 
   console.log('SpectrumViewer: Rendering with:', {
@@ -88,7 +112,7 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      {/* Toolbar Row */}
+      {/* Toolbar Row - Controls for both main and region spectra */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'flex-end', 
@@ -102,7 +126,7 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
         />
       </Box>
       
-      {/* Spectrum Plot Row */}
+      {/* Spectrum Plot Row - Displays both main and region spectra */}
       <Box sx={{ width: '100%', mb: 2 }}>
         <SpectrumPlot
           spectrumData={spectrumData}
@@ -111,11 +135,11 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
           selectedRange={selectedRange}
           isSelectingRange={isSelectingRange}
           onSelected={handleSelection}
-          onRelayout={() => {}} // Empty handler since we don't use relayout anymore
+          onRelayout={() => {}}
         />
-        </Box>
+      </Box>
       
-      {/* Range Image Row */}
+      {/* Range Image Row - Shows visual representation of selected range */}
       <Box sx={{ width: '100%' }}>
         <SpectrumRangeImage 
           selectedFile={props.selectedFile}
@@ -130,6 +154,18 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
 /**
  * Root component that provides the SpectrumContext
  * This is the main export that should be used by parent components
+ * 
+ * Component Architecture:
+ * --------------------
+ * 1. Provides SpectrumContext for:
+ *    - FWHM index state
+ *    - Region spectrum visibility
+ *    - UI state (log scale, zoom mode)
+ * 
+ * 2. Delegates rendering to SpectrumViewerInner which:
+ *    - Uses hooks for data fetching and selection
+ *    - Manages component-level state
+ *    - Renders the actual UI
  */
 function SpectrumViewerRoot(props: SpectrumViewerProps) {
   return (
