@@ -7,6 +7,7 @@ import { useSpectrumData } from './hooks/useSpectrumData';
 import { useSpectrumSelection } from './hooks/useSpectrumSelection';
 import { useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
+import { useSpectrumContext } from '../../contexts/SpectrumContext';
 
 /**
  * Props shared by both Root and Inner components
@@ -27,6 +28,9 @@ import { Box, CircularProgress, Typography } from '@mui/material';
  *    - Optional region coordinates from parent
  *    - Used to highlight corresponding area in spectrum
  */
+
+
+// This defines what data the SpectrumViewer can receive
 interface SpectrumViewerProps {
   selectedFile: string;
   selectedSignal: SignalInfo;
@@ -47,6 +51,7 @@ interface SpectrumViewerProps {
  */
 function SpectrumViewerInner(props: SpectrumViewerProps) {
   const [isSelectingRange, setIsSelectingRange] = useState(false);
+  const { setSelectedRange: setSharedRange } = useSpectrumContext();
   
   // Fetch main spectrum data
   const { spectrumData, error, loading } = useSpectrumData(
@@ -58,7 +63,17 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
   const { selectedRange, handleSelection } = useSpectrumSelection(
     spectrumData,
     isSelectingRange,
-    undefined
+    (range) => {
+      // When a range is selected, update the shared context
+      if (range && spectrumData) {
+        setSharedRange({
+          start: spectrumData.x[range.start],
+          end: spectrumData.x[range.end]
+        });
+      } else {
+        setSharedRange(null);
+      }
+    }
   );
 
   console.log('SpectrumViewer: Rendering with:', {
@@ -159,8 +174,10 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
  *    - Manages component-level state
  *    - Renders the actual UI
  */
+// This method receives data from App.tsx (SpectrumViewerProps)
 function SpectrumViewerRoot(props: SpectrumViewerProps) {
   return (
+    //Then Passes the data to SpectrumViewerInner
     <SpectrumProvider>
       <SpectrumViewerInner {...props} />
     </SpectrumProvider>

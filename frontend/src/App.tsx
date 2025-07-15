@@ -23,14 +23,16 @@
  */
 
 import { useState } from 'react'
-// import SpectrumViewer from './components/SpectrumViewer'
 import SpectrumViewerRoot from './components/SpectrumViewer/SpectrumViewerRoot'
+import type { SpectrumData } from './components/SpectrumViewer/types'
 import ImageViewer from './components/ImageViewer'
 import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
+import SpectrumToImage from './components/SpectrumToImage/SpectrumToImage'
 import { Box, Typography, Paper, Button } from '@mui/material'
+import { SpectrumProvider } from './contexts/SpectrumContext'
 import './App.css'
 
 // Import SignalInfo type from SignalSelector
@@ -60,13 +62,13 @@ function App() {
   
   const [selectedFile, setSelectedFile] = useState<string>('');
   const [selectedSignal, setSelectedSignal] = useState<SignalInfo | null>(null);
-  const [regionSpectrumData, setRegionSpectrumData] = useState<number[] | null>(null);
+  const [regionSpectrumData, setRegionSpectrumData] = useState<SpectrumData | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
 
   // Handler for region selection from ImageViewer
   const handleRegionSelected = (
     region: {x1: number, y1: number, x2: number, y2: number},
-    spectrumData: number[]
+    spectrumData: SpectrumData
   ) => {
     // console.log('Region selected in App:', region);
     // console.log('Spectrum data received:', spectrumData);
@@ -173,6 +175,7 @@ function App() {
               overflow: 'auto',  // Enable scrolling
               flex: 1
             }}>
+              {/* This is where the metadata is passed from the file to the metadata viewer */}
               <MetadataViewer 
                 selectedFile={selectedFile} 
                 selectedSignalIndex={selectedSignal ? selectedSignal.index : null} 
@@ -181,28 +184,49 @@ function App() {
           </Paper>
         </Box>
 
-        {/* Center Column: Spectrum Viewer */}
-        <Paper elevation={3} sx={{ 
-          p: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          overflow: 'hidden'  // Prevent any overflow
-        }}>
-          <Typography variant="h6" gutterBottom>
-            Spectrum View
-          </Typography>
-          <Box sx={{ flex: 1, position: 'relative' }}>
-            {selectedSignal?.capabilities.hasSpectrum && (
-              <SpectrumViewerRoot
-                selectedFile={selectedFile}
-                selectedSignal={selectedSignal}
-                regionSpectrumData={regionSpectrumData}
-                selectedRegion={selectedRegion}
-              />
-            )}
+        {/* Center Column: Spectrum Viewer and SpectrumToImage */}
+        {/* SpectrumProvider is the shared context for SpectrumViewer and SpectrumToImage*/}
+        <SpectrumProvider>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: '1rem'
+          }}>
+            {/* Spectrum Viewer */}
+            <Paper elevation={3} sx={{ 
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              overflow: 'hidden'
+            }}>
+              <Typography variant="h6" gutterBottom>
+                Spectrum View
+              </Typography>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                {selectedSignal?.capabilities.hasSpectrum && (
+                  // This is where the spectrum data is passed from imageviewer to spectrumviewer
+                  <SpectrumViewerRoot
+                    selectedFile={selectedFile}
+                    selectedSignal={selectedSignal}
+                    regionSpectrumData={regionSpectrumData}
+                    selectedRegion={selectedRegion}
+                  />
+                )}
+              </Box>
+            </Paper>
+
+            {/* SpectrumToImage */}
+            <Paper elevation={3} sx={{ 
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '200px'
+            }}>
+              <SpectrumToImage />
+            </Paper>
           </Box>
-        </Paper>
+        </SpectrumProvider>
 
         {/* Right Column: Periodic Table and Image Viewer */}
         <Box sx={{ 
@@ -247,6 +271,7 @@ function App() {
                 Image View
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
+                {/* This is where the image data is passed from App.tsx to the image viewer */}
                 <ImageViewer 
                   selectedFile={selectedFile}
                   selectedSignal={selectedSignal}
