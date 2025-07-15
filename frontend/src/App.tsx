@@ -4,22 +4,32 @@
  * This is the root component of the React application, rendered in main.tsx.
  * It serves as the entry point for the application's component tree.
  * 
+ * Data Flow:
+ * ↓ = Data passed down to child components
+ * ↑ = Callbacks/events passed up from child components
+ * 
  * Component Structure:
  * - App.tsx (You are here)
- *   ├─ FileSelector (./components/FileSelector.tsx)
- *   │   - Handles file selection
- *   │   - Shared between components
- *   ├─ SignalSelector (./components/SignalSelector.tsx)
- *   │   - Handles signal selection from files
- *   │   - Shows signal capabilities
- *   ├─ ImageViewer (./components/ImageViewer.tsx)
- *   │   - Displays 2D images or slices from 3D data
- *   └─ SpectrumViewer (./components/SpectrumViewer.tsx)
- *        - Displays 1D spectra or extracted spectra from 3D data
- * 
- * Layout:
- * - Vertical layout for selection controls
- * - Grid layout for viewers when signal is selected
+ *   ├─ FileSelector
+ *   │   ↓ selectedFile: Current selected file path
+ *   │   ↑ onFileSelect: Notifies parent of file selection
+ *   ├─ SignalSelector
+ *   │   ↓ selectedFile: Current file to get signals from
+ *   │   ↑ onSignalSelect: Notifies parent of signal selection
+ *   ├─ HAADFViewer
+ *   │   ↓ selectedFile: File to display HAADF image from
+ *   ├─ MetadataViewer
+ *   │   ↓ selectedFile: File to show metadata for
+ *   │   ↓ selectedSignalIndex: Specific signal's metadata to show
+ *   ├─ SpectrumViewerRoot
+ *   │   ↓ selectedFile: File to get spectrum from
+ *   │   ↓ selectedSignal: Signal containing spectrum data
+ *   │   ↓ regionSpectrumData: Spectrum data for selected region
+ *   │   ↓ selectedRegion: Currently selected region coordinates
+ *   └─ ImageViewer
+ *       ↓ selectedFile: File to display image from
+ *       ↓ selectedSignal: Signal containing image data
+ *       ↑ onRegionSelected: Notifies parent of region selection with spectrum data
  */
 
 import { useState } from 'react'
@@ -114,6 +124,10 @@ function App() {
         }}>
           Select File
         </Box>
+        {/* FileSelector Props:
+           * ↓ selectedFile: Data passed down - current selected file path
+           * ↑ onFileSelect: Callback passed up - notifies parent of file selection
+           */}
         <FileSelector 
           selectedFile={selectedFile}
           onFileSelect={setSelectedFile}
@@ -156,6 +170,9 @@ function App() {
             overflow: 'hidden'
           }}>
             <Box sx={{ flex: 1, position: 'relative' }}>
+              {/* HAADFViewer Props:
+               * ↓ selectedFile: Data passed down - file to display HAADF image from
+               */}
               <HAADFViewer selectedFile={selectedFile} />
             </Box>
           </Paper>
@@ -175,7 +192,11 @@ function App() {
               overflow: 'auto',  // Enable scrolling
               flex: 1
             }}>
-              {/* This is where the metadata is passed from the file to the metadata viewer */}
+              {/* This is where the metadata is passed from the file to the metadata viewer
+               * MetadataViewer Props:
+               * ↓ selectedFile: Data passed down - file to show metadata for
+               * ↓ selectedSignalIndex: Data passed down - specific signal's metadata to show
+               */}
               <MetadataViewer 
                 selectedFile={selectedFile} 
                 selectedSignalIndex={selectedSignal ? selectedSignal.index : null} 
@@ -204,8 +225,13 @@ function App() {
                 Spectrum View
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
+                {/* SpectrumViewerRoot Props:
+                 * ↓ selectedFile: Data passed down - file to get spectrum from
+                 * ↓ selectedSignal: Data passed down - signal containing spectrum data
+                 * ↓ regionSpectrumData: Data passed down - spectrum data for selected region
+                 * ↓ selectedRegion: Data passed down - currently selected region coordinates
+                 */}
                 {selectedSignal?.capabilities.hasSpectrum && (
-                  // This is where the spectrum data is passed from imageviewer to spectrumviewer
                   <SpectrumViewerRoot
                     selectedFile={selectedFile}
                     selectedSignal={selectedSignal}
@@ -272,6 +298,11 @@ function App() {
               </Typography>
               <Box sx={{ flex: 1, position: 'relative' }}>
                 {/* This is where the image data is passed from App.tsx to the image viewer */}
+                {/* ImageViewer Props:
+                 * ↓ selectedFile: Data passed down - file to display image from
+                 * ↓ selectedSignal: Data passed down - signal containing image data
+                 * ↑ onRegionSelected: Callback passed up - notifies parent of region selection with spectrum data
+                 */}
                 <ImageViewer 
                   selectedFile={selectedFile}
                   selectedSignal={selectedSignal}
