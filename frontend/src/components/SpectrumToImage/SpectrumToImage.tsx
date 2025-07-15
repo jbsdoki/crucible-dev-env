@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SpectrumContext';
+import { useSpectrumContext } from '../../contexts/SharedSpectrumContext';
 
 /**
  * SpectrumToImage Component

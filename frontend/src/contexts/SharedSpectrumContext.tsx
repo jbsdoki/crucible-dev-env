@@ -1,6 +1,13 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
+/*
+This context is used to share the selected range between the SpectrumViewer and SpectrumToImage components.
+It is used to pass the selected range from the SpectrumViewer to the SpectrumToImage component.
+*/
+
+
+
 /**
  * Interface defining the shape of our context value
  * minimal state - just a selected range

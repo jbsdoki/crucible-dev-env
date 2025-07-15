@@ -42,7 +42,7 @@ import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
 import SpectrumToImage from './components/SpectrumToImage/SpectrumToImage'
 import { Box, Typography, Paper, Button } from '@mui/material'
-import { SpectrumProvider } from './contexts/SpectrumContext'
+import { SpectrumProvider } from './contexts/SharedSpectrumContext'
 import './App.css'
 
 // Import SignalInfo type from SignalSelector
