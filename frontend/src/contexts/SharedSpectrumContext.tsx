@@ -3,18 +3,25 @@ import type { ReactNode } from 'react';
 
 /*
 This context is used to share the selected range between the SpectrumViewer and SpectrumToImage components.
-It is used to pass the selected range from the SpectrumViewer to the SpectrumToImage component.
+The range includes both the indices (for API calls) and energy values (for display).
 */
-
-
 
 /**
  * Interface defining the shape of our context value
- * minimal state - just a selected range
  */
 interface SpectrumContextValue {
-  selectedRange: { start: number; end: number } | null;
-  setSelectedRange: (range: { start: number; end: number } | null) => void;
+  selectedRange: {
+    indices: { start: number; end: number };
+    energy: { start: number; end: number };
+  } | null;
+  setSelectedRange: (range: {
+    indices: { start: number; end: number };
+    energy: { start: number; end: number };
+  } | null) => void;
+  selectedFile: string | null;
+  setSelectedFile: (file: string | null) => void;
+  signalIndex: number | null;
+  setSignalIndex: (index: number | null) => void;
 }
 
 /**
@@ -26,11 +33,20 @@ const SpectrumContext = createContext<SpectrumContextValue | undefined>(undefine
  * Provider component that wraps parts of the app that need access to the context
  */
 export function SpectrumProvider({ children }: { children: ReactNode }) {
-  const [selectedRange, setSelectedRange] = useState<{ start: number; end: number } | null>(null);
+  const [selectedRange, setSelectedRange] = useState<{
+    indices: { start: number; end: number };
+    energy: { start: number; end: number };
+  } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [signalIndex, setSignalIndex] = useState<number | null>(null);
 
   const value = {
     selectedRange,
     setSelectedRange,
+    selectedFile,
+    setSelectedFile,
+    signalIndex,
+    setSignalIndex,
   };
 
   return (

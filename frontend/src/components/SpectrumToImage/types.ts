@@ -27,14 +27,14 @@ export interface ImageDisplayConfig {
 /**
  * Main props interface for SpectrumToImage component
  */
-export interface SpectrumToImageProps {
-  selectedFile: string;
-  signalIndex: number;
-  selectedRanges: EnergyRange[];              // Array of selected ranges to display
-  displayConfig?: ImageDisplayConfig;          // Optional display configuration
-  onImageLoaded?: (rangeId: string, imageData: number[][]) => void;  // Callback when an image is loaded
-  onError?: (rangeId: string, error: string) => void;                // Callback for error handling
-}
+// export interface SpectrumToImageProps {
+//   selectedFile: string;
+//   signalIndex: number;
+//   selectedRanges: EnergyRange[];              // Array of selected ranges to display
+//   displayConfig?: ImageDisplayConfig;          // Optional display configuration
+//   onImageLoaded?: (rangeId: string, imageData: number[][]) => void;  // Callback when an image is loaded
+//   onError?: (rangeId: string, error: string) => void;                // Callback for error handling
+// }
 
 /**
  * State interface for managing multiple images
@@ -46,3 +46,12 @@ export interface ImageState {
     error: string | null;
   };
 } 
+
+export interface SpectrumRangeImageProps {
+  selectedFile: string;
+  signalIndex: number;
+  selectedRange: {
+    start: number;
+    end: number;
+  } | null;
+}

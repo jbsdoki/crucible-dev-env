@@ -51,7 +51,12 @@ interface SpectrumViewerProps {
  */
 function SpectrumViewerInner(props: SpectrumViewerProps) {
   const [isSelectingRange, setIsSelectingRange] = useState(false);
-  const { setSelectedRange: setSharedRange } = useSpectrumContext();
+  // const { setSelectedRange: setSharedRange } = useSpectrumContext();
+  const { 
+    setSelectedRange: setSharedRange,
+    setSelectedFile,
+    setSignalIndex 
+  } = useSpectrumContext();
   
   // Fetch main spectrum data
   const { spectrumData, error, loading } = useSpectrumData(
@@ -60,21 +65,50 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
   );
   
   // Handle range selection for the main spectrum
+  // const { selectedRange, handleSelection } = useSpectrumSelection(
+  //   spectrumData,
+  //   isSelectingRange,
+  //   (range) => {
+  //     // When a range is selected, update the shared context
+  //     if (range && spectrumData) {
+  //       setSharedRange({
+  //         start: spectrumData.x[range.start],
+  //         end: spectrumData.x[range.end]
+  //       });
+  //     } else {
+  //       setSharedRange(null);
+  //     }
+  //   }
+  // );
   const { selectedRange, handleSelection } = useSpectrumSelection(
     spectrumData,
     isSelectingRange,
     (range) => {
-      // When a range is selected, update the shared context
+      // When a range is selected, update all shared context values
       if (range && spectrumData) {
+        // Set both indices and energy values
         setSharedRange({
-          start: spectrumData.x[range.start],
-          end: spectrumData.x[range.end]
+          indices: {
+            start: range.start,
+            end: range.end
+          },
+          energy: {
+            start: spectrumData.x[range.start],
+            end: spectrumData.x[range.end]
+          }
         });
+        // Set the file and signal index
+        setSelectedFile(props.selectedFile);
+        setSignalIndex(props.selectedSignal.index);
       } else {
+        // Clear all values when range is cleared
         setSharedRange(null);
+        setSelectedFile(null);
+        setSignalIndex(null);
       }
     }
   );
+
 
   console.log('SpectrumViewer: Rendering with:', {
     selectedFile: props.selectedFile,
