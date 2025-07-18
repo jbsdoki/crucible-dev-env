@@ -269,5 +269,24 @@ export const getAxesData = async (filename: string, signalIdx: number) => {
 /**************************************************************************/
 /***************** Periodic Table Functions *******************************/
 /**************************************************************************/
+/**
+Retrieves the emission spectra for a specific element from the backend
+Given the atomic number of the element
+ * @param atomicNumber - Atomic number of the element
+ * Returns: Object containing emission spectra data
+ */
+export const getEmissionSpectra = async (atomicNumber: number) => {
+  try {
+    console.log('Fetching Emission Spectra:', { atomicNumber });
+    const response = await api.get('/emission-spectra', {
+      params: { atomic_number: atomicNumber }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Emission Spectra:', error);
+    throw error;
+  }
+};
+
 
 export default api; 

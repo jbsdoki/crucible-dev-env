@@ -1,0 +1,126 @@
+.element-details {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+/* Modal styles */
+.element-details.modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Box styles */
+.element-details.box {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.element-details-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  position: relative;
+  max-height: 80%;
+  overflow-y: auto;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.element-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.element-symbol {
+  font-size: 48px;
+  font-weight: bold;
+  margin-right: 20px;
+}
+
+.element-number {
+  font-size: 24px;
+  color: #666;
+}
+
+.element-info h2 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.category {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.spectra-data {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.spectra-data h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.property-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.property-label {
+  font-weight: 500;
+  width: 150px;
+  color: #666;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.property-value {
+  flex: 1;
+  color: #333;
+}
+
+.loading {
+  color: #2196F3;
+  padding: 10px;
+  text-align: center;
+  font-style: italic;
+}
+
+.error {
+  color: #d32f2f;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #ffebee;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+} 

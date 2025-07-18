@@ -35,7 +35,8 @@ from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 import os
 import time
-from service_handlers import file_service, signal_service
+from service_handlers import file_service, signal_service, data_service
+from operations import periodic_table_functions
 
 
 # Create FastAPI instance
@@ -277,6 +278,23 @@ async def get_axes_data(filename: str = Query(...), signal_idx: int = Query(...)
     except Exception as e:
         print(f"ERROR in get_axes_data(): {str(e)}")
         print("=== Ending get_axes_data() with error ===\n")
+        raise HTTPException(status_code=500, detail=str(e))
+
+############################# periodic table ##################################
+
+@app.get("/emission-spectra")
+async def get_emission_spectra(atomic_number: int):
+    try:
+        print(f"\n=== Starting get_emission_spectra() in main.py ===")
+        print(f"Requested emission spectra for atomic number: {atomic_number}")
+        
+        spectra = data_service.get_emission_spectra(atomic_number)
+
+        return spectra
+    
+    except Exception as e:
+        print(f"ERROR in get_emission_spectra() in main.py: {str(e)}")
+        print("=== Ending get_emission_spectra() with error in main.py ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
 
