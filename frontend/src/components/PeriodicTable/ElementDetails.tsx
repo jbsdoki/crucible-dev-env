@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getElementCategory } from './periodicTableUtils';
 import { getEmissionSpectra } from '../../services/api';
+import { useEmissionLineContext } from '../../contexts/EmissionLineContext';
 import './ElementDetails.css';
 
 interface ElementDetailsProps {
@@ -26,10 +27,16 @@ interface EmissionSpectra {
   ma1_energy: number | null;
 }
 
+interface SelectedLines {
+  [key: string]: boolean;
+}
+
 const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isModal = true }) => {
   const [spectraData, setSpectraData] = useState<EmissionSpectra | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedLines, setSelectedLines] = useState<SelectedLines>({});
+  const { setSelectedEmissionLine } = useEmissionLineContext();
 
   useEffect(() => {
     const fetchSpectraData = async () => {
@@ -42,8 +49,14 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
         const response = await getEmissionSpectra(element.AtomicNumber);
         console.log('Received backend data:', response);
         setSpectraData(response);
+        
+        // Initialize selected lines state with all lines unselected
+        const initialSelectedState = Object.keys(response).reduce((acc, key) => {
+          acc[key] = false;
+          return acc;
+        }, {} as SelectedLines);
+        setSelectedLines(initialSelectedState);
       } catch (err: any) {
-        // More detailed error message based on the error
         const errorMessage = err.response?.status === 500
           ? `Unable to fetch emission spectra for ${element.Name} (${element.Element}). This data might not be available.`
           : 'Failed to fetch emission spectra data. Please try again later.';
@@ -56,6 +69,35 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
 
     fetchSpectraData();
   }, [element]);
+
+  const handleLineToggle = (key: string) => {
+    const newSelectedLines = {
+      ...selectedLines,
+      [key]: !selectedLines[key]
+    };
+    setSelectedLines(newSelectedLines);
+
+    // Update context with selected lines if we have both element and spectra data
+    if (element && spectraData) {
+      const selectedEmissionLines = Object.entries(spectraData).reduce((acc, [key, value]) => {
+        if (newSelectedLines[key]) {
+          acc[key as keyof EmissionSpectra] = value;
+        }
+        return acc;
+      }, {} as EmissionSpectra);
+
+      // Only update context if there are selected lines
+      if (Object.keys(selectedEmissionLines).length > 0) {
+        setSelectedEmissionLine({
+          Element: element.Element,
+          AtomicNumber: element.AtomicNumber,
+          EmissionLines: selectedEmissionLines
+        });
+      } else {
+        setSelectedEmissionLine(null);
+      }
+    }
+  };
 
   if (!element) return null;
 
@@ -71,17 +113,22 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
     return (
       <div className="spectra-data">
         <h3>Emission Spectra</h3>
-        {Object.entries(spectraData).map(([key, value]) => {
-        //   console.log(`Rendering ${key}:`, value);
-          return (
-            <div key={key} className="property-row">
+        {Object.entries(spectraData).map(([key, value]) => (
+          <div key={key} className="property-row">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={selectedLines[key] || false}
+                onChange={() => handleLineToggle(key)}
+                disabled={value === null}
+              />
               <span className="property-label">{key}: </span>
               <span className="property-value">
                 {value !== null ? `${value.toFixed(2)} keV` : 'Not available'}
               </span>
-            </div>
-          );
-        })}
+            </label>
+          </div>
+        ))}
       </div>
     );
   };

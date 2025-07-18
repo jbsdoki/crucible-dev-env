@@ -2,6 +2,7 @@
 import Plot from 'react-plotly.js';
 import type { PlotData, Layout } from 'plotly.js';
 import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
+import { useEmissionLineContext } from '../../../contexts/EmissionLineContext';
 import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
 
 // Props needed for the Plot component
@@ -35,6 +36,9 @@ function SpectrumPlot({
     isZoomMode,
     showRegion
   } = useSpectrumContext();
+
+  // Get emission line data from EmissionLineContext context
+  const { selectedEmissionLine } = useEmissionLineContext();
 
   // Process y-values for log scale - applies to both main and region spectra
   const processYValuesForLogScale = (yValues: number[]): number[] => {
@@ -72,6 +76,54 @@ function SpectrumPlot({
     }
   };
 
+
+
+  /*############################################################################################
+  This function retrieves the emission lines from the shared context EmissionLineContext
+  The context is shared between the PeriodicTable and the SpectrumViewer components.
+  The data only flows one way:
+  - PeriodicTable -> EmissionLineContext -> SpectrumViewer
+  ############################################################################################*/
+  const generateEmissionLineShapes = () => {
+    if (!selectedEmissionLine) return [];
+
+    return Object.entries(selectedEmissionLine.EmissionLines)
+      .filter(([_, energy]) => energy !== null)
+      .map(([lineName, energy]) => ({
+        type: 'line' as const,
+        x0: energy as number,  // We filtered out null values above
+        x1: energy as number,  // We filtered out null values above
+        y0: 0,
+        y1: 1,
+        yref: 'paper' as const,
+        line: {
+          color: 'black',
+          width: 1,
+          dash: 'dash' as const
+        },
+        name: `${selectedEmissionLine.Element}-${lineName}`
+      }));
+  };
+
+  // Generate annotations for emission lines
+  const generateEmissionLineAnnotations = () => {
+    if (!selectedEmissionLine) return [];
+
+    return Object.entries(selectedEmissionLine.EmissionLines)
+      .filter(([_, energy]) => energy !== null)
+      .map(([lineName, energy]) => ({
+        x: energy as number,  // We filtered out null values above
+        y: -0.15,
+        text: `${selectedEmissionLine.Element} (${lineName})`,
+        showarrow: false,
+        yref: 'paper' as const,
+        yanchor: 'top' as const,
+        textangle: '45' as const
+      }));
+  };
+  // End emission line functions
+  //############################################################################################
+
   // Base layout configuration - applies to entire plot
   const baseLayout: Partial<Layout> = {
     showlegend: true,
@@ -88,7 +140,9 @@ function SpectrumPlot({
       } : undefined,
       type: isLogScale ? 'log' : 'linear',
       range: calculateYAxisRange(spectrumData.y)
-    }
+    },
+    shapes: generateEmissionLineShapes(),
+    annotations: generateEmissionLineAnnotations()
   };
 
   // Plot data preparation - builds array of traces to display
@@ -108,7 +162,6 @@ function SpectrumPlot({
   });
 
   // Add FWHM line if enabled - this uses the main signal/spectrum's FWHM index
-  // Calculated in the backend
   if (showFWHM && fwhm_index !== null) {
     const fwhmX = spectrumData.x[fwhm_index];
     const maxY = Math.max(...spectrumData.y);
@@ -126,9 +179,7 @@ function SpectrumPlot({
     });
   }
 
-  // Add selected range markers if range is selected - this is from 1D spectrum selection
-  // When the uses drags to select a region on the 1D spectrum plot, the selectedRange is updated
-  // and this component is re-rendered with the new selectedRange.
+  // Add selected range markers if range is selected
   if (selectedRange) {
     // Add start marker
     plotData.push({
@@ -176,9 +227,7 @@ function SpectrumPlot({
     });
   }
 
-  // Add region spectrum if available - this is from image viewer region selection
-  // When the user selects a region on the 2D image viewer, the regionSpectrumData is updated
-  // and this component is re-rendered with the new regionSpectrumData.
+  // Add region spectrum if available
   if (showRegion && regionSpectrumData) {
     plotData.push({
       x: regionSpectrumData.x,
