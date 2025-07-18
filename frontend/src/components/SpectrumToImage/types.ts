@@ -24,17 +24,6 @@ export interface ImageDisplayConfig {
   zsmooth?: 'best' | 'fast' | false; // Smoothing option for the heatmap
 }
 
-/**
- * Main props interface for SpectrumToImage component
- */
-// export interface SpectrumToImageProps {
-//   selectedFile: string;
-//   signalIndex: number;
-//   selectedRanges: EnergyRange[];              // Array of selected ranges to display
-//   displayConfig?: ImageDisplayConfig;          // Optional display configuration
-//   onImageLoaded?: (rangeId: string, imageData: number[][]) => void;  // Callback when an image is loaded
-//   onError?: (rangeId: string, error: string) => void;                // Callback for error handling
-// }
 
 /**
  * State interface for managing multiple images

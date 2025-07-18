@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Plot from 'react-plotly.js';
 import type { PlotData, Layout } from 'plotly.js';
-import { useSpectrumContext } from '../contexts/SpectrumContext';
+import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
 import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
 
 // Props needed for the Plot component

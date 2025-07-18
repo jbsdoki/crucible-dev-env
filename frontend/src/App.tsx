@@ -40,9 +40,10 @@ import HAADFViewer from './components/HAADFViewer'
 import MetadataViewer from './components/MetadataViewer'
 import FileSelector from './components/FileSelector'
 import SignalSelector from './components/SignalSelector'
-import SpectrumToImage from './components/SpectrumToImage/SpectrumToImage'
+import SpectrumToImage from './components/SpectrumToImage/SpectrumRangeVisualizer'
+import PeriodicTable from './components/PeriodicTable/PeriodicTable'
 import { Box, Typography, Paper, Button } from '@mui/material'
-import { SpectrumProvider } from './contexts/SharedSpectrumContext'
+import { SpectrumProvider } from './contexts/SpectrumRangeContext'
 import './App.css'
 
 // Import SignalInfo type from SignalSelector
@@ -266,7 +267,12 @@ function App() {
             flex: 1,
             p: 2,
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            overflow: 'auto',
+            minWidth: '700px', // Ensure minimum width for periodic table
+            '& > .MuiBox-root': {
+              minHeight: 'min-content' // Allow content to determine height
+            }
           }}>
             <Typography variant="h6" gutterBottom>
               Periodic Table
@@ -274,14 +280,14 @@ function App() {
             <Box sx={{ 
               flex: 1,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              alignItems: 'flex-start',
+              justifyContent: 'flex-start',
               bgcolor: 'background.default',
-              borderRadius: 1
+              borderRadius: 1,
+              overflow: 'auto',
+              padding: 1
             }}>
-              <Typography variant="h5" color="text.secondary">
-                Periodic Table Here
-              </Typography>
+              <PeriodicTable />
             </Box>
           </Paper>
 

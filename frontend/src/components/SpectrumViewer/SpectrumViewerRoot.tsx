@@ -1,4 +1,4 @@
-import { SpectrumProvider } from './contexts/SpectrumContext';
+import { SpectrumProvider } from './contexts/SpectrumViewerContext';
 import type { SignalInfo, SpectrumData } from './types';
 import SpectrumRangeImage from './components/SpectrumRangeImage';
 import SpectrumToolbar from './components/SpectrumToolbar';
@@ -7,7 +7,7 @@ import { useSpectrumData } from './hooks/useSpectrumData';
 import { useSpectrumSelection } from './hooks/useSpectrumSelection';
 import { useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SharedSpectrumContext';
+import { useSpectrumContext } from '../../contexts/SpectrumRangeContext';
 
 /**
  * Props shared by both Root and Inner components

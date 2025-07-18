@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SharedSpectrumContext';
+import { useSpectrumContext } from '../../contexts/SpectrumRangeContext';
 import { useEffect, useState } from 'react';
 import * as api from '../../services/api';
 import Plot from 'react-plotly.js';
@@ -10,6 +10,15 @@ import Plot from 'react-plotly.js';
  * Creates a 2D spatial map showing the distribution of X-rays within a selected energy range.
  * The intensity at each pixel represents the count of X-rays detected within the specified
  * energy range at that spatial location.
+ * 
+ * This component receives the Spectrum Range from the SpectrumRangeContext
+ * It also receives the selected file and signal index from the SpectrumRangeContext
+ * It then uses the selected file and signal index to fetch the image data from the backend
+ * and then displays the image data in a 2D spatial map'
+ * 
+ * The data only flows one way:
+ * - SpectrumViewer -> SpectrumRangeContext -> SpectrumToImage
+ * 
  */
 export function SpectrumToImage() {
   const { selectedRange, selectedFile, signalIndex } = useSpectrumContext();

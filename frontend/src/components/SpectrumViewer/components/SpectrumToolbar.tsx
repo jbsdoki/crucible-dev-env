@@ -6,8 +6,8 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import BlockIcon from '@mui/icons-material/Block';
-import { useSpectrumContext } from '../contexts/SpectrumContext';
-import { useState, useEffect } from 'react';
+import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
+import { useEffect } from 'react';
 
 interface SpectrumToolbarProps {
   regionSpectrumData?: {

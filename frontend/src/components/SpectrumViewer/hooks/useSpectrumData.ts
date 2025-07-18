@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSpectrum } from '../../../services/api';
-import { useSpectrumContext } from '../contexts/SpectrumContext';
+import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
 import type { SignalInfo, SpectrumData } from '../types';
 
 interface UseSpectrumDataResult {

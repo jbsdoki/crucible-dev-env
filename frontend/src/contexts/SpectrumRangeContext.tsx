@@ -1,10 +1,13 @@
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
-/*
+/*##########################################################################################################
 This context is used to share the selected range between the SpectrumViewer and SpectrumToImage components.
 The range includes both the indices (for API calls) and energy values (for display).
-*/
+
+The data only flows one way:
+- SpectrumViewer -> SpectrumRangeContext -> SpectrumToImage
+##########################################################################################################*/
 
 /**
  * Interface defining the shape of our context value
