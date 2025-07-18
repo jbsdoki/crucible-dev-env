@@ -42,9 +42,12 @@ The component accepts the following props:
    - Control visualization options
    - Manage region spectrum visibility
 
-4. **Range Image Visualization**
+
+4. **Range Image Visualization (REMOVED)**
    - Displays visual representation of selected spectrum ranges
    - Updates in real-time as selections change
+   THIS FUNCTIONALITY HAS BEEN REMOVED AND SHIFTED TO A NEW COMPONENT:
+   SpectrumToImage
 
 ## Sub-Components
 
@@ -65,11 +68,18 @@ The component accepts the following props:
 
 The component integrates with two main contexts:
 1. **SpectrumViewerContext**: Manages component-specific state
+   - This context is only used by SpectrumViewer, it is not meant 
+     to be used by any other component
+   - Controls Toolbar settings. 
    - FWHM index state
    - Region spectrum visibility
    - UI state (log scale, zoom mode)
 
 2. **SpectrumRangeContext**: Manages shared spectrum range state
+   - This context is stored in src/contexts and can be used for all
+     components, but I advise you don't change that unless necessary
+     data flows:
+        SpectrumViewer -> App.tsx -> SpectromToRange
    - Selected range indices and energy values
    - Selected file and signal information
 

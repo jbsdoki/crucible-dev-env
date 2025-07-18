@@ -1,6 +1,6 @@
 import { SpectrumProvider } from './contexts/SpectrumViewerContext';
 import type { SignalInfo, SpectrumData } from './types';
-import SpectrumRangeImage from './components/SpectrumRangeImage';
+// import SpectrumRangeImage from './components/SpectrumRangeImage';
 import SpectrumToolbar from './components/SpectrumToolbar';
 import SpectrumPlot from './components/SpectrumPlot';
 import { useSpectrumData } from './hooks/useSpectrumData';
@@ -181,13 +181,13 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
       </Box>
       
       {/* Range Image Row - Shows visual representation of selected range */}
-      <Box sx={{ width: '100%' }}>
+      {/* <Box sx={{ width: '100%' }}>
         <SpectrumRangeImage 
           selectedFile={props.selectedFile}
           signalIndex={props.selectedSignal.index}
           selectedRange={selectedRange}
         />
-      </Box>
+      </Box> */}
     </Box>
   );
 }
