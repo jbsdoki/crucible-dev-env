@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getElementCategory } from './periodicTableUtils';
+import { getElementCategory } from './utils/periodicTableUtils';
 import { getEmissionSpectra } from '../../services/api';
 import { useEmissionLineContext } from '../../contexts/EmissionLineContext';
 import './ElementDetails.css';

@@ -5,7 +5,7 @@ import {
   elementGridPosition, 
   getElementCategory, 
   categoryColors 
-} from './periodicTableUtils';
+} from './utils/periodicTableUtils';
 import ElementDetails from './ElementDetails';
 import * as api from '../../services/api';
 
