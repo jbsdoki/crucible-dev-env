@@ -69,13 +69,13 @@ def get_emission_spectra(atomic_number: int):
         
     print(f"\n=== Ending get_emission_spectra() in periodic_table_functions.py ===")    
     return {
-        "ka1_energy": ka1_energy,
-        "ka2_energy": ka2_energy,
-        "kb1_energy": kb1_energy,
-        "la1_energy": la1_energy,
-        "la2_energy": la2_energy,
-        "lb1_energy": lb1_energy,
-        "lb2_energy": lb2_energy,
-        "lg1_energy": lg1_energy,
-        "ma1_energy": ma1_energy
+        "ka1": ka1_energy,
+        "ka2": ka2_energy,
+        "kb1": kb1_energy,
+        "la1": la1_energy,
+        "la2": la2_energy,
+        "lb1": lb1_energy,
+        "lb2": lb2_energy,
+        "lg1": lg1_energy,
+        "ma1": ma1_energy
     }

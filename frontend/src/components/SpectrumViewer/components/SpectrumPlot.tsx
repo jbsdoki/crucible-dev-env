@@ -113,7 +113,7 @@ function SpectrumPlot({
       .filter(([_, energy]) => energy !== null)
       .map(([lineName, energy]) => ({
         x: energy as number,  // We filtered out null values above
-        y: -0.15,
+        y: -0.05,
         text: `${selectedEmissionLine.Element} (${lineName})`,
         showarrow: false,
         yref: 'paper' as const,
