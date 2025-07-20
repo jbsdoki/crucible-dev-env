@@ -55,14 +55,14 @@ export function useSpectrumSelection(
       return;
     }
 
-    // Extract range from event
+    // Extract x-range from the 2D selection
     const [start, end] = event.range.x;
     console.log('useSpectrumSelection: Raw selection range:', { start, end });
 
     // Find the closest x values in our data
     const xValues = spectrumData.x;
-    const startIdx = xValues.findIndex(x => x >= start);
-    const endIdx = xValues.findIndex(x => x >= end);
+    const startIdx = xValues.findIndex(x => x >= Math.min(start, end));  // Handle left-to-right or right-to-left selection
+    const endIdx = xValues.findIndex(x => x >= Math.max(start, end));
     
     // Log the conversion from x-values to indices
     console.log('useSpectrumSelection: Converting to indices:', {

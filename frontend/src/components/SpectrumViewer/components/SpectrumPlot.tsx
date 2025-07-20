@@ -256,13 +256,17 @@ function SpectrumPlot({
           ...baseLayout.xaxis,
           autorange: true,
           fixedrange: false
+        },
+        selectdirection: 'h',  // Force horizontal selection
+        modebar: {
+          orientation: 'h'
         }
       }}
       config={{
         displayModeBar: true,
         scrollZoom: true,
         displaylogo: false,
-        modeBarButtonsToRemove: ['select2d', 'lasso2d'],
+        modeBarButtonsToRemove: ['select2d', 'lasso2d', 'resetScale2d', 'zoom2d', 'pan2d'],
         responsive: true
       }}
       onSelected={onSelected}
