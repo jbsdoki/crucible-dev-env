@@ -6,7 +6,7 @@
  * 
  * Application Flow:
  * 1. main.tsx (You are here)
- *    └─ Renders App.tsx
+ *    └─ Renders new_App.tsx (Testing new layout)
  *        └─ Renders SpectrumViewer.tsx
  *            └─ Makes API calls to FastAPI backend (localhost:8000)
  * 
@@ -21,6 +21,7 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+// import App from './new_App.tsx'
 
 // Create and render the React root
 // The '!' tells TypeScript that we're certain the element exists
