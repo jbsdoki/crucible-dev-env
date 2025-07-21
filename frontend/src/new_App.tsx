@@ -1,3 +1,39 @@
+/**
+ * Main Application Component
+ * 
+ * This is the root component of the React application, rendered in main.tsx.
+ * It serves as the entry point for the application's component tree.
+ * 
+ * Data Flow:
+ * ↓ = Data passed down to child components
+ * ↑ = Callbacks/events passed up from child components
+ * 
+ * Component Structure:
+ * - App.tsx (You are here)
+ *   ├─ FileSelector
+ *   │   ↓ selectedFile: Current selected file path
+ *   │   ↑ onFileSelect: Notifies parent of file selection
+ *   ├─ SignalSelector
+ *   │   ↓ selectedFile: Current file to get signals from
+ *   │   ↑ onSignalSelect: Notifies parent of signal selection
+ *   ├─ HAADFViewer
+ *   │   ↓ selectedFile: File to display HAADF image from
+ *   ├─ MetadataViewer
+ *   │   ↓ selectedFile: File to show metadata for
+ *   │   ↓ selectedSignalIndex: Specific signal's metadata to show
+ *   ├─ SpectrumViewerRoot
+ *   │   ↓ selectedFile: File to get spectrum from
+ *   │   ↓ selectedSignal: Signal containing spectrum data
+ *   │   ↓ regionSpectrumData: Spectrum data for selected region
+ *   │   ↓ selectedRegion: Currently selected region coordinates
+ *   └─ ImageViewer
+ *       ↓ selectedFile: File to display image from
+ *       ↓ selectedSignal: Signal containing image data
+ *       ↑ onRegionSelected: Notifies parent of region selection with spectrum data
+ */
+
+
+
 import { useState } from 'react';
 import { Button, Box } from '@mui/material';
 import MainLayout from './WebPageLayouts/MainLayout';
@@ -18,6 +54,10 @@ import type { SpectrumData } from './components/SpectrumViewer/types';
  * 
  * Root component of the application that manages the main application state
  * and composes the layout using the new grid-based layout.
+ * 
+ * Context Providers:
+ * - SpectrumProvider: Provides spectrum range and visualization settings
+ * - EmissionLineProvider: Provides selected emission line data for periodic table integration
  */
 function App() {
   // State for test mode toggle (temporary)
@@ -76,20 +116,20 @@ function App() {
       </Button>
 
       {/* Main application layout with context providers */}
-      <SpectrumProvider>
-        <EmissionLineProvider>
+      <SpectrumProvider>        {/* Provides spectrum range data to SpectrumViewer and SpectrumToImage */}
+        <EmissionLineProvider>  {/* Provides emission line data between PeriodicTable and SpectrumViewer */}
           <MainLayout
             headerLeft={
               <FileSelector
-                selectedFile={selectedFile}
-                onFileSelect={setSelectedFile}
+                selectedFile={selectedFile}       // ↓ Prop: Current file path
+                onFileSelect={setSelectedFile}    // ↑ Callback: Updates selected file
               />
             }
             headerRight={
               selectedFile ? (
                 <SignalSelector
-                  selectedFile={selectedFile}
-                  onSignalSelect={setSelectedSignal}
+                  selectedFile={selectedFile}         // ↓ Prop: Current file to load signals from
+                  onSignalSelect={setSelectedSignal}  // ↑ Callback: Updates selected signal
                 />
               ) : (
                 <Box sx={{ 
@@ -123,9 +163,9 @@ function App() {
                 <Box sx={{ flex: 1, position: 'relative' }}>
                   {selectedSignal?.capabilities.hasImage ? (
                     <ImageViewer
-                      selectedFile={selectedFile}
-                      selectedSignal={selectedSignal}
-                      onRegionSelected={handleRegionSelected}
+                      selectedFile={selectedFile}               // ↓ Prop: File to load image from
+                      selectedSignal={selectedSignal}           // ↓ Prop: Signal containing image data
+                      onRegionSelected={handleRegionSelected}   // ↑ Callback: Updates region selection
                     />
                   ) : (
                     <Box sx={{ 
@@ -154,11 +194,13 @@ function App() {
                 {selectedSignal?.capabilities.hasSpectrum ? (
                   <Box sx={{ flex: 1, position: 'relative' }}>
                     <SpectrumViewerRoot
-                      selectedFile={selectedFile}
-                      selectedSignal={selectedSignal}
-                      regionSpectrumData={regionSpectrumData}
-                      selectedRegion={selectedRegion}
+                      selectedFile={selectedFile}               // ↓ Prop: File to load spectrum from
+                      selectedSignal={selectedSignal}           // ↓ Prop: Signal containing spectrum data
+                      regionSpectrumData={regionSpectrumData}   // ↓ Prop: Spectrum data from selected region
+                      selectedRegion={selectedRegion}           // ↓ Prop: Selected region coordinates
                     />
+                    {/* Uses SpectrumProvider context for range selection */}
+                    {/* Uses EmissionLineProvider context for emission line overlay */}
                   </Box>
                 ) : (
                   <Box sx={{ 
@@ -209,6 +251,7 @@ function App() {
                     <PeriodicTable />
                   </Box>
                 </Box>
+                {/* Uses EmissionLineProvider context to share selected elements */}
               </Box>
             }
             bottomLeft={
@@ -236,8 +279,8 @@ function App() {
                 }}>
                   {selectedFile ? (
                     <MetadataViewer 
-                      selectedFile={selectedFile}
-                      selectedSignalIndex={selectedSignal ? selectedSignal.index : null}
+                      selectedFile={selectedFile}     // ↓ Prop: File to show metadata for
+                      selectedSignalIndex={selectedSignal ? selectedSignal.index : null}  // ↓ Prop: Signal index for specific metadata
                     />
                   ) : (
                     <Box sx={{ 
@@ -296,6 +339,7 @@ function App() {
                     </Box>
                   )}
                 </Box>
+                {/* Uses SpectrumProvider context to access selected range */}
               </Box>
             }
           />
