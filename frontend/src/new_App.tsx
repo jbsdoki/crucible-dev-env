@@ -46,7 +46,7 @@ import SpectrumViewerRoot from './components/SpectrumViewer/SpectrumViewerRoot';
 import PeriodicTable from './components/PeriodicTable/PeriodicTable';
 import MetadataViewer from './components/MetadataViewer';
 import SpectrumToImage from './components/SpectrumRangeVisualizer/SpectrumRangeVisualizer';
-import EmissionSpectraWidthSum from './components/EmissionSpectraWidthSum';
+import EmissionSpectraWidthSum from './components/EmissionLineAnalysis';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
 
