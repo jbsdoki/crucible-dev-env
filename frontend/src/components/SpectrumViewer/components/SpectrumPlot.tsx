@@ -260,7 +260,9 @@ function SpectrumPlot({
         selectdirection: 'h',  // Force horizontal selection
         modebar: {
           orientation: 'h'
-        }
+        },
+        // Add uirevision to maintain zoom levels and other UI states
+        uirevision: `${selectedSignal.title}-${isLogScale}`
       }}
       config={{
         displayModeBar: true,
