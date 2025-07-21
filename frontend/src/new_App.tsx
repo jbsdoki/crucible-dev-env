@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Box } from '@mui/material';
-import MainLayout from './layouts/MainLayout';
+import MainLayout from './WebPageLayouts/MainLayout';
 import { SpectrumProvider } from './contexts/SpectrumRangeContext';
 import { EmissionLineProvider } from './contexts/EmissionLineContext';
 import FileSelector from './components/FileSelector';
