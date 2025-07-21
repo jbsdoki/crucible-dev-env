@@ -372,4 +372,3 @@ def get_fwhm_index(spectrum_data, half_zero_height, zero_index):
         print(f"Error removing zero peak: {str(e)}")
         return None
 
-    

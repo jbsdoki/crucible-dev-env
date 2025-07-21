@@ -351,3 +351,41 @@ async def energy_range_spectrum(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
+"""
+Get the spectrum sum for a specific energy range.
+
+Parameters:
+- filename: Name of the file containing the signal
+- signal_idx: Index of the signal in the file
+- start: Starting energy value in keV
+- end: Ending energy value in keV
+
+Returns:
+- Total sum of x-ray counts within the specified energy range
+"""
+@app.get("/emission-spectra-width-sum")
+async def emission_spectra_width_sum(
+    filename: str = Query(..., description="Name of the file to process"),
+    signal_idx: int = Query(..., description="Index of the signal in the file"),
+    start: float = Query(..., description="Start energy value in keV"),
+    end: float = Query(..., description="End energy value in keV")
+):
+    """
+    Get the spectrum sum for a specific energy range.
+
+    Parameters:
+    - filename: Name of the file containing the signal
+    - signal_idx: Index of the signal in the file
+    - start: Starting energy value in keV
+    - end: Ending energy value in keV
+
+    Returns:
+    - Total sum of x-ray counts within the specified energy range
+    """
+    try:
+        return await signal_service.get_emission_spectra_width_sum(filename, signal_idx, start, end)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+

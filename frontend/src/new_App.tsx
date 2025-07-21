@@ -46,6 +46,7 @@ import SpectrumViewerRoot from './components/SpectrumViewer/SpectrumViewerRoot';
 import PeriodicTable from './components/PeriodicTable/PeriodicTable';
 import MetadataViewer from './components/MetadataViewer';
 import SpectrumToImage from './components/SpectrumRangeVisualizer/SpectrumRangeVisualizer';
+import EmissionSpectraWidthSum from './components/EmissionSpectraWidthSum';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
 
@@ -340,6 +341,51 @@ function App() {
                   )}
                 </Box>
                 {/* Uses SpectrumProvider context to access selected range */}
+              </Box>
+            }
+            bottomRight={
+              <Box sx={{ 
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                bgcolor: 'white'
+              }}>
+                <Box sx={{ 
+                  typography: 'h5', 
+                  p: 2, 
+                  textAlign: 'center',
+                  color: 'text.primary',
+                  fontWeight: 'medium'
+                }}>
+                  Emission Line Analysis
+                </Box>
+                <Box sx={{ 
+                  flex: 1, 
+                  position: 'relative',
+                  overflow: 'auto',
+                  p: 2
+                }}>
+                  {selectedSignal?.capabilities.hasSpectrum ? (
+                    <EmissionSpectraWidthSum
+                      selectedFile={selectedFile}
+                      selectedSignalIndex={selectedSignal.index}
+                    />
+                  ) : (
+                    <Box sx={{ 
+                      color: '#666',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '100%',
+                      height: '100%'
+                    }}>
+                      {selectedFile 
+                        ? "Select a signal with spectrum capabilities to view emission line analysis"
+                        : "Select a file to view emission line analysis"}
+                    </Box>
+                  )}
+                </Box>
               </Box>
             }
           />
