@@ -40,6 +40,9 @@ interface SpectrumContextValue {
   // Region spectrum visibility
   showRegion: boolean;
   setShowRegion: (value: boolean) => void;
+  // Emission lines visibility
+  showEmissionLines: boolean;
+  setShowEmissionLines: (value: boolean) => void;
 }
 
 // Create the context with undefined as initial value
@@ -57,6 +60,7 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
   const [showFWHM, setShowFWHM] = useState<boolean>(false);
   const [isZoomMode, setIsZoomMode] = useState<boolean>(true);
   const [showRegion, setShowRegion] = useState<boolean>(true);
+  const [showEmissionLines, setShowEmissionLines] = useState<boolean>(true); // Default to true
 
   const value: SpectrumContextValue = {
     fwhm_index,
@@ -68,7 +72,9 @@ export function SpectrumProvider({ children }: SpectrumProviderProps) {
     isZoomMode,
     setIsZoomMode,
     showRegion,
-    setShowRegion
+    setShowRegion,
+    showEmissionLines,
+    setShowEmissionLines
   };
 
   return (

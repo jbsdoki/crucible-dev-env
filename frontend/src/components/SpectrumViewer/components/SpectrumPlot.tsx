@@ -34,7 +34,8 @@ function SpectrumPlot({
     isLogScale,
     showFWHM,
     isZoomMode,
-    showRegion
+    showRegion,
+    showEmissionLines
   } = useSpectrumContext();
 
   // Get emission line data from EmissionLineContext context
@@ -85,7 +86,7 @@ function SpectrumPlot({
   - PeriodicTable -> EmissionLineContext -> SpectrumViewer
   ############################################################################################*/
   const generateEmissionLineShapes = () => {
-    if (!selectedEmissionLine) return [];
+    if (!selectedEmissionLine || !showEmissionLines) return [];
 
     return Object.entries(selectedEmissionLine.EmissionLines)
       .filter(([_, energy]) => energy !== null)
@@ -107,7 +108,7 @@ function SpectrumPlot({
 
   // Generate annotations for emission lines
   const generateEmissionLineAnnotations = () => {
-    if (!selectedEmissionLine) return [];
+    if (!selectedEmissionLine || !showEmissionLines) return [];
 
     return Object.entries(selectedEmissionLine.EmissionLines)
       .filter(([_, energy]) => energy !== null)

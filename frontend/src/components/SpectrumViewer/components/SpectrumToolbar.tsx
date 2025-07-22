@@ -6,6 +6,7 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import BlockIcon from '@mui/icons-material/Block';
+import AlignVerticalCenterIcon from '@mui/icons-material/AlignVerticalCenter';
 import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
 import { useEffect } from 'react';
 
@@ -48,6 +49,8 @@ function SpectrumToolbar({ regionSpectrumData, onSelectionModeChange, isSelectin
     setIsZoomMode,
     showRegion,
     setShowRegion,
+    showEmissionLines,
+    setShowEmissionLines,
     fwhm_index
   } = useSpectrumContext();
 
@@ -155,6 +158,20 @@ function SpectrumToolbar({ regionSpectrumData, onSelectionModeChange, isSelectin
         <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
           <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
             <ScaleIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={showEmissionLines ? "Hide Emission Lines" : "Show Emission Lines"}>
+          <IconButton 
+            onClick={() => setShowEmissionLines(!showEmissionLines)} 
+            color={showEmissionLines ? "primary" : "default"}
+            sx={{ 
+              bgcolor: showEmissionLines ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
+              '&:hover': {
+                bgcolor: showEmissionLines ? 'rgba(25, 118, 210, 0.2)' : 'rgba(0, 0, 0, 0.04)'
+              }
+            }}
+          >
+            <AlignVerticalCenterIcon />
           </IconButton>
         </Tooltip>
       </Stack>
