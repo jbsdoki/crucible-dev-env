@@ -1,3 +1,13 @@
+/*##########################################################################################################
+This context is used to share the selected emission line between the PeriodicTable and EmissionLineAnalysis 
+components. The data is used to display the emission lines in the EmissionLineAnalysis component.
+
+The data only flows one way:
+- PeriodicTable -> EmissionLineContext -> EmissionLineAnalysis
+##########################################################################################################*/
+
+
+
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 

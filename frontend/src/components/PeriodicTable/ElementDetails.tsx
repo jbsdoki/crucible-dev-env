@@ -13,6 +13,8 @@ interface ElementDetailsProps {
   } | null;
   onClose?: () => void;
   isModal?: boolean;
+  selectedLines: { [key: string]: boolean };
+  onSelectedLinesChange: (selectedLines: { [key: string]: boolean }) => void;
 }
 
 interface EmissionSpectra {
@@ -27,15 +29,16 @@ interface EmissionSpectra {
   ma1: number | null;
 }
 
-interface SelectedLines {
-  [key: string]: boolean;
-}
-
-const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isModal = true }) => {
+const ElementDetails: React.FC<ElementDetailsProps> = ({ 
+  element, 
+  onClose, 
+  isModal = true,
+  selectedLines,
+  onSelectedLinesChange
+}) => {
   const [spectraData, setSpectraData] = useState<EmissionSpectra | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedLines, setSelectedLines] = useState<SelectedLines>({});
   const { setSelectedEmissionLine } = useEmissionLineContext();
 
   useEffect(() => {
@@ -49,13 +52,6 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
         const response = await getEmissionSpectra(element.AtomicNumber);
         console.log('Received backend data:', response);
         setSpectraData(response);
-        
-        // Initialize selected lines state with all lines unselected
-        const initialSelectedState = Object.keys(response).reduce((acc, key) => {
-          acc[key] = false;
-          return acc;
-        }, {} as SelectedLines);
-        setSelectedLines(initialSelectedState);
       } catch (err: any) {
         const errorMessage = err.response?.status === 500
           ? `Unable to fetch emission spectra for ${element.Name} (${element.Element}). This data might not be available.`
@@ -70,17 +66,11 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
     fetchSpectraData();
   }, [element]);
 
-  const handleLineToggle = (key: string) => {
-    const newSelectedLines = {
-      ...selectedLines,
-      [key]: !selectedLines[key]
-    };
-    setSelectedLines(newSelectedLines);
-
-    // Update context with selected lines if we have both element and spectra data
+  // Update context whenever selectedLines changes
+  useEffect(() => {
     if (element && spectraData) {
       const selectedEmissionLines = Object.entries(spectraData).reduce((acc, [key, value]) => {
-        if (newSelectedLines[key]) {
+        if (selectedLines[key]) {
           acc[key as keyof EmissionSpectra] = value;
         }
         return acc;
@@ -97,6 +87,14 @@ const ElementDetails: React.FC<ElementDetailsProps> = ({ element, onClose, isMod
         setSelectedEmissionLine(null);
       }
     }
+  }, [selectedLines, element, spectraData, setSelectedEmissionLine]);
+
+  const handleLineToggle = (key: string) => {
+    const newSelectedLines = {
+      ...selectedLines,
+      [key]: !selectedLines[key]
+    };
+    onSelectedLinesChange(newSelectedLines);
   };
 
   if (!element) return null;

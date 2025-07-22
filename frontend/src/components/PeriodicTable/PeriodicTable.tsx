@@ -8,6 +8,7 @@ import {
 } from './utils/periodicTableUtils';
 import ElementDetails from './ElementDetails';
 import * as api from '../../services/api';
+import { useEmissionLineContext } from '../../contexts/EmissionLineContext';
 
 interface PeriodicElement {
   AtomicNumber: number;
@@ -27,6 +28,13 @@ interface ElementCellProps {
 interface PeriodicTableProps {
   onElementClick?: (element: PeriodicElement) => void;
   displayMode?: 'modal' | 'box';
+}
+
+// Interface for tracking selected emission lines per element
+interface SelectedLinesState {
+  [elementNumber: number]: {
+    [lineName: string]: boolean;
+  };
 }
 
 const ElementCell: React.FC<ElementCellProps> = ({ element, onElementClick, isSelected }) => {
@@ -49,7 +57,10 @@ const ElementCell: React.FC<ElementCellProps> = ({ element, onElementClick, isSe
         gridColumn: pos.col, 
         gridRow: pos.row,
         backgroundColor,
-        border: isSelected ? '2px solid #2196F3' : '1px solid #ddd'
+        border: isSelected ? '2px solid #2196F3' : '1px solid #ddd',
+        transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+        zIndex: isSelected ? 1 : 'auto',
+        transition: 'transform 0.2s ease-in-out'
       }}
       onClick={handleClick}
       role="button"
@@ -63,14 +74,42 @@ const ElementCell: React.FC<ElementCellProps> = ({ element, onElementClick, isSe
 };
 
 const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, displayMode = 'modal' }) => {
-  const [selectedElement, setSelectedElement] = useState<PeriodicElement | null>(null);
+  const [selectedElements, setSelectedElements] = useState<Set<number>>(new Set());
   const [showModal, setShowModal] = useState(false);
+  const [activeElement, setActiveElement] = useState<PeriodicElement | null>(null);
+  // This state tracks the selected emission lines, allowing the
+  // PeriodicTable component to keep track of which are selected
+  const [selectedLinesState, setSelectedLinesState] = useState<SelectedLinesState>({});
+  const { setSelectedEmissionLine } = useEmissionLineContext();
 
   const handleElementClick = (element: PeriodicElement) => {
-    setSelectedElement(element);
-    if (displayMode === 'modal') {
-      setShowModal(true);
+    const isCurrentlySelected = selectedElements.has(element.AtomicNumber);
+    
+    if (isCurrentlySelected) {
+      // Deselect the element
+      const newSelectedElements = new Set(selectedElements);
+      newSelectedElements.delete(element.AtomicNumber);
+      setSelectedElements(newSelectedElements);
+      
+      // Remove element's emission lines from state
+      const newSelectedLinesState = { ...selectedLinesState };
+      delete newSelectedLinesState[element.AtomicNumber];
+      setSelectedLinesState(newSelectedLinesState);
+      
+      // If this was the active element in the modal, close it
+      if (activeElement?.AtomicNumber === element.AtomicNumber) {
+        setShowModal(false);
+        setActiveElement(null);
+      }
+    } else {
+      // Select the element
+      setSelectedElements(new Set([...selectedElements, element.AtomicNumber]));
+      setActiveElement(element);
+      if (displayMode === 'modal') {
+        setShowModal(true);
+      }
     }
+
     if (onElementClick) {
       onElementClick(element);
     }
@@ -78,6 +117,15 @@ const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, displayMo
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setActiveElement(null);
+  };
+
+  // Add handler for updating selected lines
+  const handleSelectedLinesChange = (elementNumber: number, selectedLines: { [key: string]: boolean }) => {
+    setSelectedLinesState(prev => ({
+      ...prev,
+      [elementNumber]: selectedLines
+    }));
   };
 
   return (
@@ -88,25 +136,31 @@ const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, displayMo
             key={element.AtomicNumber} 
             element={element} 
             onElementClick={handleElementClick}
-            isSelected={selectedElement?.AtomicNumber === element.AtomicNumber}
+            isSelected={selectedElements.has(element.AtomicNumber)}
           />
         ))}
       </div>
 
       {/* Show element details based on display mode */}
-      {selectedElement && (
+      {activeElement && (
         displayMode === 'modal' ? (
           showModal && (
             <ElementDetails 
-              element={selectedElement}
+              element={activeElement}
               onClose={handleCloseModal}
               isModal={true}
+              selectedLines={selectedLinesState[activeElement.AtomicNumber] || {}}
+              onSelectedLinesChange={(selectedLines) => 
+                handleSelectedLinesChange(activeElement.AtomicNumber, selectedLines)}
             />
           )
         ) : (
           <ElementDetails 
-            element={selectedElement}
+            element={activeElement}
             isModal={false}
+            selectedLines={selectedLinesState[activeElement.AtomicNumber] || {}}
+            onSelectedLinesChange={(selectedLines) => 
+              handleSelectedLinesChange(activeElement.AtomicNumber, selectedLines)}
           />
         )
       )}
