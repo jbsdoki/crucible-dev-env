@@ -1,9 +1,11 @@
 /*##########################################################################################################
 This context is used to share the selected emission line between the PeriodicTable and EmissionLineAnalysis 
-components. The data is used to display the emission lines in the EmissionLineAnalysis component.
+and SpectrumViewer components. The data is used to display the emission lines in the EmissionLineAnalysis 
+component and the SpectrumViewer component.
 
-The data only flows one way:
+The data only flows one way through components:
 - PeriodicTable -> EmissionLineContext -> EmissionLineAnalysis
+                                       -> SpectrumViewer
 ##########################################################################################################*/
 
 

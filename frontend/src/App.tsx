@@ -7,9 +7,39 @@
  * Data Flow:
  * ↓ = Data passed down to child components
  * ↑ = Callbacks/events passed up from child components
+ * → = Data flow through context
  * 
  * Component Structure:
  * - App.tsx (You are here)
+ *   ├─ MainLayout (WebPageLayouts/MainLayout.tsx)
+ *   │   ↓ headerLeft: Top-left header section for file selection
+ *   │   ↓ headerRight: Top-right header section for signal selection
+ *   │   ↓ topLeft: Main content area for image selection/viewing
+ *   │   ↓ topCenter: Main content area for spectrum visualization
+ *   │   ↓ topRight: Main content area for periodic table
+ *   │   ↓ bottomLeft: Lower section for metadata display
+ *   │   ↓ bottomCenter: Lower section for spectrum range visualization
+ *   │   ↓ bottomRight: Lower section for emission line analysis
+ *   │   Handles the responsive grid-based layout of the application (the main webpage),
+ *   │   organizing all major components into a structured dashboard view (provides the grid layout)
+ *   │
+ *   ├─ Contexts (src/contexts/)
+ *   │   ├─ EmissionLineContext
+ *   │   │   → Shares emission line spectra data between components
+ *   │   │   → Flow: PeriodicTable → EmissionLineContext → SpectrumViewer, EmissionLineAnalysis
+ *   │   │   → Manages element selection and emission lines (Kα1, Kα2, Kβ1, etc.)
+ *   │   │
+ *   │   ├─ SpectrumRangeContext
+ *   │   │   → Manages X-ray energy ranges between components
+ *   │   │   → Flow: SpectrumViewer → SpectrumRangeContext → SpectrumToImage
+ *   │   │   → Handles energy values (KeV) and channel values (0-4095)
+ *   │   │
+ *   │   └─ EmissionRangeContext
+ *   │       → Shares selected ranges for emission line analysis
+ *   │       → Flow: EmissionLineAnalysis → EmissionRangeContext → SpectrumViewer
+ *   │       → Manages spectrum and map display states
+ *   │
+ *   │Components (What's displayed on the webpage)
  *   ├─ FileSelector
  *   │   ↓ selectedFile: Current selected file path
  *   │   ↑ onFileSelect: Notifies parent of file selection
