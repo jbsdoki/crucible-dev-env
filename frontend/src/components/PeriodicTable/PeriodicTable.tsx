@@ -8,7 +8,7 @@ import {
 } from './utils/periodicTableUtils';
 import ElementDetails from './ElementDetails';
 import * as api from '../../services/api';
-import { useEmissionLineContext } from '../../contexts/EmissionLineContext';
+import { useEmissionLineContext } from '../../contexts/EmissionLineFromTableContext';
 
 interface PeriodicElement {
   AtomicNumber: number;
@@ -105,9 +105,9 @@ const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, displayMo
       // Select the element
       setSelectedElements(new Set([...selectedElements, element.AtomicNumber]));
       setActiveElement(element);
-      if (displayMode === 'modal') {
-        setShowModal(true);
-      }
+    if (displayMode === 'modal') {
+      setShowModal(true);
+    }
     }
 
     if (onElementClick) {

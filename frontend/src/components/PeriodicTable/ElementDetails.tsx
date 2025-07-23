@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getElementCategory } from './utils/periodicTableUtils';
 import { getEmissionSpectra } from '../../services/api';
-import { useEmissionLineContext } from '../../contexts/EmissionLineContext';
+import { useEmissionLineContext } from '../../contexts/EmissionLineFromTableContext';
 import './ElementDetails.css';
 
 interface ElementDetailsProps {

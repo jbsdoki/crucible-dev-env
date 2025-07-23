@@ -2,14 +2,15 @@
 import Plot from 'react-plotly.js';
 import type { PlotData, Layout } from 'plotly.js';
 import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
-import { useEmissionLineContext } from '../../../contexts/EmissionLineContext';
 import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
+import EmissionLineRangeDisplay from './EmissionLineRangeDisplay';
 
 // Props needed for the Plot component
 interface SpectrumPlotProps {
   // Main spectrum data from the originally selected signal
   spectrumData: SpectrumData;
   selectedSignal: SignalInfo;
+  selectedFile: string;  // Added this prop
   // Data from image viewer region selection - separate from main spectrum
   regionSpectrumData?: SpectrumData | null;
   // Range selection within this 1D spectrum plot (not from image viewer)
@@ -22,6 +23,7 @@ interface SpectrumPlotProps {
 function SpectrumPlot({
   spectrumData,
   selectedSignal,
+  selectedFile,
   regionSpectrumData,
   selectedRange,
   isSelectingRange,
@@ -39,7 +41,7 @@ function SpectrumPlot({
   } = useSpectrumContext();
 
   // Get emission line data from EmissionLineContext context
-  const { selectedEmissionLine } = useEmissionLineContext();
+  // const { selectedEmissionLine } = useEmissionLineContext(); // This line is removed as per the new_code
 
   // Process y-values for log scale - applies to both main and region spectra
   const processYValuesForLogScale = (yValues: number[]): number[] => {
@@ -85,45 +87,58 @@ function SpectrumPlot({
   The data only flows one way:
   - PeriodicTable -> EmissionLineContext -> SpectrumViewer
   ############################################################################################*/
-  const generateEmissionLineShapes = () => {
-    if (!selectedEmissionLine || !showEmissionLines) return [];
+  // const generateEmissionLineShapes = () => { // This function is removed as per the new_code
+  //   if (!selectedEmissionLine || !showEmissionLines) return [];
 
-    return Object.entries(selectedEmissionLine.EmissionLines)
-      .filter(([_, energy]) => energy !== null)
-      .map(([lineName, energy]) => ({
-        type: 'line' as const,
-        x0: energy as number,  // We filtered out null values above
-        x1: energy as number,  // We filtered out null values above
-        y0: 0,
-        y1: 1,
-        yref: 'paper' as const,
-        line: {
-          color: 'black',
-          width: 1,
-          dash: 'dash' as const
-        },
-        name: `${selectedEmissionLine.Element}-${lineName}`
-      }));
-  };
+  //   return Object.entries(selectedEmissionLine.EmissionLines)
+  //     .filter(([_, energy]) => energy !== null)
+  //     .map(([lineName, energy]) => ({
+  //       type: 'line' as const,
+  //       x0: energy as number,  // We filtered out null values above
+  //       x1: energy as number,  // We filtered out null values above
+  //       y0: 0,
+  //       y1: 1,
+  //       yref: 'paper' as const,
+  //       line: {
+  //         color: 'black',
+  //         width: 1,
+  //         dash: 'dash' as const
+  //       },
+  //       name: `${selectedEmissionLine.Element}-${lineName}`
+  //     }));
+  // };
 
-  // Generate annotations for emission lines
-  const generateEmissionLineAnnotations = () => {
-    if (!selectedEmissionLine || !showEmissionLines) return [];
+  // // Generate annotations for emission lines // This function is removed as per the new_code
+  // const generateEmissionLineAnnotations = () => {
+  //   if (!selectedEmissionLine || !showEmissionLines) return [];
 
-    return Object.entries(selectedEmissionLine.EmissionLines)
-      .filter(([_, energy]) => energy !== null)
-      .map(([lineName, energy]) => ({
-        x: energy as number,  // We filtered out null values above
-        y: -0.05,
-        text: `${selectedEmissionLine.Element} (${lineName})`,
-        showarrow: false,
-        yref: 'paper' as const,
-        yanchor: 'top' as const,
-        textangle: '45' as const
-      }));
-  };
+  //   return Object.entries(selectedEmissionLine.EmissionLines)
+  //     .filter(([_, energy]) => energy !== null)
+  //     .map(([lineName, energy]) => ({
+  //       x: energy as number,  // We filtered out null values above
+  //       y: -0.05,
+  //       text: `${selectedEmissionLine.Element} (${lineName})`,
+  //       showarrow: false,
+  //       yref: 'paper' as const,
+  //       yanchor: 'top' as const,
+  //       textangle: '45' as const
+  //     }));
+  // };
   // End emission line functions
   //############################################################################################
+
+  // Get emission line range configuration
+  const emissionRangeConfig = showEmissionLines ? 
+    EmissionLineRangeDisplay({ spectrumData }) : 
+    { traces: [], shapes: [], annotations: [] };
+
+  console.log('SpectrumPlot: Using EmissionLineRangeDisplay config:', {
+    hasConfig: !!emissionRangeConfig,
+    traceCount: emissionRangeConfig.traces.length,
+    shapeCount: emissionRangeConfig.shapes.length,
+    annotationCount: emissionRangeConfig.annotations.length,
+    showEmissionLines
+  });
 
   // Base layout configuration - applies to entire plot
   const baseLayout: Partial<Layout> = {
@@ -142,9 +157,16 @@ function SpectrumPlot({
       type: isLogScale ? 'log' : 'linear',
       range: calculateYAxisRange(spectrumData.y)
     },
-    shapes: generateEmissionLineShapes(),
-    annotations: generateEmissionLineAnnotations()
+    shapes: emissionRangeConfig.shapes,
+    annotations: emissionRangeConfig.annotations
   };
+
+  console.log('SpectrumPlot: Created layout with:', {
+    hasShapes: !!baseLayout.shapes?.length,
+    shapeCount: baseLayout.shapes?.length,
+    hasAnnotations: !!baseLayout.annotations?.length,
+    annotationCount: baseLayout.annotations?.length
+  });
 
   // Plot data preparation - builds array of traces to display
   const plotData: Array<Partial<PlotData>> = [];
@@ -152,7 +174,7 @@ function SpectrumPlot({
   // Add main spectrum trace - this is from the original signal selection
   plotData.push({
     x: spectrumData.x,
-    y: processYValuesForLogScale(spectrumData.y),
+    y: processYValuesForLogScale(spectrumData.y.map(y => Math.max(y, 0.01))),
     type: 'scatter',
     mode: 'lines',
     name: 'Full Spectrum',
@@ -161,6 +183,9 @@ function SpectrumPlot({
       width: 2
     }
   });
+
+  // Add emission line range traces
+  plotData.push(...emissionRangeConfig.traces);
 
   // Add FWHM line if enabled - this uses the main signal/spectrum's FWHM index
   if (showFWHM && fwhm_index !== null) {

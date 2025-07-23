@@ -7,7 +7,7 @@ import { useSpectrumData } from './hooks/useSpectrumData';
 import { useSpectrumSelection } from './hooks/useSpectrumSelection';
 import { useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SpectrumRangeContext';
+import { useSpectrumContext } from '../../contexts/SpectrumRangeToImageContext';
 
 /**
  * Props shared by both Root and Inner components
@@ -170,6 +170,7 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
       {/* Spectrum Plot Row - Displays both main and region spectra */}
       <Box sx={{ width: '100%', mb: 2 }}>
         <SpectrumPlot
+          selectedFile={props.selectedFile}
           spectrumData={spectrumData}
           selectedSignal={props.selectedSignal}
           regionSpectrumData={props.regionSpectrumData}

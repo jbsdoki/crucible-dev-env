@@ -67,8 +67,9 @@
 import { useState } from 'react';
 import { Button, Box } from '@mui/material';
 import MainLayout from './WebPageLayouts/MainLayout';
-import { SpectrumProvider } from './contexts/SpectrumRangeContext';
-import { EmissionLineProvider } from './contexts/EmissionLineContext';
+import { SpectrumProvider } from './contexts/SpectrumRangeToImageContext';
+import { EmissionLineProvider } from './contexts/EmissionLineFromTableContext';
+import { EmissionRangeProvider } from './contexts/EmissionRangeSelectionContext';
 import FileSelector from './components/FileSelector';
 import SignalSelector from './components/SignalSelector';
 import ImageViewer from './components/ImageViewer';
@@ -149,212 +150,91 @@ function App() {
       {/* Main application layout with context providers */}
       <SpectrumProvider>        {/* Provides spectrum range data to SpectrumViewer and SpectrumToImage */}
         <EmissionLineProvider>  {/* Provides emission line data between PeriodicTable and SpectrumViewer */}
-          <MainLayout
-            headerLeft={
-              <FileSelector
-                selectedFile={selectedFile}       // ↓ Prop: Current file path
-                onFileSelect={setSelectedFile}    // ↑ Callback: Updates selected file
-              />
-            }
-            headerRight={
-              selectedFile ? (
-                <SignalSelector
-                  selectedFile={selectedFile}         // ↓ Prop: Current file to load signals from
-                  onSignalSelect={setSelectedSignal}  // ↑ Callback: Updates selected signal
+          <EmissionRangeProvider> {/* Provides range data between EmissionLineAnalysis and SpectrumViewer */}
+            <MainLayout
+              headerLeft={
+                <FileSelector
+                  selectedFile={selectedFile}       // ↓ Prop: Current file path
+                  onFileSelect={setSelectedFile}    // ↑ Callback: Updates selected file
                 />
-              ) : (
-                <Box sx={{ 
-                  color: '#666',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%'
-                }}>
-                  Select a file to view available signals
-                </Box>
-              )
-            }
-            topLeft={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: 'white'
-              }}>
-                <Box sx={{ 
-                  typography: 'h5', 
-                  p: 2, 
-                  textAlign: 'center',
-                  color: 'text.primary',
-                  fontWeight: 'medium'
-                }}>
-                  Select 2D Range
-                </Box>
-                <Box sx={{ flex: 1, position: 'relative' }}>
-                  {selectedSignal?.capabilities.hasImage ? (
-                    <ImageViewer
-                      selectedFile={selectedFile}               // ↓ Prop: File to load image from
-                      selectedSignal={selectedSignal}           // ↓ Prop: Signal containing image data
-                      onRegionSelected={handleRegionSelected}   // ↑ Callback: Updates region selection
-                    />
-                  ) : (
-                    <Box sx={{ 
-                      color: '#666',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      height: '100%'
-                    }}>
-                      {selectedFile 
-                        ? "Select a signal with image capabilities to view image"
-                        : "Select a file to view image"}
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            }
-            topCenter={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                bgcolor: 'white'
-              }}>
-                {selectedSignal?.capabilities.hasSpectrum ? (
-                  <Box sx={{ flex: 1, position: 'relative' }}>
-                    <SpectrumViewerRoot
-                      selectedFile={selectedFile}               // ↓ Prop: File to load spectrum from
-                      selectedSignal={selectedSignal}           // ↓ Prop: Signal containing spectrum data
-                      regionSpectrumData={regionSpectrumData}   // ↓ Prop: Spectrum data from selected region
-                      selectedRegion={selectedRegion}           // ↓ Prop: Selected region coordinates
-                    />
-                    {/* Uses SpectrumProvider context for range selection */}
-                    {/* Uses EmissionLineProvider context for emission line overlay */}
-                  </Box>
+              }
+              headerRight={
+                selectedFile ? (
+                  <SignalSelector
+                    selectedFile={selectedFile}         // ↓ Prop: Current file to load signals from
+                    onSignalSelect={setSelectedSignal}  // ↑ Callback: Updates selected signal
+                  />
                 ) : (
                   <Box sx={{ 
                     color: '#666',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '100%',
-                    height: '100%'
+                    width: '100%'
                   }}>
-                    {selectedFile 
-                      ? "Select a signal with spectrum capabilities to view spectrum"
-                      : "Select a file to view spectrum"}
+                    Select a file to view available signals
                   </Box>
-                )}
-              </Box>
-            }
-            topRight={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: 'white'
-              }}>
+                )
+              }
+              topLeft={
                 <Box sx={{ 
-                  typography: 'h5', 
-                  p: 2, 
-                  textAlign: 'center',
-                  color: 'text.primary',
-                  fontWeight: 'medium'
-                }}>
-                  Periodic Table
-                </Box>
-                <Box sx={{ 
-                  flex: 1, 
-                  position: 'relative',
-                  overflow: 'auto',
+                  width: '100%',
+                  height: '100%',
                   display: 'flex',
-                  alignItems: 'center',  // Changed to center
-                  justifyContent: 'center',
-                  p: 2
+                  flexDirection: 'column',
+                  bgcolor: 'white'
                 }}>
-                  <Box sx={{
-                    transform: 'scale(0.8)',  // Scale down to 80%
-                    transformOrigin: 'center center'  // Scale from center
+                  <Box sx={{ 
+                    typography: 'h5', 
+                    p: 2, 
+                    textAlign: 'center',
+                    color: 'text.primary',
+                    fontWeight: 'medium'
                   }}>
-                    <PeriodicTable />
+                    Select 2D Range
+                  </Box>
+                  <Box sx={{ flex: 1, position: 'relative' }}>
+                    {selectedSignal?.capabilities.hasImage ? (
+                      <ImageViewer
+                        selectedFile={selectedFile}               // ↓ Prop: File to load image from
+                        selectedSignal={selectedSignal}           // ↓ Prop: Signal containing image data
+                        onRegionSelected={handleRegionSelected}   // ↑ Callback: Updates region selection
+                      />
+                    ) : (
+                      <Box sx={{ 
+                        color: '#666',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}>
+                        {selectedFile 
+                          ? "Select a signal with image capabilities to view image"
+                          : "Select a file to view image"}
+                      </Box>
+                    )}
                   </Box>
                 </Box>
-                {/* Uses EmissionLineProvider context to share selected elements */}
-              </Box>
-            }
-            bottomLeft={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: 'white'
-              }}>
+              }
+              topCenter={
                 <Box sx={{ 
-                  typography: 'h5', 
-                  p: 2, 
-                  textAlign: 'center',
-                  color: 'text.primary',
-                  fontWeight: 'medium'
-                }}>
-                  Metadata
-                </Box>
-                <Box sx={{ 
-                  flex: 1, 
-                  position: 'relative',
-                  overflow: 'auto',
-                  p: 2
-                }}>
-                  {selectedFile ? (
-                    <MetadataViewer 
-                      selectedFile={selectedFile}     // ↓ Prop: File to show metadata for
-                      selectedSignalIndex={selectedSignal ? selectedSignal.index : null}  // ↓ Prop: Signal index for specific metadata
-                    />
-                  ) : (
-                    <Box sx={{ 
-                      color: '#666',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      height: '100%'
-                    }}>
-                      Select a file to view metadata
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            }
-            bottomCenter={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: 'white'
-              }}>
-                <Box sx={{ 
-                  typography: 'h5', 
-                  p: 2, 
-                  textAlign: 'center',
-                  color: 'text.primary',
-                  fontWeight: 'medium'
-                }}>
-                  Spectrum Range
-                </Box>
-                <Box sx={{ 
-                  flex: 1, 
-                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  p: 2
+                  bgcolor: 'white'
                 }}>
                   {selectedSignal?.capabilities.hasSpectrum ? (
-                    <SpectrumToImage />
+                    <Box sx={{ flex: 1, position: 'relative' }}>
+                      <SpectrumViewerRoot
+                        selectedFile={selectedFile}               // ↓ Prop: File to load spectrum from
+                        selectedSignal={selectedSignal}           // ↓ Prop: Signal containing spectrum data
+                        regionSpectrumData={regionSpectrumData}   // ↓ Prop: Spectrum data from selected region
+                        selectedRegion={selectedRegion}           // ↓ Prop: Selected region coordinates
+                      />
+                      {/* Uses SpectrumProvider context for range selection */}
+                      {/* Uses EmissionLineProvider context for emission line overlay */}
+                    </Box>
                   ) : (
                     <Box sx={{ 
                       color: '#666',
@@ -365,60 +245,183 @@ function App() {
                       height: '100%'
                     }}>
                       {selectedFile 
-                        ? "Select a signal with spectrum capabilities to view spectrum range"
-                        : "Select a file to view spectrum range"}
+                        ? "Select a signal with spectrum capabilities to view spectrum"
+                        : "Select a file to view spectrum"}
                     </Box>
                   )}
                 </Box>
-                {/* Uses SpectrumProvider context to access selected range */}
-              </Box>
-            }
-            bottomRight={
-              <Box sx={{ 
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: 'white'
-              }}>
+              }
+              topRight={
                 <Box sx={{ 
-                  typography: 'h5', 
-                  p: 2, 
-                  textAlign: 'center',
-                  color: 'text.primary',
-                  fontWeight: 'medium'
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  bgcolor: 'white'
                 }}>
-                  Emission Line Analysis
-                </Box>
-                <Box sx={{ 
-                  flex: 1, 
-                  position: 'relative',
-                  overflow: 'auto',
-                  p: 2
-                }}>
-                  {selectedSignal?.capabilities.hasSpectrum ? (
-                    <EmissionSpectraWidthSum
-                      selectedFile={selectedFile}
-                      selectedSignalIndex={selectedSignal.index}
-                    />
-                  ) : (
-                    <Box sx={{ 
-                      color: '#666',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '100%',
-                      height: '100%'
+                  <Box sx={{ 
+                    typography: 'h5', 
+                    p: 2, 
+                    textAlign: 'center',
+                    color: 'text.primary',
+                    fontWeight: 'medium'
+                  }}>
+                    Periodic Table
+                  </Box>
+                  <Box sx={{ 
+                    flex: 1, 
+                    position: 'relative',
+                    overflow: 'auto',
+                    display: 'flex',
+                    alignItems: 'center',  // Changed to center
+                    justifyContent: 'center',
+                    p: 2
+                  }}>
+                    <Box sx={{
+                      transform: 'scale(0.8)',  // Scale down to 80%
+                      transformOrigin: 'center center'  // Scale from center
                     }}>
-                      {selectedFile 
-                        ? "Select a signal with spectrum capabilities to view emission line analysis"
-                        : "Select a file to view emission line analysis"}
+                      <PeriodicTable />
                     </Box>
-                  )}
+                  </Box>
+                  {/* Uses EmissionLineProvider context to share selected elements */}
                 </Box>
-              </Box>
-            }
-          />
+              }
+              bottomLeft={
+                <Box sx={{ 
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  bgcolor: 'white'
+                }}>
+                  <Box sx={{ 
+                    typography: 'h5', 
+                    p: 2, 
+                    textAlign: 'center',
+                    color: 'text.primary',
+                    fontWeight: 'medium'
+                  }}>
+                    Metadata
+                  </Box>
+                  <Box sx={{ 
+                    flex: 1, 
+                    position: 'relative',
+                    overflow: 'auto',
+                    p: 2
+                  }}>
+                    {selectedFile ? (
+                      <MetadataViewer 
+                        selectedFile={selectedFile}     // ↓ Prop: File to show metadata for
+                        selectedSignalIndex={selectedSignal ? selectedSignal.index : null}  // ↓ Prop: Signal index for specific metadata
+                      />
+                    ) : (
+                      <Box sx={{ 
+                        color: '#666',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}>
+                        Select a file to view metadata
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              }
+              bottomCenter={
+                <Box sx={{ 
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  bgcolor: 'white'
+                }}>
+                  <Box sx={{ 
+                    typography: 'h5', 
+                    p: 2, 
+                    textAlign: 'center',
+                    color: 'text.primary',
+                    fontWeight: 'medium'
+                  }}>
+                    Spectrum Range
+                  </Box>
+                  <Box sx={{ 
+                    flex: 1, 
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 2
+                  }}>
+                    {selectedSignal?.capabilities.hasSpectrum ? (
+                      <SpectrumToImage />
+                    ) : (
+                      <Box sx={{ 
+                        color: '#666',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}>
+                        {selectedFile 
+                          ? "Select a signal with spectrum capabilities to view spectrum range"
+                          : "Select a file to view spectrum range"}
+                      </Box>
+                    )}
+                  </Box>
+                  {/* Uses SpectrumProvider context to access selected range */}
+                </Box>
+              }
+              bottomRight={
+                <Box sx={{ 
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  bgcolor: 'white'
+                }}>
+                  <Box sx={{ 
+                    typography: 'h5', 
+                    p: 2, 
+                    textAlign: 'center',
+                    color: 'text.primary',
+                    fontWeight: 'medium'
+                  }}>
+                    Emission Line Analysis
+                  </Box>
+                  <Box sx={{ 
+                    flex: 1, 
+                    position: 'relative',
+                    overflow: 'auto',
+                    p: 2
+                  }}>
+                    {selectedSignal?.capabilities.hasSpectrum ? (
+                      <EmissionSpectraWidthSum
+                        selectedFile={selectedFile}
+                        selectedSignalIndex={selectedSignal.index}
+                      />
+                    ) : (
+                      <Box sx={{ 
+                        color: '#666',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: '100%'
+                      }}>
+                        {selectedFile 
+                          ? "Select a signal with spectrum capabilities to view emission line analysis"
+                          : "Select a file to view emission line analysis"}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              }
+            />
+          </EmissionRangeProvider>
         </EmissionLineProvider>
       </SpectrumProvider>
     </Box>

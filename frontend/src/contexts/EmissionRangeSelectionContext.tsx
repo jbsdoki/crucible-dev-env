@@ -6,23 +6,25 @@ The data only flows one way:
 - EmissionLineAnalysis -> EmissionRangeContext -> SpectrumViewer
 ##########################################################################################################*/
 
-
 import { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
+// Interface for a single emission line range
 interface EmissionRange {
-  lineName: string;
-  energy: number;
-  start: number;
-  end: number;
-  color: string;
+  lineName: string;      // Name of the emission line (e.g., "ka1")
+  energy: number;        // Center energy of the line
+  start: number;         // Start of range in keV
+  end: number;          // End of range in keV
+  color?: string;       // Optional color for display
 }
 
+// Interface for managing display state
 interface DisplayState {
-  spectrum: EmissionRange[];
-  map: EmissionRange[];
+  spectrum: EmissionRange[];  // Ranges to display on spectrum
+  map: EmissionRange[];      // Ranges to display on 2D map
 }
 
+// Interface for the context value
 interface EmissionRangeContextType {
   // State
   displayState: DisplayState;
@@ -35,6 +37,7 @@ interface EmissionRangeContextType {
   clearAll: () => void;
 }
 
+// Default context value
 const defaultContext: EmissionRangeContextType = {
   displayState: {
     spectrum: [],
@@ -47,8 +50,10 @@ const defaultContext: EmissionRangeContextType = {
   clearAll: () => {}
 };
 
+// Create the context
 export const EmissionRangeContext = createContext<EmissionRangeContextType>(defaultContext);
 
+// Custom hook for using the context
 export function useEmissionRange() {
   const context = useContext(EmissionRangeContext);
   if (!context) {
@@ -57,16 +62,19 @@ export function useEmissionRange() {
   return context;
 }
 
+// Provider component props
 interface EmissionRangeProviderProps {
   children: ReactNode;
 }
 
+// Provider component
 export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) {
   const [displayState, setDisplayState] = useState<DisplayState>({
     spectrum: [],
     map: []
   });
 
+  // Add a range to spectrum display
   const addToSpectrum = (range: EmissionRange) => {
     setDisplayState(prev => ({
       ...prev,
@@ -74,6 +82,7 @@ export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) 
     }));
   };
 
+  // Remove a range from spectrum display
   const removeFromSpectrum = (lineName: string) => {
     setDisplayState(prev => ({
       ...prev,
@@ -81,6 +90,7 @@ export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) 
     }));
   };
 
+  // Add a range to map display
   const addToMap = (range: EmissionRange) => {
     setDisplayState(prev => ({
       ...prev,
@@ -88,6 +98,7 @@ export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) 
     }));
   };
 
+  // Remove a range from map display
   const removeFromMap = (lineName: string) => {
     setDisplayState(prev => ({
       ...prev,
@@ -95,6 +106,7 @@ export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) 
     }));
   };
 
+  // Clear all ranges
   const clearAll = () => {
     setDisplayState({
       spectrum: [],
@@ -117,3 +129,4 @@ export function EmissionRangeProvider({ children }: EmissionRangeProviderProps) 
     </EmissionRangeContext.Provider>
   );
 }
+

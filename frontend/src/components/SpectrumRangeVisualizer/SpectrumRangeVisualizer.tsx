@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SpectrumRangeContext';
+import { useSpectrumContext } from '../../contexts/SpectrumRangeToImageContext';
 import { useEffect, useState } from 'react';
 import * as api from '../../services/api';
 import Plot from 'react-plotly.js';
