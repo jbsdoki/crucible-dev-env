@@ -16,6 +16,33 @@
     - Used for the FastAPI backend and Hyperspy
     - Install micromamba from: https://mamba.readthedocs.io/en/latest/installation.html
 
+## Development Environment
+This frontend application uses:
+- React 18 with TypeScript
+- Vite: Build tool and dev server that serves source files over native ES modules
+- Material-UI (MUI): React component library
+
+Key development commands:
+```bash
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+The Vite configuration is in `vite.config.ts`, which handles:
+- TypeScript compilation
+- Module resolution
+- Build optimization
+- Development server settings
+
+## Environment
+This application frontend was develope using Vite + React environment
+
 
 
 # Setup Steps
