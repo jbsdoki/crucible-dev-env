@@ -20,6 +20,28 @@
  * Context Usage:
  * - EmissionLineContext: Receives selected element and emission line data
  * - EmissionRangeContext: Sends range data for spectrum visualization
+ * 
+ * Data Operations and Flow:
+ * 1. Data Reception:
+ *    - selectedEmissionLine: Received from EmissionLineContext (../contexts/EmissionLineFromTableContext)
+ *      Contains element details and emission line energies selected in the Periodic Table
+ * 
+ * 2. API Calls:
+ *    - getEmissionSpectraWidthSum: Called from ../services/api
+ *      Fetches sum calculations for each emission line range from the backend
+ *      Parameters: selectedFile, selectedSignalIndex, start energy, end energy
+ *      Returns: numerical sum or error message
+ * 
+ * 3. Data Transmission:
+ *    - To Spectrum Viewer: Via EmissionRangeContext (../contexts/EmissionRangeSelectionContext)
+ *      Using addToSpectrum and removeFromSpectrum functions
+ *      Sends: line name, energy, start/end range, color for visualization
+ *    - To 2D Map: Not yet implemented, but structure is in place
+ * 
+ * 4. State Management:
+ *    - buttonStates: Tracks UI state for spectrum/map toggles
+ *    - sums: Stores API response data for each emission line
+ *    - startOffset/endOffset: User-configurable range parameters
  ##########################################################################################################*/
 
 import { useState, useEffect } from 'react';
@@ -47,24 +69,54 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
   const [sums, setSums] = useState<Record<string, number | string>>({});
   // Add state for tracking button toggles for each emission line
   const [buttonStates, setButtonStates] = useState<Record<string, ButtonStates>>({});
-  //This is the hook that receives the selected emission line from the periodic table
+  
+  /*##########################################################################################################
+   * Data Reception Section
+   * 
+   * Hooks used:
+   * - useEmissionLineContext: Receives selected element data from Periodic Table
+   * - useEmissionRange: Gets functions to send data to Spectrum Viewer
+   * 
+   * Context Sources:
+   * - EmissionLineContext: ../contexts/EmissionLineFromTableContext
+   * - EmissionRangeContext: ../contexts/EmissionRangeSelectionContext
+   ##########################################################################################################*/
   const { selectedEmissionLine } = useEmissionLineContext();
-  // These are the hooks/functions that send emission line ranges to spectrum viewer
   const { addToSpectrum, removeFromSpectrum } = useEmissionRange();
 
   // Initialize button states when emission line changes
   useEffect(() => {
-    if (selectedEmissionLine) {
+    if (selectedEmissionLine) { //Code inside () doesn't run until selectedEmissionLine changes
       const initialStates: Record<string, ButtonStates> = {};
-      Object.keys(selectedEmissionLine.EmissionLines).forEach(lineName => {
-        initialStates[lineName] = { spectrum: false, map: false };
+      Object.keys(selectedEmissionLine.EmissionLines).forEach(lineName => { //For each emission line, create new entry in initialStates
+        initialStates[lineName] = { spectrum: false, map: false }; //Initialize button states to false
       });
-      setButtonStates(initialStates);
+      setButtonStates(initialStates); //Set the button states to the initial states
     }
   }, [selectedEmissionLine]);
 
+  /*##########################################################################################################
+   * Data Fetching Section
+   * 
+   * Function: fetchSums
+   * Purpose: Retrieves sum calculations for each emission line range
+   * 
+   * API Call:
+   * - Function: getEmissionSpectraWidthSum from ../services/api
+   * - Parameters:
+   *   - selectedFile: current data file path
+   *   - selectedSignalIndex: current signal index
+   *   - start: calculated start energy (energy - startOffset)
+   *   - end: calculated end energy (energy + endOffset)
+   * 
+   * Data Storage:
+   * - Updates 'sums' state with results
+   * - Format: Record<string, number | string>
+   *   - Key: emission line name
+   *   - Value: numerical sum or error message
+   ##########################################################################################################*/
   useEffect(() => {
-    async function fetchSums() {
+    async function fetchSums() { //This is the function that fetches the sums from the backend
       if (!selectedEmissionLine || !selectedFile) return;
 
       const newSums: Record<string, number | string> = {};
@@ -107,7 +159,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     }
 
     fetchSums();
-  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startOffset, endOffset]);
+    //Code inside () doesn't run until selectedEmissionLine, selectedFile, selectedSignalIndex, startOffset, or endOffset changes
+  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startOffset, endOffset]); 
 
   const handleStartOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newOffset = parseFloat(event.target.value);
@@ -123,8 +176,29 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     }
   };
 
-  // This is the function that is called when the user clicks the "Display on Spectrum" button
-  // It toggles the spectrum state for the selected emission line by updating the context
+  /*##########################################################################################################
+   * Data Transmission Section
+   * 
+   * Function: handleSpectrumToggle
+   * Purpose: Sends emission line range data to Spectrum Viewer
+   * 
+   * Data Flow:
+   * 1. Source: Local state and props
+   *    - Uses: selectedEmissionLine, startOffset, endOffset
+   * 
+   * 2. Destination: EmissionRangeContext
+   *    - Via: addToSpectrum/removeFromSpectrum functions
+   *    - Data Sent:
+   *      {
+   *        lineName: string,    // Emission line identifier
+   *        energy: number,      // Center energy value
+   *        start: number,       // Range start (energy - startOffset)
+   *        end: number,         // Range end (energy + endOffset)
+   *        color: string        // Visual styling
+   *      }
+   * 
+   * 3. Effect: Updates Spectrum Viewer display through context
+   ##########################################################################################################*/
   const handleSpectrumToggle = (lineName: string, energy: number) => {
     const newButtonStates = {
       ...buttonStates,

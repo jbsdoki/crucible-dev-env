@@ -6,25 +6,58 @@
  * 1. Emission lines from the periodic table (vertical dashed lines)
  * 2. Range selections from EmissionLineAnalysis (filled areas)
  * 
- * Context Usage:
- * 1. EmissionRangeContext (from EmissionRangeSelectionContext):
- *    - Receives: displayState.spectrum[] containing active ranges selected in EmissionLineAnalysis
- *    - Each range has: { lineName, start, end, color }
+ * Data Reception:
+ * 1. Props:
+ *    spectrumData: {
+ *      x: number[],  // Energy values for the spectrum
+ *      y: number[]   // Intensity values for the spectrum
+ *    }
  * 
- * 2. EmissionLineContext (from EmissionLineFromTableContext):
- *    - Receives: selectedEmissionLine data from periodic table selections
- *    - Contains: Element name and EmissionLines object with energy values
+ * 2. Context Data:
+ *    a. EmissionRangeContext:
+ *       - Source: ../contexts/EmissionRangeSelectionContext
+ *       - Data: displayState.spectrum[]
+ *       - Format: Array of {
+ *           lineName: string,
+ *           start: number,    // Start energy in keV
+ *           end: number,      // End energy in keV
+ *           color: string     // Optional visualization color
+ *         }
+ *       - Origin: User selections in EmissionLineAnalysis component
  * 
- * Data Flow:
- * EmissionLineRangeDisplay → SpectrumPlot → SpectrumViewerRoot
- * 1. This component generates plot configurations (traces, shapes, annotations)
- * 2. SpectrumPlot uses these configs to render visualizations
- * 3. No direct state management - all data comes from contexts
+ *    b. EmissionLineContext:
+ *       - Source: ../contexts/EmissionLineFromTableContext
+ *       - Data: selectedEmissionLine
+ *       - Format: {
+ *           Element: string,
+ *           EmissionLines: {
+ *             [lineName: string]: number  // Energy values in keV
+ *           }
+ *         }
+ *       - Origin: User selections in PeriodicTable component
  * 
- * Key Functions:
- * 1. generateRangeTraces: Creates filled area plots for selected ranges
- * 2. generateEmissionLineShapes: Creates vertical lines for emission energies
- * 3. generateEmissionLineAnnotations: Creates labels for emission lines
+ * Data Processing & Output:
+ * 1. Range Visualization:
+ *    - Input: displayState.spectrum[]
+ *    - Processing: Maps energy ranges to spectrum data indices
+ *    - Output: Plotly traces with filled areas
+ * 
+ * 2. Emission Line Visualization:
+ *    - Input: selectedEmissionLine.EmissionLines
+ *    - Processing: Converts energy values to vertical lines and labels
+ *    - Output: Plotly shapes and annotations
+ * 
+ * Return Value (PlotConfig):
+ * {
+ *   traces: Partial<PlotData>[],     // Filled range areas
+ *   shapes: Partial<Shape>[],        // Vertical emission lines
+ *   annotations: Partial<Annotations>[]  // Text labels
+ * }
+ * 
+ * Data Flow Chain:
+ * 1. PeriodicTable → EmissionLineContext → This Component
+ * 2. EmissionLineAnalysis → EmissionRangeContext → This Component
+ * 3. This Component → SpectrumPlot → Final Visualization
  ##########################################################################################################*/
 
 import React from 'react';
@@ -32,7 +65,13 @@ import { useEmissionRange } from '../../../contexts/EmissionRangeSelectionContex
 import { useEmissionLineContext } from '../../../contexts/EmissionLineFromTableContext';
 import type { PlotData, Shape, Annotations } from 'plotly.js';
 
-// Props: Receives spectrum data for mapping energy values to plot coordinates
+/*##########################################################################################################
+ * Interface Definitions
+ * 
+ * Props Interface:
+ * Defines the required spectrum data structure passed from parent component
+ * Used for mapping energy values to plot coordinates
+ ##########################################################################################################*/
 interface EmissionLineRangeDisplayProps {
   spectrumData: {
     x: number[];  // Energy values array
@@ -40,30 +79,34 @@ interface EmissionLineRangeDisplayProps {
   };
 }
 
-// Return type: Configuration objects for Plotly visualization
+/*##########################################################################################################
+ * Return Type Interface:
+ * Defines the structure of visualization configuration objects
+ * These configs are consumed by Plotly in the parent SpectrumPlot component
+ ##########################################################################################################*/
 interface PlotConfig {
   traces: Partial<PlotData>[];     // Filled range areas
   shapes: Partial<Shape>[];        // Vertical emission lines
   annotations: Partial<Annotations>[];  // Text labels for emission lines
 }
 
-//Extract spectrum data from the props object and return a PlotConfig object
 const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProps): PlotConfig => {
-  /*#################################################################################
-   * Context Hooks:
-   * 1. useEmissionRange():
-   *    - Provides displayState.spectrum which contains all currently active ranges
-   *    - Each range represents a user-selected area from EmissionLineAnalysis
-   *    - Format: { lineName, start, end, color }
-   */
+  /*##########################################################################################################
+   * Context Data Reception
+   * 
+   * 1. EmissionRangeContext:
+   *    - Purpose: Receives active range selections from EmissionLineAnalysis
+   *    - Usage: Creates filled area visualizations for selected ranges
+   *    - Data Structure: displayState.spectrum[]
+   *    - Update Trigger: When user toggles ranges in EmissionLineAnalysis
+   * 
+   * 2. EmissionLineContext:
+   *    - Purpose: Receives selected element's emission line data
+   *    - Usage: Creates vertical lines and labels for emission energies
+   *    - Data Structure: selectedEmissionLine.EmissionLines
+   *    - Update Trigger: When user selects different elements in PeriodicTable
+   ##########################################################################################################*/
   const { displayState } = useEmissionRange();
-
-  /*#################################################################################
-   * 2. useEmissionLineContext():
-   *    - Provides selectedEmissionLine from periodic table selection
-   *    - Contains element info and its emission line energies
-   *    - Format: { Element: string, EmissionLines: { lineName: energy } }
-   */
   const { selectedEmissionLine } = useEmissionLineContext();
 
   // Debug logging for context data
@@ -83,29 +126,43 @@ const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProp
     }))
   });
 
-  /*
-   * Creates Plotly traces for each selected range from EmissionLineAnalysis
-   * This is the red filled area representing the emission line sum 
-   * - Maps energy ranges to spectrum data indices
-   * - Creates filled area plots using 'tozeroy' fill
-   * - Uses color from range config or default red
-   * Returns: Array of Plotly trace objects
-   */
+  /*##########################################################################################################
+   * Range Trace Generation
+   * 
+   * Function: generateRangeTraces
+   * Purpose: Creates filled area visualizations for selected energy ranges
+   *          This is the red filled area representing the emission line sum   
+   * 
+   * Data Flow:
+   * 1. Input Processing:
+   *    - Takes ranges from displayState.spectrum
+   *    - Maps energy values to spectrum data indices
+   * 
+   * 2. Data Transformation:
+   *    - Extracts relevant portions of spectrum data
+   *    - Applies minimum visibility threshold
+   * 
+   * 3. Output Generation:
+   *    - Creates Plotly scatter traces with fill
+   *    - Configures hover templates and styling
+   * 
+   * Return: Array of Plotly trace configurations
+   ##########################################################################################################*/
   const generateRangeTraces = (): Partial<PlotData>[] => {
     const traces: Partial<PlotData>[] = [];
 
-    displayState.spectrum.forEach(range => {
+    displayState.spectrum.forEach(range => { // for each ragne
       // Debug logging for range processing
       console.log('Processing range:', {
         lineName: range.lineName,
         start: range.start,
         end: range.end,
-        spectrumXRange: [spectrumData.x[0], spectrumData.x[spectrumData.x.length - 1]]
+        spectrumXRange: [spectrumData.x[0], spectrumData.x[spectrumData.x.length - 1]] // x values of the spectrum
       });
 
       // Find spectrum data indices that correspond to our energy range
-      const startIdx = spectrumData.x.findIndex(x => x >= range.start);
-      const endIdx = spectrumData.x.findIndex(x => x >= range.end);
+      const startIdx = spectrumData.x.findIndex(x => x >= range.start); // find the index of the first x value greater than or equal to the start of the range, -1 if not found
+      const endIdx = spectrumData.x.findIndex(x => x >= range.end); // find the index of the first x value greater than or equal to the end of the range, -1 if not found
       
       console.log('Found indices:', {
         startIdx,
@@ -114,11 +171,11 @@ const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProp
         endEnergy: endIdx !== -1 ? spectrumData.x[endIdx] : null
       });
 
-      if (startIdx !== -1 && endIdx !== -1) {
+      if (startIdx !== -1 && endIdx !== -1) { // if the start and end indices are not -1 (java .findIndex() returns -1 if not found)
         // Extract data points for this range
-        const xSlice = spectrumData.x.slice(startIdx, endIdx + 1);
-        const ySlice = spectrumData.y.slice(startIdx, endIdx + 1)
-          .map(y => Math.max(y, 0.01)); // Ensure minimum visibility
+        const xSlice = spectrumData.x.slice(startIdx, endIdx + 1); //Get all X data points in the range (KeV)
+        const ySlice = spectrumData.y.slice(startIdx, endIdx + 1)  //Get all Y data points in the range (Counts)
+          .map(y => Math.max(y, 0.001)); // Ensure minimum visibility
 
         console.log('Created range trace:', {
           pointCount: xSlice.length,
@@ -132,7 +189,7 @@ const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProp
           y: ySlice,
           type: 'scatter',
           mode: 'lines',
-          fill: 'tozeroy',  // Fill from line to y=0
+          fill: 'tozeroy',  // Fill from line from data to y=0
           fillcolor: range.color || 'rgba(255, 0, 0, 0.2)', // Use provided color or default
           line: { width: 0 },  // Hide the line, show only fill
           name: `${range.lineName} Range`,
@@ -144,12 +201,27 @@ const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProp
     return traces;
   };
 
-  /*
-   * Creates vertical line shapes for emission lines from periodic table
-   * - Uses black dashed lines
-   * - Only creates lines for non-null energy values
-   * Returns: Array of Plotly shape objects
-   */
+  /*##########################################################################################################
+   * Emission Line Shape Generation
+   * 
+   * Function: generateEmissionLineShapes
+   * Purpose: Creates dashed vertical line visualizations for emission energies
+   * 
+   * Data Flow:
+   * 1. Input Processing:
+   *    - Takes emission lines from selectedEmissionLine
+   *    - Filters out null energy values
+   * 
+   * 2. Data Transformation:
+   *    - Converts energy values to vertical line coordinates
+   *    - Applies consistent styling (black dashed lines)
+   * 
+   * 3. Output Generation:
+   *    - Creates Plotly shape configurations
+   *    - Includes element and line name information
+   * 
+   * Return: Array of Plotly shape configurations
+   ##########################################################################################################*/
   const generateEmissionLineShapes = (): Partial<Shape>[] => {
     if (!selectedEmissionLine) {
       console.log('No emission lines selected');
@@ -185,12 +257,27 @@ const EmissionLineRangeDisplay = ({ spectrumData }: EmissionLineRangeDisplayProp
     return shapes;
   };
 
-  /*
-   * Creates text labels at top of page for emission lines
-   * - Places labels above the plot
-   * - Rotated 45 degrees for better readability
-   * Returns: Array of Plotly annotation objects
-   */
+  /*##########################################################################################################
+   * Annotation Generation
+   * 
+   * Function: generateEmissionLineAnnotations
+   * Purpose: Creates text labels for emission lines at the top of the page
+   * 
+   * Data Flow:
+   * 1. Input Processing:
+   *    - Takes emission lines from selectedEmissionLine
+   *    - Filters out null energy values
+   * 
+   * 2. Data Transformation:
+   *    - Calculates label positions
+   *    - Formats element and line name text
+   * 
+   * 3. Output Generation:
+   *    - Creates Plotly annotation configurations
+   *    - Applies consistent positioning and rotation
+   * 
+   * Return: Array of Plotly annotation configurations
+   ##########################################################################################################*/
   const generateEmissionLineAnnotations = (): Partial<Annotations>[] => {
     if (!selectedEmissionLine) return [];
 

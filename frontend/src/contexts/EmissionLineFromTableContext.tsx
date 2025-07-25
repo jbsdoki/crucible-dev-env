@@ -4,7 +4,7 @@ and SpectrumViewer components. The data is used to display the emission lines in
 component and the SpectrumViewer component.
 
 The data only flows one way through components:
-- PeriodicTable -> EmissionLineContext -> EmissionLineAnalysis
+- PeriodicTable -> EmissionLineContext -> EmissionLineAnalysis,
                                        -> SpectrumViewer
 ##########################################################################################################*/
 
