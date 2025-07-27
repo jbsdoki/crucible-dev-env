@@ -67,7 +67,7 @@
 import { useState } from 'react';
 import { Button, Box } from '@mui/material';
 import MainLayout from './WebPageLayouts/MainLayout';
-import { SpectrumProvider } from './contexts/SpectrumRangeToImageContext';
+import { SpectrumProvider } from './contexts/SpectrumViewerToSpectrumRangeVisualizer';
 import { EmissionLineProvider } from './contexts/EmissionLineFromTableContext';
 import { EmissionRangeProvider } from './contexts/EmissionRangeSelectionContext';
 import FileSelector from './components/FileSelector';
@@ -334,45 +334,95 @@ function App() {
                 <Box sx={{ 
                   width: '100%',
                   height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',  // Split into two equal columns
+                  gap: '8px',
                   bgcolor: 'white'
                 }}>
+                  
+                  {/* Left section: Spectrum Range Images */}
                   <Box sx={{ 
-                    typography: 'h5', 
-                    p: 2, 
-                    textAlign: 'center',
-                    color: 'text.primary',
-                    fontWeight: 'medium'
-                  }}>
-                    Spectrum Range
-                  </Box>
-                  <Box sx={{ 
-                    flex: 1, 
-                    position: 'relative',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    p: 2
+                    flexDirection: 'column',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    overflow: 'hidden'
                   }}>
-                    {selectedSignal?.capabilities.hasSpectrum ? (
-                      <SpectrumToImage />
-                    ) : (
-                      <Box sx={{ 
-                        color: '#666',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: '100%'
-                      }}>
-                        {selectedFile 
-                          ? "Select a signal with spectrum capabilities to view spectrum range"
-                          : "Select a file to view spectrum range"}
-                      </Box>
-                    )}
+                    {/* Header for spectrum section */}
+                    <Box sx={{ 
+                      typography: 'subtitle1', 
+                      p: 1, 
+                      textAlign: 'center',
+                      bgcolor: '#f5f5f5',
+                      borderBottom: '1px solid #e0e0e0',
+                      fontWeight: 'medium'
+                    }}>
+                      Spectrum Range Images
+                    </Box>
+                    
+                    {/* Content area for spectrum images */}
+                    <Box sx={{ 
+                      flex: 1, 
+                      p: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'auto'
+                    }}>
+                      {selectedSignal?.capabilities.hasSpectrum ? (
+                        <SpectrumToImage />
+                      ) : (
+                        <Box sx={{ 
+                          color: '#666', 
+                          textAlign: 'center' 
+                        }}>
+                          {selectedFile 
+                            ? "Select a signal with spectrum capabilities"
+                            : "Select a file to view spectrum ranges"}
+                        </Box>
+                      )}
+                    </Box>
                   </Box>
-                  {/* Uses SpectrumProvider context to access selected range */}
+
+                  {/* Right section: Emission Line Images (placeholder) */}
+                  <Box sx={{ 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Header for emission section */}
+                    <Box sx={{ 
+                      typography: 'subtitle1', 
+                      p: 1, 
+                      textAlign: 'center',
+                      bgcolor: '#f5f5f5',
+                      borderBottom: '1px solid #e0e0e0',
+                      fontWeight: 'medium'
+                    }}>
+                      Emission Line Images
+                    </Box>
+                    
+                    {/* Placeholder content for emission images */}
+                    <Box sx={{ 
+                      flex: 1, 
+                      p: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      overflow: 'auto'
+                    }}>
+                      <Box sx={{ 
+                        color: '#666', 
+                        textAlign: 'center' 
+                      }}>
+                        Emission Range Visualizer
+                        <br />
+                        (Coming Soon)
+                      </Box>
+                    </Box>
+                  </Box>
                 </Box>
               }
               bottomRight={

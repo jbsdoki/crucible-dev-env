@@ -7,7 +7,7 @@ import { useSpectrumData } from './hooks/useSpectrumData';
 import { useSpectrumSelection } from './hooks/useSpectrumSelection';
 import { useState } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SpectrumRangeToImageContext';
+import { useSpectrumContext } from '../../contexts/SpectrumViewerToSpectrumRangeVisualizer';
 
 /**
  * Props shared by both Root and Inner components
