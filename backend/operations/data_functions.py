@@ -279,6 +279,11 @@ def get_spectrum_data(signal):
 def get_zero_index(signal):
     """
     Finds the index where energy = 0 in the spectrum.
+    Formula : 
+    Real Index = (Index * Scale) + Offset 
+    Index = (Real - Offset) / Scale
+    So if real is 0:
+    Index = (-Offset) / Scale
     
     Args:
         signal: The hyperspy signal object

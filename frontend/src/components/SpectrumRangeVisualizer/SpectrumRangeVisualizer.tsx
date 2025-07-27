@@ -38,6 +38,8 @@ export function SpectrumToImage() {
 
       try {
         console.log('SpectrumToImage: Fetching image data for range:', selectedRange.indices);
+        console.log('SpectrumToImage: Using indices - Start:', selectedRange.indices.start, 'End:', selectedRange.indices.end);
+        console.log('SpectrumToImage: Corresponding energy range - Start:', selectedRange.energy.start, 'keV, End:', selectedRange.energy.end, 'keV');
         setImageLoading(true);
         setImageError(null);
         

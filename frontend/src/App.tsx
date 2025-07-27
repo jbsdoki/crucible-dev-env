@@ -70,6 +70,7 @@ import MainLayout from './WebPageLayouts/MainLayout';
 import { SpectrumProvider } from './contexts/SpectrumViewerToSpectrumRangeVisualizer';
 import { EmissionLineProvider } from './contexts/EmissionLineFromTableContext';
 import { EmissionRangeProvider } from './contexts/EmissionRangeSelectionContext';
+import { EmissionRangeToImageProvider } from './contexts/EmissionAnalysisToEmissionRangeImageContext';
 import FileSelector from './components/FileSelector';
 import SignalSelector from './components/SignalSelector';
 import ImageViewer from './components/ImageViewer';
@@ -78,6 +79,7 @@ import PeriodicTable from './components/PeriodicTable/PeriodicTable';
 import MetadataViewer from './components/MetadataViewer';
 import SpectrumToImage from './components/SpectrumRangeVisualizer/SpectrumRangeVisualizer';
 import EmissionSpectraWidthSum from './components/EmissionLineAnalysis';
+import EmissionLineRangeVisualizer from './components/EmissionLineRangeVisualizer/EmissionLineRangeVisualizer';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
 
@@ -151,6 +153,7 @@ function App() {
       <SpectrumProvider>        {/* Provides spectrum range data to SpectrumViewer and SpectrumToImage */}
         <EmissionLineProvider>  {/* Provides emission line data between PeriodicTable and SpectrumViewer */}
           <EmissionRangeProvider> {/* Provides range data between EmissionLineAnalysis and SpectrumViewer */}
+            <EmissionRangeToImageProvider> {/* Provides emission line range data to EmissionLineRangeVisualizer */}
             <MainLayout
               headerLeft={
                 <FileSelector
@@ -413,14 +416,18 @@ function App() {
                       justifyContent: 'center',
                       overflow: 'auto'
                     }}>
-                      <Box sx={{ 
-                        color: '#666', 
-                        textAlign: 'center' 
-                      }}>
-                        Emission Range Visualizer
-                        <br />
-                        (Coming Soon)
-                      </Box>
+                      {selectedSignal?.capabilities.hasSpectrum ? (
+                        <EmissionLineRangeVisualizer />
+                      ) : (
+                        <Box sx={{ 
+                          color: '#666', 
+                          textAlign: 'center' 
+                        }}>
+                          {selectedFile 
+                            ? "Select a signal with spectrum capabilities"
+                            : "Select a file to view emission ranges"}
+                        </Box>
+                      )}
                     </Box>
                   </Box>
                 </Box>
@@ -471,6 +478,7 @@ function App() {
                 </Box>
               }
             />
+            </EmissionRangeToImageProvider>
           </EmissionRangeProvider>
         </EmissionLineProvider>
       </SpectrumProvider>

@@ -1,43 +1,43 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useSpectrumContext } from '../../contexts/SpectrumViewerToSpectrumRangeVisualizer';
+import { useEmissionRangeToImageContext } from '../../contexts/EmissionAnalysisToEmissionRangeImageContext';
 import { useEffect, useState } from 'react';
 import * as api from '../../services/api';
 import Plot from 'react-plotly.js';
 
 /**
- * SpectrumToImage Component
+ * EmissionLineRangeVisualizer Component
  * 
- * Creates a 2D spatial map showing the distribution of X-rays within a selected energy range.
+ * Creates a 2D spatial map showing the distribution of X-rays within a selected emission line energy range.
  * The intensity at each pixel represents the count of X-rays detected within the specified
- * energy range at that spatial location.
+ * emission line energy range at that spatial location.
  * 
- * This component receives the Spectrum Range from the SpectrumRangeContext
- * It also receives the selected file and signal index from the SpectrumRangeContext
+ * This component receives the Emission Line Range from the EmissionRangeToImageContext
+ * It also receives the selected file and signal index from the EmissionRangeToImageContext
  * It then uses the selected file and signal index to fetch the image data from the backend
- * and then displays the image data in a 2D spatial map'
+ * and then displays the image data in a 2D spatial map
  * 
  * The data only flows one way:
- * - SpectrumViewer -> SpectrumRangeContext -> SpectrumToImage
+ * - EmissionLineAnalysis -> EmissionRangeToImageContext -> EmissionLineRangeVisualizer
  * 
  */
-export function SpectrumToImage() {
-  const { selectedRange, selectedFile, signalIndex } = useSpectrumContext();
+export function EmissionLineRangeVisualizer() {
+  const { selectedRange, selectedFile, signalIndex } = useEmissionRangeToImageContext();
   const [energyFilteredImage, setEnergyFilteredImage] = useState<number[][] | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
   // Fetch image data when selectedRange changes
   useEffect(() => {
-    console.log('SpectrumToImage: Range changed:', selectedRange?.energy);
+    console.log('EmissionLineRangeVisualizer: Range changed:', selectedRange?.energy);
     
     const fetchImageData = async () => {
       if (!selectedRange || !selectedFile || signalIndex === null) {
-        console.log('SpectrumToImage: Missing required data:', { selectedFile, selectedRange, signalIndex });
+        console.log('EmissionLineRangeVisualizer: Missing required data:', { selectedFile, selectedRange, signalIndex });
         return;
       }
 
       try {
-        console.log('SpectrumToImage: Fetching image data for range:', selectedRange.indices);
+        console.log('EmissionLineRangeVisualizer: Fetching image data for range:', selectedRange.indices);
         setImageLoading(true);
         setImageError(null);
         
@@ -48,10 +48,10 @@ export function SpectrumToImage() {
           selectedRange.indices  // Use indices for API call
         );
         
-        console.log('SpectrumToImage: Successfully fetched image data');
+        console.log('EmissionLineRangeVisualizer: Successfully fetched image data');
         setEnergyFilteredImage(imageData);
       } catch (error) {
-        console.error('SpectrumToImage: Error fetching image:', error);
+        console.error('EmissionLineRangeVisualizer: Error fetching image:', error);
         setImageError('Failed to load energy-filtered image');
         setEnergyFilteredImage(null);
       } finally {
@@ -136,4 +136,4 @@ export function SpectrumToImage() {
   );
 }
 
-export default SpectrumToImage;
+export default EmissionLineRangeVisualizer;

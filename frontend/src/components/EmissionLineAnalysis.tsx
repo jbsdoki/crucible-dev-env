@@ -5,7 +5,7 @@
  * This component analyzes and displays emission line data for selected elements from the periodic table.
  * It allows users to:
  * 1. View emission line energies range sums for selected elements
- * 2. Set custom energy ranges around emission lines (start and end offsets)
+ * 2. Set custom energy ranges around emission lines (start and end ranges)
  * 4. Toggle visibility of ranges on both spectrum and 2D map visualizations (2D MAP NOT IMPLEMENTED YET)
  * 
  * Data Flow:
@@ -41,14 +41,16 @@
  * 4. State Management:
  *    - buttonStates: Tracks UI state for spectrum/map toggles
  *    - sums: Stores API response data for each emission line
- *    - startOffset/endOffset: User-configurable range parameters
+ *    - startRange/endRange: User-configurable range parameters from selecting range on component
  ##########################################################################################################*/
 
 import { useState, useEffect } from 'react';
 import { Box, TextField, Typography, Paper, Stack, Button } from '@mui/material';
 import { useEmissionLineContext } from '../contexts/EmissionLineFromTableContext';
 import { useEmissionRange } from '../contexts/EmissionRangeSelectionContext';
+import { useEmissionRangeToImageContext } from '../contexts/EmissionAnalysisToEmissionRangeImageContext';
 import { getEmissionSpectraWidthSum } from '../services/api';
+import { getAxesData } from '../services/api';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MapIcon from '@mui/icons-material/Map';
 
@@ -63,9 +65,9 @@ interface ButtonStates {
 }
 
 export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIndex }: EmissionSpectraWidthSumProps) {
-  // Replace single width with start and end offsets
-  const [startOffset, setStartOffset] = useState<number>(0.1); // Default offset of 0.1 keV before the line
-  const [endOffset, setEndOffset] = useState<number>(0.1); // Default offset of 0.1 keV after the line
+  // Replace single width with start and end ranges
+  const [startRange, setStartRange] = useState<number>(0.1); // Default range of 0.1 keV before the line
+  const [endRange, setEndRange] = useState<number>(0.1); // Default range of 0.1 keV after the line
   const [sums, setSums] = useState<Record<string, number | string>>({});
   // Add state for tracking button toggles for each emission line
   const [buttonStates, setButtonStates] = useState<Record<string, ButtonStates>>({});
@@ -76,13 +78,20 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    * Hooks used:
    * - useEmissionLineContext: Receives selected element data from Periodic Table
    * - useEmissionRange: Gets functions to send data to Spectrum Viewer
+   * - useEmissionRangeToImageContext: Sends range data to EmissionLineRangeVisualizer
    * 
    * Context Sources:
    * - EmissionLineContext: ../contexts/EmissionLineFromTableContext
    * - EmissionRangeContext: ../contexts/EmissionRangeSelectionContext
+   * - EmissionRangeToImageContext: ../contexts/EmissionAnalysisToEmissionRangeImageContext
    ##########################################################################################################*/
   const { selectedEmissionLine } = useEmissionLineContext();
   const { addToSpectrum, removeFromSpectrum } = useEmissionRange();
+  const { 
+    setSelectedRange: setEmissionImageRange, 
+    setSelectedFile: setEmissionImageFile, 
+    setSignalIndex: setEmissionImageSignalIndex 
+  } = useEmissionRangeToImageContext();
 
   // Initialize button states when emission line changes
   useEffect(() => {
@@ -106,8 +115,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    * - Parameters:
    *   - selectedFile: current data file path
    *   - selectedSignalIndex: current signal index
-   *   - start: calculated start energy (energy - startOffset)
-   *   - end: calculated end energy (energy + endOffset)
+   *   - start: calculated start energy (energy - startRange)
+   *   - end: calculated end energy (energy + endRange)
    * 
    * Data Storage:
    * - Updates 'sums' state with results
@@ -125,14 +134,14 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
       for (const [lineName, energy] of Object.entries(selectedEmissionLine.EmissionLines)) {
         if (energy !== null) {
           try {
-            // Calculate range using start and end offsets
-            const start = Math.max(0, energy - startOffset);
-            const end = energy + endOffset;
+            // Calculate range using start and end ranges
+            const start = Math.max(0, energy - startRange);
+            const end = energy + endRange;
             
             console.log(`Calculating range for ${lineName}:`, {
               energy,
-              startOffset,
-              endOffset,
+              startRange,
+              endRange,
               start,
               end,
               unit: 'keV'
@@ -159,20 +168,20 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     }
 
     fetchSums();
-    //Code inside () doesn't run until selectedEmissionLine, selectedFile, selectedSignalIndex, startOffset, or endOffset changes
-  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startOffset, endOffset]); 
+    //Code inside () doesn't run until selectedEmissionLine, selectedFile, selectedSignalIndex, startRange, or endRange changes
+  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startRange, endRange]); 
 
-  const handleStartOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newOffset = parseFloat(event.target.value);
-    if (!isNaN(newOffset) && newOffset >= 0) {
-      setStartOffset(newOffset);
+  const handleStartRangeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newRange = parseFloat(event.target.value);
+    if (!isNaN(newRange) && newRange >= 0) {
+      setStartRange(newRange);
     }
   };
 
-  const handleEndOffsetChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newOffset = parseFloat(event.target.value);
-    if (!isNaN(newOffset) && newOffset >= 0) {
-      setEndOffset(newOffset);
+  const handleEndRangeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newRange = parseFloat(event.target.value);
+    if (!isNaN(newRange) && newRange >= 0) {
+      setEndRange(newRange);
     }
   };
 
@@ -184,7 +193,7 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    * 
    * Data Flow:
    * 1. Source: Local state and props
-   *    - Uses: selectedEmissionLine, startOffset, endOffset
+   *    - Uses: selectedEmissionLine, startRange, endRange
    * 
    * 2. Destination: EmissionRangeContext
    *    - Via: addToSpectrum/removeFromSpectrum functions
@@ -192,8 +201,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    *      {
    *        lineName: string,    // Emission line identifier
    *        energy: number,      // Center energy value
-   *        start: number,       // Range start (energy - startOffset)
-   *        end: number,         // Range end (energy + endOffset)
+   *        start: number,       // Range start (energy - startRange)
+   *        end: number,         // Range end (energy + endRange)
    *        color: string        // Visual styling
    *      }
    * 
@@ -211,8 +220,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
 
     // If turning on, add to spectrum ranges
     if (newButtonStates[lineName].spectrum) {
-      const start = Math.max(0, energy - startOffset);
-      const end = energy + endOffset;
+      const start = Math.max(0, energy - startRange);
+      const end = energy + endRange;
       addToSpectrum({
         lineName,
         energy,
@@ -228,31 +237,78 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     console.log('Display on Spectrum clicked for', lineName, 'new state:', newButtonStates[lineName].spectrum);
   };
 
-  const handleMapToggle = (lineName: string) => {
-    setButtonStates(prev => ({
-      ...prev,
+  const handleMapToggle = async (lineName: string, energy: number) => {
+    const newButtonStates = {
+      ...buttonStates,
       [lineName]: {
-        ...prev[lineName],
-        map: !prev[lineName].map
+        ...buttonStates[lineName],
+        map: !buttonStates[lineName].map
       }
-    }));
+    };
+    setButtonStates(newButtonStates);
+
+    // If turning on, add to emission image context
+    if (newButtonStates[lineName].map) {
+      const start = Math.max(0, energy - startRange);
+      const end = energy + endRange;
+      
+      // TODO: Convert energy values to indices for API calls
+      // For now, using placeholder conversion (1 keV = ~200 indices)
+      // This should be replaced with proper energy-to-index conversion
+      // Translation formula for converting from 0 - 4095 indices to 0 ~ 40 KeV indices
+      // Index = (Real - Offset) / Scale (Real is KeV, Index is 0 - 4095)
+      // Real = (Index * Scale) + Offset
+
+      // Get the axes data from the backend
+      const axesData = await getAxesData(selectedFile, selectedSignalIndex);
+      console.log('Complete axes data object:', axesData);
+      console.log('Axes Data Properties - Offset:', axesData.offset, 'Scale:', axesData.scale, 'Units:', axesData.units);
+
+             // Convert from energy in KeV to index in 0 - 4095 indices
+       const startIndex = Math.round((start - axesData.offset) / axesData.scale);
+       const endIndex = Math.round((end - axesData.offset) / axesData.scale);
+       
+       console.log('EmissionLineAnalysis: Energy to Index Conversion:');
+       console.log('  - Energy range:', start.toFixed(4), 'to', end.toFixed(4), 'keV');
+       console.log('  - Axes data: offset =', axesData.offset, ', scale =', axesData.scale);
+       console.log('  - Calculated indices:', startIndex, 'to', endIndex);
+       console.log('  - Index range width:', endIndex - startIndex + 1, 'channels');
+       
+       setEmissionImageRange({
+        indices: { start: startIndex, end: endIndex },
+        energy: { start, end },
+        lineName,
+        element: selectedEmissionLine?.Element || 'Unknown'
+      });
+      setEmissionImageFile(selectedFile);
+      setEmissionImageSignalIndex(selectedSignalIndex);
+      
+      console.log('Display on 2D Map clicked for', lineName, 'energy range:', { start, end });
+    } else {
+      // If turning off, clear the context
+      setEmissionImageRange(null);
+      setEmissionImageFile(null);
+      setEmissionImageSignalIndex(null);
+      
+      console.log('Removed from 2D Map:', lineName);
+    }
   };
 
-  // Update ranges when offsets change
+  // Update ranges when range values change
   useEffect(() => {
     if (!selectedEmissionLine) return;
 
     // Update ranges for all displayed lines
     Object.entries(selectedEmissionLine.EmissionLines).forEach(([lineName, energy]) => {
       if (energy !== null && buttonStates[lineName]?.spectrum) {
-        const start = Math.max(0, energy - startOffset);  // energy is emission line value in keV
-        const end = energy + endOffset;
+        const start = Math.max(0, energy - startRange);  // energy is emission line value in keV
+        const end = energy + endRange;
         // Assuming addToSpectrum and removeFromSpectrum are defined elsewhere or will be added.
         // For now, we'll just log the action.
         console.log('Updating spectrum ranges for', lineName, { start, end });
       }
     });
-  }, [selectedEmissionLine, startOffset, endOffset, buttonStates]);
+  }, [selectedEmissionLine, startRange, endRange, buttonStates]);
 
   if (!selectedEmissionLine) {
     return (
@@ -269,31 +325,31 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
   return (
     // Main container with padding and margin
     <Paper sx={{ p: 2, m: 2 }}>
-      {/* Header section with element name and offset controls */}
+      {/* Header section with element name and range controls */}
       <Box sx={{ mb: 2 }}>
         {/* Display selected element name */}
         <Typography variant="h6">
           {selectedEmissionLine.Element} Emission Line Sums
         </Typography>
         
-        {/* Offset input controls arranged horizontally */}
+        {/* Range input controls arranged horizontally */}
         <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-          {/* Start offset input field */}
+          {/* Start range input field */}
           <TextField
-            label="Start Offset (keV)"
+            label="Start Range (keV)"
             type="number"
-            value={startOffset}
-            onChange={handleStartOffsetChange}
+            value={startRange}
+            onChange={handleStartRangeChange}
             inputProps={{ step: 0.1, min: 0 }}
             size="small"
             helperText="Distance before emission line"
           />
-          {/* End offset input field */}
+          {/* End range input field */}
           <TextField
-            label="End Offset (keV)"
+            label="End Range (keV)"
             type="number"
-            value={endOffset}
-            onChange={handleEndOffsetChange}
+            value={endRange}
+            onChange={handleEndRangeChange}
             inputProps={{ step: 0.1, min: 0 }}
             size="small"
             helperText="Distance after emission line"
@@ -308,8 +364,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
           if (energy === null) return null; // Skip null energy values
           
           const sum = sums[lineName];
-          const start = Math.max(0, energy - startOffset);
-          const end = energy + endOffset;
+          const start = Math.max(0, energy - startRange);
+          const end = energy + endRange;
           
           return (
             // Individual emission line row with flex layout
@@ -368,7 +424,7 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
                   size="small"
                   startIcon={<MapIcon />}
                   onClick={() => {
-                    handleMapToggle(lineName);
+                    handleMapToggle(lineName, energy);
                     console.log('Display on 2D Mapping clicked for', lineName);
                   }}
                   sx={{
