@@ -221,6 +221,31 @@ export const getEnergyRangeSpectrum = async (
   }
 };
 
+/**
+ * Gets the sum of x-ray counts within a specific energy range
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * @param start - Start energy in keV
+ * @param end - End energy in keV
+ * Returns: Number of counts or error message if range is invalid
+ */
+export const getEmissionSpectraWidthSum = async (
+  filename: string, 
+  signalIdx: number, 
+  start: number, 
+  end: number
+): Promise<number | string> => {
+  try {
+    console.log('Fetching Emission Spectra Width Sum:', { filename, signalIdx, start, end });
+    const response = await api.get('/emission-spectra-width-sum', {
+      params: { filename, signal_idx: signalIdx, start, end }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Emission Spectra:', error);
+    throw error;
+  }
+};
 
 /**************************************************************************/
 /***************** Data Retrieval Functions *******************************/
@@ -269,5 +294,26 @@ export const getAxesData = async (filename: string, signalIdx: number) => {
 /**************************************************************************/
 /***************** Periodic Table Functions *******************************/
 /**************************************************************************/
+/**
+Retrieves the emission spectra for a specific element from the backend
+Given the atomic number of the element
+ * @param atomicNumber - Atomic number of the element
+ * Returns: Object containing emission spectra data
+ */
+export const getEmissionSpectra = async (atomicNumber: number) => {
+  try {
+    console.log('Fetching Emission Spectra:', { atomicNumber });
+    const response = await api.get('/emission-spectra', {
+      params: { atomic_number: atomicNumber }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Emission Spectra:', error);
+    throw error;
+  }
+};
+
+
+
 
 export default api; 

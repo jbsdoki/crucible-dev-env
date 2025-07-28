@@ -35,7 +35,8 @@ from fastapi.responses import JSONResponse
 import hyperspy.api as hs
 import os
 import time
-from service_handlers import file_service, signal_service
+from service_handlers import file_service, signal_service, data_service
+from operations import periodic_table_functions
 
 
 # Create FastAPI instance
@@ -279,6 +280,23 @@ async def get_axes_data(filename: str = Query(...), signal_idx: int = Query(...)
         print("=== Ending get_axes_data() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
+############################# periodic table ##################################
+
+@app.get("/emission-spectra")
+async def get_emission_spectra(atomic_number: int):
+    try:
+        print(f"\n=== Starting get_emission_spectra() in main.py ===")
+        print(f"Requested emission spectra for atomic number: {atomic_number}")
+        
+        spectra = data_service.get_emission_spectra(atomic_number)
+
+        return spectra
+    
+    except Exception as e:
+        print(f"ERROR in get_emission_spectra() in main.py: {str(e)}")
+        print("=== Ending get_emission_spectra() with error in main.py ===\n")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 ################################################################################
 #################### API Endpoints for manipulating data #######################
@@ -332,4 +350,42 @@ async def energy_range_spectrum(
         return await signal_service.spectrum_to_2d(filename, signal_idx, start, end)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+"""
+Get the spectrum sum for a specific energy range.
+
+Parameters:
+- filename: Name of the file containing the signal
+- signal_idx: Index of the signal in the file
+- start: Starting energy value in keV
+- end: Ending energy value in keV
+
+Returns:
+- Total sum of x-ray counts within the specified energy range
+"""
+@app.get("/emission-spectra-width-sum")
+async def emission_spectra_width_sum(
+    filename: str = Query(..., description="Name of the file to process"),
+    signal_idx: int = Query(..., description="Index of the signal in the file"),
+    start: float = Query(..., description="Start energy value in keV"),
+    end: float = Query(..., description="End energy value in keV")
+):
+    """
+    Get the spectrum sum for a specific energy range.
+
+    Parameters:
+    - filename: Name of the file containing the signal
+    - signal_idx: Index of the signal in the file
+    - start: Starting energy value in keV
+    - end: Ending energy value in keV
+
+    Returns:
+    - Total sum of x-ray counts within the specified energy range
+    """
+    try:
+        return await signal_service.get_emission_spectra_width_sum(filename, signal_idx, start, end)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 

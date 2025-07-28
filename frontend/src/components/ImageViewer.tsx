@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { getImageData, getRegionSpectrum } from '../services/api';
+import type { SpectrumData } from './SpectrumViewer/types';
 import Plot from 'react-plotly.js';
 
 interface SignalCapabilities {
@@ -28,7 +29,7 @@ interface ImageData {
 interface ImageViewerProps {
   selectedFile: string;
   selectedSignal: SignalInfo;
-  onRegionSelected?: (region: {x1: number, y1: number, x2: number, y2: number}, spectrumData: number[]) => void;
+  onRegionSelected?: (region: {x1: number, y1: number, x2: number, y2: number}, spectrumData: SpectrumData) => void;
 }
 
 /**

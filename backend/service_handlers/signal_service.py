@@ -4,7 +4,7 @@ from utils import constants
 import os
 import numpy as np
 import hyperspy.api as hs
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Union
 
 # FileService is a class that handles file operations
 
@@ -427,4 +427,60 @@ class SignalService:
             traceback.print_exc()
             print("=== Ending get_axes_data() with error ===\n")
             return None
+
+
+    async def get_emission_spectra_width_sum(
+        self,
+        filename: str,
+        signal_idx: int,
+        start: float,
+        end: float
+    ) -> Union[float, str]:
+        """
+        Get the total count of x-rays detected within a specific energy range.
+        
+        Args:
+            filename (str): Name of the file containing the signal
+            signal_idx (int): Index of the signal in the file
+            start (float): Starting energy value in keV
+            end (float): Ending energy value in keV
             
+        Returns:
+            Union[float, str]: Total sum of x-ray counts within the specified energy range,
+                             or error message if range is outside spectrum
+        """
+        print(f"=== Starting get_emission_spectra_width_sum() in signal_service.py ===")
+        print(f"Parameters: filename={filename}, signal_idx={signal_idx}")
+        print(f"Energy range: {start:.4f} keV to {end:.4f} keV")
+        
+        try:
+            # Load the signal
+            signal = self.file_service.get_or_load_file(filename, signal_idx)
+            
+            # Get the energy axis values
+            energy_axis = signal.axes_manager[-1]
+            max_energy = energy_axis.high_value
+            min_energy = energy_axis.low_value
+            
+            print(f"Signal energy range: {min_energy:.4f} to {max_energy:.4f} keV")
+            
+            # Check if the requested range is outside the signal's range
+            if start > max_energy or end > max_energy:
+                return "Energy range exceeds spectrum maximum"
+            if start < min_energy or end < min_energy:
+                return "Energy range below spectrum minimum"
+            
+            # Use isig to select the energy range directly
+            signal_slice = signal.isig[start:end]
+            
+            # Sum all counts in the selected range
+            total_counts = signal_slice.data.sum()
+            print(f"Total x-ray counts in range: {total_counts}")
+            
+            print("=== Ending get_emission_spectra_width_sum() successfully ===\n")
+            return float(total_counts)
+            
+        except Exception as e:
+            print(f"Error in get_emission_spectra_width_sum: {str(e)}")
+            print("=== Ending get_emission_spectra_width_sum() with error ===\n")
+            raise e

@@ -16,6 +16,33 @@
     - Used for the FastAPI backend and Hyperspy
     - Install micromamba from: https://mamba.readthedocs.io/en/latest/installation.html
 
+## Development Environment
+This frontend application uses:
+- React 18 with TypeScript
+- Vite: Build tool and dev server that serves source files over native ES modules
+- Material-UI (MUI): React component library
+
+Key development commands:
+```bash
+# Start dev server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+The Vite configuration is in `vite.config.ts`, which handles:
+- TypeScript compilation
+- Module resolution
+- Build optimization
+- Development server settings
+
+## Environment
+This application frontend was develope using Vite + React environment
+
 
 
 # Setup Steps
@@ -129,40 +156,55 @@ Frontend:
 
 main.tsx (Starts app)
    |
-   -> App.tsx (Calls components, organizes them into sections on the screen)
+   -> App.tsx (Root component that manages application state and layout, shares data between
+            |   Components, only if components don't have shared context)
             |
-            -> Contexts: (Provide data for the components)
-            |           - ElementContext.tsx
-            |           - FileContext.tst
+            -> MainLayout (WebPageLayouts/MainLayout.tsx)
+            |    Handles responsive grid-based layout of the application
+            |    Organizes components into structured dashboard sections:
+            |
+            -> Contexts (Provide data sharing between components)
+            |    - EmissionLineContext
+            |    |     PeriodicTable → Context → SpectrumViewer and EmissionLineAnalysis
+            |    |     Manages element selection and emission lines
+            |    |
+            |    - SpectrumRangeContext
+            |    |     SpectrumViewer → Context → SpectrumToImage
+            |    |     Manages X-ray energy ranges and channels
+            |    |
+            |    - EmissionRangeContext
+            |          EmissionLineAnalysis → Context → SpectrumViewer
+            |          Manages spectrum and map display states
             |              
-            -> Components: (Control what is displayed to screen, only displays in one section)
-                         - FileSelector.tsx
-                         - ImageViewer.tsx
-                         - MetadataViewer.tsx
-                         - SignalSelector.tsx
-                         - SpectrumViewer.tsx
-                                |
-                                v
-                           api.ts (File that calls backend API)
-                                 ^
-                                 |
-                                 |
-Backend:                         |
-                                 |   
-                                 v
-                           main.py (File that returns data to frontend, calls service functions)
-                                 |
-                                 v
-                  Service Handlers: (Organizes and calls individual functions)
-                     - file_service.py
-                     - signal_service.py
-                                 |
-                                 v     
-                  Operations: (Individual data manipulating functions stored here)
-                     - file_functions.py
-                     - image_viewer_functions.py
-                     - metadata_functions.py
-                     - signal_functions.py
-                     - spectrum_viewer_functions.py
-                           ```
+            -> Components (What's displayed on the webpage, make calls to backend through api.ts)
+                    - FileSelector (File selection)
+                    - SignalSelector (Signal selection from files)
+                    - HAADFViewer (HAADF image display)
+                    - MetadataViewer (File and signal metadata)
+                    - SpectrumViewerRoot (Spectrum visualization)
+                    - ImageViewer (Image display and region selection)
+                          |
+                          v
+                     api.ts (Handles backend API calls)
+                          ^
+                          |
+Backend:                  |   
+                          v
+                     main.py (Routes requests and returns data)
+                          |
+                          v
+               Service Handlers (Organize and process requests)
+                  - data_service.py
+                  - file_service.py
+                  - signal_service.py
+                          |
+                          v     
+               Operations (Core data processing functions)
+                  - data_functions.py
+                  - file_functions.py
+                  - image_viewer_functions.py
+                  - periodic_table_functions.py
+                  - signal_functions.py
+                  - spectrum_functions.py
+```
 

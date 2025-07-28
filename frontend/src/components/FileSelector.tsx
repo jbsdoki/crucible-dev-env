@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FormControl, InputLabel, Select, MenuItem, Box } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 import { getFiles } from '../services/api';
 
 interface FileSelectorProps {
@@ -17,20 +17,15 @@ interface FileSelectorProps {
  * @param onFileSelect - Callback function when a file is selected
  */
 function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
-  // console.log('=== Starting FileSelector component from FileSelector.tsx ===');
   const [files, setFiles] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const fetchFiles = async () => {
-      // console.log('=== Starting fetchFiles ===');
       try {
-        //Calls getFiles in frontend/src/services/api.ts 
-        // which calls get_file_list() in backend/main.py
         const fileList = await getFiles();  
         setFiles(fileList);
         setError('');
-        // console.log('=== Ending fetchFiles successfully from FileSelector.tsx ===');
       } catch (err) {
         setError(`Error fetching files: ${(err as Error).message}`);
         console.log(`${err}`);
@@ -42,15 +37,22 @@ function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
 
   const result = (
     <Box sx={{ width: '100%', mb: 2 }}>
+      <Box sx={{ 
+        typography: 'h5', 
+        mb: 2, 
+        textAlign: 'center',
+        color: 'text.primary',
+        fontWeight: 'medium'
+      }}>
+        Select File
+      </Box>
       <FormControl fullWidth error={!!error}>
         <InputLabel>Select File</InputLabel>
         <Select
           value={selectedFile}
           label="Select File"
           onChange={(e) => {
-            // console.log('=== Starting file selection change handler ===');
             onFileSelect(e.target.value);
-            // console.log('=== Ending file selection change handler ===');
           }}
         >
           {files.map((file) => (
@@ -60,10 +62,14 @@ function FileSelector({ selectedFile, onFileSelect }: FileSelectorProps) {
           ))}
         </Select>
       </FormControl>
+      {error && (
+        <Typography color="error" sx={{ mt: 1 }}>
+          {error}
+        </Typography>
+      )}
     </Box>
   );
   
-  // console.log('=== Ending FileSelector component from FileSelector.tsx ===');
   return result;
 }
 
