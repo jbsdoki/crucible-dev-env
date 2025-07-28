@@ -26,18 +26,18 @@ import { useSpectrumContext } from '../../../contexts/SpectrumViewerToSpectrumRa
  */
 function RangeDisplayDropdown() {
   const { ranges, displayedRangeId, setDisplayedRange } = useSpectrumContext();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+  const [anchorElem, setAnchorElem] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorElem);
 
   const rangeCount = Object.keys(ranges).length;
   const displayedRange = displayedRangeId ? ranges[displayedRangeId] : null;
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+    setAnchorElem(event.currentTarget);
   };
 
   const handleClose = () => {
-    setAnchorEl(null);
+    setAnchorElem(null);
   };
 
   const handleSelectRange = (rangeId: number) => {
@@ -92,7 +92,7 @@ function RangeDisplayDropdown() {
       </Tooltip>
 
       <Menu
-        anchorEl={anchorEl}
+        anchorEl={anchorElem}
         open={open}
         onClose={handleClose}
         PaperProps={{

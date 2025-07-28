@@ -8,13 +8,15 @@ import {
   Typography,
   Box,
   Tooltip,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 import { 
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   KeyboardArrowDown as ArrowDownIcon,
-  ImageSearch as ImageSearchIcon
+  ImageSearch as ImageSearchIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useEmissionRangeToImageContext } from '../../../contexts/EmissionAnalysisToEmissionRangeImageContext';
 
@@ -23,21 +25,22 @@ import { useEmissionRangeToImageContext } from '../../../contexts/EmissionAnalys
  * 
  * Allows users to select which emission line range from the collection to display as an image.
  * Shows all available emission line ranges with their element, line name, and energy values.
+ * Users can also delete ranges using the "x" button on each item.
  */
 function EmissionLineRangeDisplayDropdown() {
-  const { ranges, displayedRangeId, setDisplayedRange } = useEmissionRangeToImageContext();
-  const [anchorElem, setAnchorElem] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorElem);
+  const { ranges, displayedRangeId, setDisplayedRange, removeRange } = useEmissionRangeToImageContext();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
 
   const rangeCount = Object.keys(ranges).length;
   const displayedRange = displayedRangeId ? ranges[displayedRangeId] : null;
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorElem(event.currentTarget);
+    setAnchorEl(event.currentTarget);
   };
 
   const handleClose = () => {
-    setAnchorElem(null);
+    setAnchorEl(null);
   };
 
   const handleSelectRange = (rangeId: number) => {
@@ -48,6 +51,12 @@ function EmissionLineRangeDisplayDropdown() {
   const handleClearSelection = () => {
     setDisplayedRange(null);
     handleClose();
+  };
+
+  const handleDeleteRange = (rangeId: number, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent menu item click
+    removeRange(rangeId);
+    console.log(`Deleted emission line range ${rangeId} from dropdown`);
   };
 
   // Convert ranges object to array and sort by ID
@@ -92,7 +101,7 @@ function EmissionLineRangeDisplayDropdown() {
       </Tooltip>
 
       <Menu
-        anchorEl={anchorElem}
+        anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         PaperProps={{
@@ -132,7 +141,7 @@ function EmissionLineRangeDisplayDropdown() {
               onClick={() => handleSelectRange(range.id)}
               selected={isSelected}
               sx={{ 
-                pr: 2,
+                pr: 1,
                 '&.Mui-selected': {
                   bgcolor: 'primary.light',
                   '&:hover': {
@@ -168,7 +177,23 @@ function EmissionLineRangeDisplayDropdown() {
                   </Box>
                 }
                 secondary={`${range.energy.start.toFixed(2)} - ${range.energy.end.toFixed(2)} keV`}
+                sx={{ mr: 1 }}
               />
+              <Tooltip title="Delete Emission Line Range">
+                <IconButton
+                  size="small"
+                  onClick={(event) => handleDeleteRange(range.id, event)}
+                  sx={{ 
+                    color: 'error.main',
+                    '&:hover': {
+                      bgcolor: 'error.light',
+                      color: 'error.dark'
+                    }
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </MenuItem>
           );
         })}
