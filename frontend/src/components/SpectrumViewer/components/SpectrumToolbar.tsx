@@ -1,7 +1,7 @@
 import { Stack, Tooltip, IconButton, Box } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import CropIcon from '@mui/icons-material/Crop';
+import RangeSelectionDropdown from './RangeSelectionDropdown';
 import ScaleIcon from '@mui/icons-material/Scale';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import PanToolIcon from '@mui/icons-material/PanTool';
@@ -9,6 +9,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import AlignVerticalCenterIcon from '@mui/icons-material/AlignVerticalCenter';
 import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
 import { useEffect } from 'react';
+
 
 interface SpectrumToolbarProps {
   regionSpectrumData?: {
@@ -30,7 +31,7 @@ interface SpectrumToolbarProps {
  * Provides controls for spectrum visualization including:
  * - Show/Hide Region
  * - Zoom/Pan Mode Toggle
- * - Selection Mode Toggle
+ * - Range Selection Management (via dropdown)
  * - Log/Linear Scale Toggle
  * - FWHM Line Toggle
  */
@@ -58,12 +59,6 @@ function SpectrumToolbar({ regionSpectrumData, onSelectionModeChange, isSelectin
   const handleZoomModeToggle = () => {
     console.log('SpectrumToolbar: Toggling zoom mode from:', isZoomMode, 'to:', !isZoomMode);
     setIsZoomMode(!isZoomMode);
-  };
-
-  // Handle selection mode toggle
-  const handleSelectionModeToggle = () => {
-    console.log('SpectrumToolbar: Toggling selection mode to:', !isSelectingRange);
-    onSelectionModeChange(!isSelectingRange);
   };
 
   // Log context value changes
@@ -141,20 +136,13 @@ function SpectrumToolbar({ regionSpectrumData, onSelectionModeChange, isSelectin
             </span>
           </Tooltip>
         )}
-        <Tooltip title={isSelectingRange ? "Disable Selection" : "Enable Selection"}>
-          <IconButton 
-            onClick={handleSelectionModeToggle} 
-            color={isSelectingRange ? "success" : "default"}
-            sx={{ 
-              bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-              '&:hover': {
-                bgcolor: isSelectingRange ? 'rgba(76, 175, 80, 0.2)' : 'rgba(0, 0, 0, 0.04)'
-              }
-            }}
-          >
-            <CropIcon />
-          </IconButton>
-        </Tooltip>
+        
+        {/* New Range Selection Dropdown - replaces old CropIcon button */}
+        <RangeSelectionDropdown 
+          isSelectingRange={isSelectingRange}
+          onSelectionModeChange={onSelectionModeChange}
+        />
+        
         <Tooltip title={isLogScale ? "Switch to Linear Scale" : "Switch to Log Scale"}>
           <IconButton onClick={() => setIsLogScale(!isLogScale)} color={isLogScale ? "primary" : "default"}>
             <ScaleIcon />

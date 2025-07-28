@@ -51,9 +51,8 @@ interface SpectrumViewerProps {
  */
 function SpectrumViewerInner(props: SpectrumViewerProps) {
   const [isSelectingRange, setIsSelectingRange] = useState(false);
-  // const { setSelectedRange: setSharedRange } = useSpectrumContext();
   const { 
-    setSelectedRange: setSharedRange,
+    addRange,
     setSelectedFile,
     setSignalIndex 
   } = useSpectrumContext();
@@ -65,29 +64,14 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
   );
   
   // Handle range selection for the main spectrum
-  // const { selectedRange, handleSelection } = useSpectrumSelection(
-  //   spectrumData,
-  //   isSelectingRange,
-  //   (range) => {
-  //     // When a range is selected, update the shared context
-  //     if (range && spectrumData) {
-  //       setSharedRange({
-  //         start: spectrumData.x[range.start],
-  //         end: spectrumData.x[range.end]
-  //       });
-  //     } else {
-  //       setSharedRange(null);
-  //     }
-  //   }
-  // );
   const { selectedRange, handleSelection } = useSpectrumSelection(
     spectrumData,
     isSelectingRange,
     (range) => {
-      // When a range is selected, update all shared context values
+      // When a range is selected, add it to the range collection
       if (range && spectrumData) {
-        // Set both indices and energy values
-        setSharedRange({
+        // Add the new range to the collection
+        const newRangeId = addRange({
           indices: {
             start: range.start,
             end: range.end
@@ -97,18 +81,22 @@ function SpectrumViewerInner(props: SpectrumViewerProps) {
             end: spectrumData.x[range.end]
           }
         });
-        // Set the file and signal index
+        
+        // Set the file and signal index context
         setSelectedFile(props.selectedFile);
         setSignalIndex(props.selectedSignal.index);
-      } else {
-        // Clear all values when range is cleared
-        setSharedRange(null);
-        setSelectedFile(null);
-        setSignalIndex(null);
+        
+        // Exit selection mode after adding range
+        setIsSelectingRange(false);
+        
+        if (newRangeId) {
+          console.log(`Successfully added range ${newRangeId}`);
+        } else {
+          console.warn('Failed to add range - maximum of 10 ranges reached');
+        }
       }
     }
   );
-
 
   console.log('SpectrumViewer: Rendering with:', {
     selectedFile: props.selectedFile,

@@ -36,7 +36,9 @@
  *    - To Spectrum Viewer: Via EmissionRangeContext (../contexts/EmissionRangeSelectionContext)
  *      Using addToSpectrum and removeFromSpectrum functions
  *      Sends: line name, energy, start/end range, color for visualization
- *    - To 2D Map: Not yet implemented, but structure is in place
+ *    - To EmissionLineRangeVisualizer: Via EmissionRangeToImageContext (../contexts/EmissionAnalysisToEmissionRangeImageContext)
+ *      Using addRange and removeRange functions
+ *      Sends: start/end range
  * 
  * 4. State Management:
  *    - buttonStates: Tracks UI state for spectrum/map toggles
@@ -62,6 +64,7 @@ interface EmissionSpectraWidthSumProps {
 interface ButtonStates {
   spectrum: boolean;
   map: boolean;
+  mapRangeId?: number | null; // Track which range ID is associated with this button
 }
 
 export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIndex }: EmissionSpectraWidthSumProps) {
@@ -78,7 +81,7 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    * Hooks used:
    * - useEmissionLineContext: Receives selected element data from Periodic Table
    * - useEmissionRange: Gets functions to send data to Spectrum Viewer
-   * - useEmissionRangeToImageContext: Sends range data to EmissionLineRangeVisualizer
+   * - useEmissionRangeToImageContext: Sends range data to EmissionLineRangeVisualizer 
    * 
    * Context Sources:
    * - EmissionLineContext: ../contexts/EmissionLineFromTableContext
@@ -88,7 +91,8 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
   const { selectedEmissionLine } = useEmissionLineContext();
   const { addToSpectrum, removeFromSpectrum } = useEmissionRange();
   const { 
-    setSelectedRange: setEmissionImageRange, 
+    addRange,
+    removeRange,
     setSelectedFile: setEmissionImageFile, 
     setSignalIndex: setEmissionImageSignalIndex 
   } = useEmissionRangeToImageContext();
@@ -98,7 +102,7 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     if (selectedEmissionLine) { //Code inside () doesn't run until selectedEmissionLine changes
       const initialStates: Record<string, ButtonStates> = {};
       Object.keys(selectedEmissionLine.EmissionLines).forEach(lineName => { //For each emission line, create new entry in initialStates
-        initialStates[lineName] = { spectrum: false, map: false }; //Initialize button states to false
+        initialStates[lineName] = { spectrum: false, map: false, mapRangeId: null }; //Initialize button states to false
       });
       setButtonStates(initialStates); //Set the button states to the initial states
     }
@@ -189,24 +193,7 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
    * Data Transmission Section
    * 
    * Function: handleSpectrumToggle
-   * Purpose: Sends emission line range data to Spectrum Viewer
-   * 
-   * Data Flow:
-   * 1. Source: Local state and props
-   *    - Uses: selectedEmissionLine, startRange, endRange
-   * 
-   * 2. Destination: EmissionRangeContext
-   *    - Via: addToSpectrum/removeFromSpectrum functions
-   *    - Data Sent:
-   *      {
-   *        lineName: string,    // Emission line identifier
-   *        energy: number,      // Center energy value
-   *        start: number,       // Range start (energy - startRange)
-   *        end: number,         // Range end (energy + endRange)
-   *        color: string        // Visual styling
-   *      }
-   * 
-   * 3. Effect: Updates Spectrum Viewer display through context
+   * Purpose: Sends emission line range data to Spectrum Viewer 
    ##########################################################################################################*/
   const handleSpectrumToggle = (lineName: string, energy: number) => {
     const newButtonStates = {
@@ -238,59 +225,81 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
   };
 
   const handleMapToggle = async (lineName: string, energy: number) => {
-    const newButtonStates = {
-      ...buttonStates,
-      [lineName]: {
-        ...buttonStates[lineName],
-        map: !buttonStates[lineName].map
-      }
-    };
-    setButtonStates(newButtonStates);
+    const currentState = buttonStates[lineName];
+    const newMapState = !currentState.map;
 
-    // If turning on, add to emission image context
-    if (newButtonStates[lineName].map) {
+    // If turning on, add to emission range collection
+    if (newMapState) {
       const start = Math.max(0, energy - startRange);
       const end = energy + endRange;
       
-      // TODO: Convert energy values to indices for API calls
-      // For now, using placeholder conversion (1 keV = ~200 indices)
-      // This should be replaced with proper energy-to-index conversion
-      // Translation formula for converting from 0 - 4095 indices to 0 ~ 40 KeV indices
-      // Index = (Real - Offset) / Scale (Real is KeV, Index is 0 - 4095)
-      // Real = (Index * Scale) + Offset
 
-      // Get the axes data from the backend
+
+
+      // Get the axes data from the backend for energy-to-index conversion
       const axesData = await getAxesData(selectedFile, selectedSignalIndex);
       console.log('Complete axes data object:', axesData);
       console.log('Axes Data Properties - Offset:', axesData.offset, 'Scale:', axesData.scale, 'Units:', axesData.units);
 
-             // Convert from energy in KeV to index in 0 - 4095 indices
-       const startIndex = Math.round((start - axesData.offset) / axesData.scale);
-       const endIndex = Math.round((end - axesData.offset) / axesData.scale);
+      // Convert from energy in KeV to index in 0 - 4095 indices
+      // Translation formula for converting from 0 - 4095 indices to 0 ~ 40 KeV indices
+      // Index = (Real - Offset) / Scale (Real is KeV, Index is 0 - 4095)
+      // Real = (Index * Scale) + Offset
+      const startIndex = Math.round((start - axesData.offset) / axesData.scale);
+      const endIndex = Math.round((end - axesData.offset) / axesData.scale);
        
-       console.log('EmissionLineAnalysis: Energy to Index Conversion:');
-       console.log('  - Energy range:', start.toFixed(4), 'to', end.toFixed(4), 'keV');
-       console.log('  - Axes data: offset =', axesData.offset, ', scale =', axesData.scale);
-       console.log('  - Calculated indices:', startIndex, 'to', endIndex);
-       console.log('  - Index range width:', endIndex - startIndex + 1, 'channels');
+      console.log('EmissionLineAnalysis: Energy to Index Conversion:');
+      console.log('  - Energy range:', start.toFixed(4), 'to', end.toFixed(4), 'keV');
+      console.log('  - Axes data: offset =', axesData.offset, ', scale =', axesData.scale);
+      console.log('  - Calculated indices:', startIndex, 'to', endIndex);
+      console.log('  - Index range width:', endIndex - startIndex + 1, 'channels');
        
-       setEmissionImageRange({
+      // Add the range to the collection
+      const newRangeId = addRange({
         indices: { start: startIndex, end: endIndex },
         energy: { start, end },
         lineName,
         element: selectedEmissionLine?.Element || 'Unknown'
       });
-      setEmissionImageFile(selectedFile);
-      setEmissionImageSignalIndex(selectedSignalIndex);
-      
-      console.log('Display on 2D Map clicked for', lineName, 'energy range:', { start, end });
+
+      if (newRangeId) {
+        // Update button state with the new range ID
+        const newButtonStates = {
+          ...buttonStates,
+          [lineName]: {
+            ...currentState,
+            map: true,
+            mapRangeId: newRangeId
+          }
+        };
+        setButtonStates(newButtonStates);
+
+        // Set the file and signal index context
+        setEmissionImageFile(selectedFile);
+        setEmissionImageSignalIndex(selectedSignalIndex);
+        
+        console.log(`Added emission range ${newRangeId} for ${lineName}`);
+      } else {
+        console.warn('Failed to add emission range - maximum of 10 ranges reached');
+      }
     } else {
-      // If turning off, clear the context
-      setEmissionImageRange(null);
-      setEmissionImageFile(null);
-      setEmissionImageSignalIndex(null);
-      
-      console.log('Removed from 2D Map:', lineName);
+      // If turning off, remove from emission range collection
+      if (currentState.mapRangeId) {
+        removeRange(currentState.mapRangeId);
+        
+        // Update button state to clear the range ID
+        const newButtonStates = {
+          ...buttonStates,
+          [lineName]: {
+            ...currentState,
+            map: false,
+            mapRangeId: null
+          }
+        };
+        setButtonStates(newButtonStates);
+        
+        console.log(`Removed emission range ${currentState.mapRangeId} for ${lineName}`);
+      }
     }
   };
 
@@ -303,8 +312,6 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
       if (energy !== null && buttonStates[lineName]?.spectrum) {
         const start = Math.max(0, energy - startRange);  // energy is emission line value in keV
         const end = energy + endRange;
-        // Assuming addToSpectrum and removeFromSpectrum are defined elsewhere or will be added.
-        // For now, we'll just log the action.
         console.log('Updating spectrum ranges for', lineName, { start, end });
       }
     });
