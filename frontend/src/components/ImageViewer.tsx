@@ -260,13 +260,7 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
                 z: imageData.data,
                 type: 'heatmap',
                 colorscale: 'Viridis',
-                showscale: true,
-                colorbar: {
-                  title: {
-                    text: 'Count',
-                    side: 'right'
-                  }
-                },
+                showscale: false,
                 zsmooth: 'best'
               }
             ]}
