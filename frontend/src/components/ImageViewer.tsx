@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, CircularProgress, Typography, Alert } from '@mui/material';
+import { Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { getImageData, getRegionSpectrum } from '../services/api';
 import type { SpectrumData } from './SpectrumViewer/types';
 import Plot from 'react-plotly.js';
@@ -50,6 +50,11 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
   const [selectedRegion, setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [selectionLoading, setSelectionLoading] = useState(false);
+  
+  // Click-based polygon drawing state
+  const [clickPoints, setClickPoints] = useState<{x: number, y: number}[]>([]);
+  const [finalShape, setFinalShape] = useState<any[]>([]);
+  const [usePolygonMode, setUsePolygonMode] = useState(false);
 
   // Effect to fetch image data when file or signal changes
   useEffect(() => {
@@ -99,6 +104,11 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
             max: data.data_range.max
           }
         });
+
+        // Clear any existing polygon shapes when loading new image data
+        setClickPoints([]);
+        setFinalShape([]);
+        setSelectedRegion(null);
 
         /* console.log('=== Ending fetchImageData successfully ==='); */
       } catch (err) {
@@ -200,6 +210,89 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
     }
   };
 
+  // Handle clicks for polygon drawing
+  const handlePolygonClick = (event: any) => {
+    if (!usePolygonMode || !event.points || event.points.length === 0) return;
+    
+    const x = Math.round(event.points[0].x);
+    const y = Math.round(event.points[0].y);
+    
+    console.log('Polygon click at:', { x, y });
+    setClickPoints(prev => [...prev, { x, y }]);
+  };
+
+  // Submit polygon and create closed shape
+  const handleSubmitPolygon = async () => {
+    if (clickPoints.length < 3) {
+      setSelectionError('Need at least 3 points to create a polygon');
+      return;
+    }
+
+    // Create closed polygon path
+    const path = `M ${clickPoints.map(p => `${p.x},${p.y}`).join(' L ')} Z`;
+    
+    const polygonShape = {
+      type: 'path',
+      path,
+      line: { color: 'blue', width: 2 },
+      fillcolor: 'rgba(0, 0, 255, 0.3)'
+    };
+
+    setFinalShape([polygonShape]);
+    console.log('Created polygon with path:', path);
+
+    // Calculate bounding box for backend API
+    const xCoords = clickPoints.map(p => p.x);
+    const yCoords = clickPoints.map(p => p.y);
+    
+    const region = {
+      x1: Math.min(...xCoords),
+      y1: Math.min(...yCoords),
+      x2: Math.max(...xCoords),
+      y2: Math.max(...yCoords)
+    };
+
+    console.log('Polygon bounding box:', region);
+    setSelectedRegion(region);
+
+    // Send region to backend (same as other selection methods)
+    if (selectedFile && selectedSignal) {
+      try {
+        setSelectionLoading(true);
+        setSelectionError(null);
+        console.log('Fetching spectrum for polygon region:', region);
+        
+        const spectrumData = await getRegionSpectrum(
+          selectedFile,
+          selectedSignal.index,
+          region
+        );
+        
+        console.log('Received spectrum data from polygon:', spectrumData);
+        
+        if (onRegionSelected) {
+          onRegionSelected(region, spectrumData);
+        }
+      } catch (error) {
+        console.error('Error fetching polygon region spectrum:', error);
+        setSelectionError(`Error processing polygon region: ${(error as Error).message}`);
+      } finally {
+        setSelectionLoading(false);
+      }
+    }
+
+    // Clear click points for next polygon
+    setClickPoints([]);
+  };
+
+  // Clear/reset polygon drawing
+  const handleClearPolygon = () => {
+    setClickPoints([]);
+    setFinalShape([]);
+    setSelectedRegion(null);
+    setSelectionError(null);
+  };
+
   const result = (
     <Box 
       sx={{ 
@@ -224,6 +317,43 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
         gap: 2,
         borderBottom: '1px solid #ccc'
       }}>
+        <Button
+          variant={usePolygonMode ? "contained" : "outlined"}
+          size="small"
+          onClick={() => {
+            setUsePolygonMode(!usePolygonMode);
+            // Clear existing selections when switching modes
+            handleClearPolygon();
+            setSelectedRegion(null);
+          }}
+          sx={{ minWidth: '120px' }}
+        >
+          {usePolygonMode ? 'Polygon Mode' : 'Selection Mode'}
+        </Button>
+        
+        {usePolygonMode && (
+          <>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleSubmitPolygon}
+              disabled={clickPoints.length < 3}
+              sx={{ minWidth: '100px' }}
+            >
+              Submit ({clickPoints.length})
+            </Button>
+            
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleClearPolygon}
+              sx={{ minWidth: '80px' }}
+            >
+              Clear
+            </Button>
+          </>
+        )}
+        
         {selectionLoading && (
           <CircularProgress size={20} />
         )}
@@ -286,8 +416,26 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
               },
               plot_bgcolor: 'transparent',
               paper_bgcolor: 'transparent',
-              dragmode: 'select',
-              selectdirection: 'any'
+              dragmode: usePolygonMode ? 'pan' : 'select',
+              selectdirection: 'any',
+              shapes: [
+                ...finalShape,
+                // Show temporary dots for click points
+                ...clickPoints.map((point, index) => ({
+                  type: 'circle',
+                  xref: 'x', yref: 'y',
+                  x0: point.x - 2, y0: point.y - 2,
+                  x1: point.x + 2, y1: point.y + 2,
+                  fillcolor: 'red',
+                  line: { color: 'red', width: 1 }
+                })),
+                // Show connecting lines between points
+                ...(clickPoints.length > 1 ? [{
+                  type: 'path',
+                  path: `M ${clickPoints.map(p => `${p.x},${p.y}`).join(' L ')}`,
+                  line: { color: 'red', width: 1, dash: 'dot' }
+                }] : [])
+              ]
             }}
             config={{
               responsive: true,
@@ -307,7 +455,8 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
               maxWidth: '100%',
               maxHeight: '100%'
             }}
-            onSelected={handleSelection}
+            onSelected={usePolygonMode ? undefined : handleSelection}
+            onClick={usePolygonMode ? handlePolygonClick : undefined}
             onRelayout={(e: any) => {
               const xRange = e['xaxis.range'] || e['xaxis.range[0]'];
               const yRange = e['yaxis.range'] || e['yaxis.range[0]'];
