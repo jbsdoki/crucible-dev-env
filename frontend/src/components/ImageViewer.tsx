@@ -183,7 +183,8 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
           );
           /* console.log('Received spectrum data:', spectrumData); */
           
-          // Pass both region and spectrum data to parent
+          // Pass both region and spectrum data to parent (App.tsx) which passes it to 
+          // SpectrumViewer.tsx as prop (Passed in App.tsx)
           if (onRegionSelected) {
             onRegionSelected(region, spectrumData);
           }

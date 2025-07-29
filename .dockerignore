@@ -1,0 +1,36 @@
+# Exclude node_modules from frontend (Docker will install fresh)
+frontend/node_modules/
+
+# Exclude Python cache and virtual environment files
+backend/__pycache__/
+backend/.venv/
+backend/venv/
+
+# Exclude sample data (should be handled differently in production)
+backend/sample_data/
+
+# Exclude Git and development files
+.git/
+.gitignore
+.cursor/
+
+# Exclude documentation and readme files
+*.md
+DOCUMENTATION.md
+frontend/frontend_documentation.md
+frontend/readme.md
+
+# Exclude development configuration files
+.vscode/
+.idea/
+
+# Exclude OS generated files
+.DS_Store
+Thumbs.db
+
+# Exclude backup files
+backup_files/
+
+# Exclude any build artifacts that might exist locally
+frontend/dist/
+frontend/build/ 
