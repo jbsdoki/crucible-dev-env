@@ -336,16 +336,26 @@ class SignalService:
             print(f"Image shape after processing: {image_data.shape}")
             print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
             
+            # Store original data range before normalization
+            data_min = float(image_data.min())
+            data_max = float(image_data.max())
+            
             # Normalize the image data for display
             if image_data.size > 0:
-                image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
-                image_data = (image_data * 255).astype(np.uint8)
-                print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
-                print(f"Final data type: {image_data.dtype}")
+                normalized_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
+                normalized_data = (normalized_data * 255).astype(np.uint8)
+                print(f"After normalization - range: min={normalized_data.min()}, max={normalized_data.max()}")
+                print(f"Final data type: {normalized_data.dtype}")
+            else:
+                normalized_data = image_data
             
             result = {
                 "data_shape": data_shape,
-                "image_data": image_data.tolist()
+                "image_data": normalized_data.tolist(),
+                "data_range": {
+                    "min": data_min,
+                    "max": data_max
+                }
             }
             
             print("=== Ending get_haadf_data() successfully ===\n")
