@@ -60,7 +60,8 @@
  * 3. This Component → SpectrumPlot → Final Visualization
  ##########################################################################################################*/
 
-import React from 'react';
+// React was unused
+// import React from 'react';
 import { useEmissionRange } from '../../../contexts/EmissionRangeSelectionContext';
 import { useEmissionLineContext } from '../../../contexts/EmissionLineFromTableContext';
 import type { PlotData, Shape, Annotations } from 'plotly.js';
