@@ -292,6 +292,28 @@ export const getAxesData = async (filename: string, signalIdx: number) => {
 };
 
 /**************************************************************************/
+/***************** Emission Line Analysis Functions ***********************/
+/**************************************************************************/
+/**
+ * Fetches the zero peak width for a specific signal in a file
+ * Calls: GET http://localhost:8000/zero-peak-width?filename=<filename>&signal_idx=<signal_idx>
+ * @param filename - Name of the file
+ * @param signalIdx - Index of the signal in the file
+ * Returns: Object containing the zero peak width
+ */
+export const getZeroPeakWidth = async (filename: string, signalIdx: number) => {
+  try {
+    const response = await api.get('/zero-peak-width', {
+      params: { filename, signal_idx: signalIdx }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching Zero Peak Width:', error);
+    throw error;
+  }
+}
+
+/**************************************************************************/
 /***************** Periodic Table Functions *******************************/
 /**************************************************************************/
 /**

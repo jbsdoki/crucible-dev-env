@@ -332,7 +332,7 @@ def get_half_zero_height(signal, zero_index):
 
 def get_fwhm_index(spectrum_data, half_zero_height, zero_index):
     """
-    Zeros out the spectrum data from the beginning up to the FWHM point.
+    Finds the index at the Full Width Half Maximum (FWHM) point after the zero peak.
     
     Args:
         spectrum_data (dict): Dictionary containing x and y values of the spectrum
@@ -340,8 +340,9 @@ def get_fwhm_index(spectrum_data, half_zero_height, zero_index):
         zero_index (int): Index where energy = 0
         
     Returns:
-        list: Modified y-values with zero peak removed, or None if error
+        int: Index at the FWHM point, or None if error
     """
+    print(f"\n=== Starting get_fwhm_index() in data_functions.py ===")
     try:
         # Get y-values from spectrum data
         y_values = spectrum_data['y']
@@ -366,14 +367,10 @@ def get_fwhm_index(spectrum_data, half_zero_height, zero_index):
                     half_max_index = i
                 break
         
-        # Zero out all data from start to FWHM
-        modified_data = y_values.copy()  # Make a copy to not modify original
-        for i in range(0, half_max_index + 1):
-            modified_data[i] = 1
-        
-        return modified_data
+        print(f"Found FWHM index: {half_max_index}")
+        return half_max_index
         
     except Exception as e:
-        print(f"Error removing zero peak: {str(e)}")
+        print(f"Error finding FWHM index: {str(e)}")
         return None
 

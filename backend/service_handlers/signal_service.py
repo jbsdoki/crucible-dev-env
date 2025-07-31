@@ -9,8 +9,8 @@ from typing import List, Dict, Any, Tuple, Union
 # FileService is a class that handles file operations
 
 class SignalService:
-    def __init__(self):
-        self.file_service = FileService()
+    def __init__(self, file_service):
+        self.file_service = file_service
 
     #############################################################################
     #                              Signal List Methods                            #

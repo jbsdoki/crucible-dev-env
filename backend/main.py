@@ -280,7 +280,28 @@ async def get_axes_data(filename: str = Query(...), signal_idx: int = Query(...)
         print("=== Ending get_axes_data() with error ===\n")
         raise HTTPException(status_code=500, detail=str(e))
 
-############################# periodic table ##################################
+################################################################################
+#################### API Endpoints for Emission Line Analysis ##################
+################################################################################
+@app.get("/zero-peak-width")
+async def get_zero_peak_width(filename: str = Query(...), signal_idx: int = Query(...)):
+    try:
+        print(f"\n=== Starting get_zero_peak_width() in main.py ===")
+        print(f"Requested zero peak width for file: {filename}, signal: {signal_idx}")
+        
+        zero_peak_width = data_service.get_zero_peak_width(filename, signal_idx)
+        print("=== Ending get_zero_peak_width() successfully ===\n")
+        return zero_peak_width
+    
+    except Exception as e:
+        print(f"ERROR in get_zero_peak_width(): {str(e)}")
+        print("=== Ending get_zero_peak_width() with error ===\n")
+        raise HTTPException(status_code=500, detail=str(e))
+
+################################################################################
+#################### API Endpoints for periodic table ##########################
+################################################################################
+
 
 @app.get("/emission-spectra")
 async def get_emission_spectra(atomic_number: int):

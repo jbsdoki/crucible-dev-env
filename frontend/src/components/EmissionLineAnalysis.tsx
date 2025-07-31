@@ -51,7 +51,7 @@ import { Box, TextField, Typography, Paper, Stack, Button } from '@mui/material'
 import { useEmissionLineContext } from '../contexts/EmissionLineFromTableContext';
 import { useEmissionRange } from '../contexts/EmissionRangeSelectionContext';
 import { useEmissionRangeToImageContext } from '../contexts/EmissionAnalysisToEmissionRangeImageContext';
-import { getEmissionSpectraWidthSum } from '../services/api';
+import { getEmissionSpectraWidthSum, getZeroPeakWidth } from '../services/api';
 import { getAxesData } from '../services/api';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MapIcon from '@mui/icons-material/Map';
@@ -68,7 +68,7 @@ interface ButtonStates {
 }
 
 export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIndex }: EmissionSpectraWidthSumProps) {
-  // Replace single width with start and end ranges
+  // Replace single width with start and end ranges - will be updated by useEffect with zeroPeakWidth
   const [startRange, setStartRange] = useState<number>(0.1); // Default range of 0.1 keV before the line
   const [endRange, setEndRange] = useState<number>(0.1); // Default range of 0.1 keV after the line
   const [sums, setSums] = useState<Record<string, number | string>>({});
@@ -107,6 +107,42 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
       setButtonStates(initialStates); //Set the button states to the initial states
     }
   }, [selectedEmissionLine]);
+
+  /*##########################################################################################################
+   * Default Range Setting Section
+   * 
+   * Purpose: Set the default emission width to zeroPeakWidth or 0.1 as fallback
+   * This useEffect fetches the zero peak width from the backend and updates the default ranges
+   ##########################################################################################################*/
+  useEffect(() => {
+    async function fetchDefaultRange() {
+      if (!selectedFile || selectedSignalIndex === undefined) return;
+      
+      try {
+        const zeroPeakWidth = await getZeroPeakWidth(selectedFile, selectedSignalIndex);
+        if (typeof zeroPeakWidth === 'number' && zeroPeakWidth > 0) {
+          // Use half of the zero peak width as the default range
+          const defaultRange = zeroPeakWidth;
+          setStartRange(defaultRange);
+          setEndRange(defaultRange);
+          console.log(`Set default emission range to ${defaultRange.toFixed(3)} keV (half of zero peak width: ${zeroPeakWidth.toFixed(3)} keV)`);
+        } else {
+          // Fallback to 0.1 if zeroPeakWidth is invalid
+          setStartRange(0.1);
+          setEndRange(0.1);
+          console.log('Using fallback default emission range of 0.1 keV');
+        }
+      } catch (error) {
+        console.error('Error fetching zero peak width:', error);
+        // Fallback to 0.1 if there's an error
+        setStartRange(0.1);
+        setEndRange(0.1);
+        console.log('Using fallback default emission range of 0.1 keV due to error');
+      }
+    }
+
+    fetchDefaultRange();
+  }, [selectedFile, selectedSignalIndex]);
 
   /*##########################################################################################################
    * Data Fetching Section
