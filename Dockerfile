@@ -5,14 +5,11 @@ FROM node:18-alpine AS frontend-builder
 # Set working directory for frontend build
 WORKDIR /app/frontend
 
-# Copy package files first (for better Docker layer caching)
-COPY frontend/package*.json ./
+# Copy frontend source code
+COPY frontend/ .
 
 # Install frontend dependencies
 RUN npm install
-
-# Copy frontend source code
-COPY frontend/ ./
 
 # Build the React application for production
 # This creates an optimized dist/ folder with minified assets
@@ -33,9 +30,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source code
 COPY backend/ ./
 
-# Copy the built frontend from the previous stage
-# This copies the optimized React build to serve as static files
-COPY --from=frontend-builder /app/frontend/dist ./static
+# Copy backend and built frontend
+COPY backend/ ./backend/
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Expose port 8080 (Google Cloud Run standard)
 EXPOSE 8080
@@ -43,4 +40,4 @@ EXPOSE 8080
 # Start the FastAPI server
 # --host 0.0.0.0 allows external connections (required for containers)
 # --port 8080 matches Google Cloud Run expectations
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"] 
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8080"] 
