@@ -337,7 +337,7 @@ async def get_region_spectrum(filename: str, signal_idx: int, x1: int, y1: int, 
         print(f"Region: ({x1}, {y1}) to ({x2}, {y2})")
         
         region = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
-        data = signal_service.get_spectrum_from_2d(filename, signal_idx, region)
+        data = signal_service.get_spectrum_from_2d_range(filename, signal_idx, region)
         print("=== Ending get_region_spectrum() successfully ===\n")
         return data
         

@@ -1,5 +1,6 @@
-import os
 from utils.constants import DATA_DIR, CURRENT_FILE
+import os
+import logging
 import numpy as np
 
 
@@ -110,8 +111,10 @@ def load_axes_manager(signal):
         if hasattr(signal, 'axes_manager'):
             print("\nExtracting axes manager information...")
             try:
-                first_axis = signal.axes_manager[2]
+                first_axis = signal.axes_manager.signal_axes[0]
                 axes_info = {
+                    'name': first_axis.name,
+                    'size': first_axis.size,
                     'offset': first_axis.offset,
                     'scale': first_axis.scale,
                     'units': first_axis.units
@@ -136,83 +139,83 @@ def load_axes_manager(signal):
         print("=== Ending load_axes_manager() with error ===\n")
         raise
 
-def load_spectrum_axes(signal):
-    """
-    Loads signal axis information from a signal in a microscopy file.
-    This function specifically extracts the signal axis (non-navigation axes) data.
+# def load_spectrum_axes(signal):
+#     """
+#     Loads signal axis information from a signal in a microscopy file.
+#     This function specifically extracts the signal axis (non-navigation axes) data.
 
-    Args:
-        signal: The hyperspy signal object containing the spectrum data
+#     Args:
+#         signal: The hyperspy signal object containing the spectrum data
         
-    Returns:
-        list: List of dictionaries containing signal axes information, where each dict includes:
-            - name: The name of the axis
-            - size: The size/length of the axis
-            - offset: The offset value of the axis
-            - scale: The scale value of the axis
-            - units: The units of the axis
+#     Returns:
+#         list: List of dictionaries containing signal axes information, where each dict includes:
+#             - name: The name of the axis
+#             - size: The size/length of the axis
+#             - offset: The offset value of the axis
+#             - scale: The scale value of the axis
+#             - units: The units of the axis
             
-    Raises:
-        ValueError: If no signal axes are found in the signal
-    """
-    print(f"\n=== Starting load_spectrum_axes() in data_functions.py ===")
-    try:
-        # Check if signal has axes_manager
-        if not hasattr(signal, 'axes_manager'):
-            raise ValueError("Signal does not have an axes_manager")
+#     Raises:
+#         ValueError: If no signal axes are found in the signal
+#     """
+#     print(f"\n=== Starting load_spectrum_axes() in data_functions.py ===")
+#     try:
+#         # Check if signal has axes_manager
+#         if not hasattr(signal, 'axes_manager'):
+#             raise ValueError("Signal does not have an axes_manager")
 
-        # Get signal axes using the signal_axes property
-        signal_axes = signal.axes_manager.signal_axes
+#         # Get signal axes using the signal_axes property
+#         signal_axes = signal.axes_manager.signal_axes
         
-        if not signal_axes:
-            raise ValueError("No signal axes found in the signal")
+#         if not signal_axes:
+#             raise ValueError("No signal axes found in the signal")
             
-        axes_info = []
-        print("\nExtracting signal axes information...")
+#         axes_info = []
+#         print("\nExtracting signal axes information...")
         
-        # Extract information for each signal axis
-        for axis in signal_axes:
-            axis_data = {
-                'name': axis.name,
-                'size': axis.size,
-                'offset': axis.offset,
-                'scale': axis.scale,
-                'units': axis.units
-            }
-            axes_info.append(axis_data)
-            print(f"Found signal axis: {axis.name}")
+#         # Extract information for each signal axis
+#         for axis in signal_axes:
+#             axis_data = {
+#                 'name': axis.name,
+#                 'size': axis.size,
+#                 'offset': axis.offset,
+#                 'scale': axis.scale,
+#                 'units': axis.units
+#             }
+#             axes_info.append(axis_data)
+#             print(f"Found signal axis: {axis.name}")
             
-        print(f"Total signal axes found: {len(axes_info)}")
-        print("=== Ending load_spectrum_axes() successfully ===\n")
-        return axes_info
+#         print(f"Total signal axes found: {len(axes_info)}")
+#         print("=== Ending load_spectrum_axes() successfully ===\n")
+#         return axes_info
         
-    except Exception as e:
-        print(f"\n!!! Error loading signal axes !!!")
-        print(f"Error type: {type(e)}")
-        print(f"Error message: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        print("=== Ending load_spectrum_axes() with error ===\n")
-        raise
+#     except Exception as e:
+#         print(f"\n!!! Error loading signal axes !!!")
+#         print(f"Error type: {type(e)}")
+#         print(f"Error message: {str(e)}")
+#         import traceback
+#         traceback.print_exc()
+#         print("=== Ending load_spectrum_axes() with error ===\n")
+#         raise
 
 
-def extract_summed_spectrum(signal):
-    """
-    Extracts the signal data summed over all navigation dimensions.
-    For example, in an EDS spectrum image, this would return the spectrum summed over all spatial points.
+# def extract_summed_spectrum(signal):
+#     """
+#     Extracts the signal data summed over all navigation dimensions.
+#     For example, in an EDS spectrum image, this would return the spectrum summed over all spatial points.
 
-    Note: The returned intensities are raw counts/values and don't need scaling.
-    For energy values (x-axis), use signal.axes_manager.signal_axes[0].axis which already includes
-    calibration (offset and scale).
+#     Note: The returned intensities are raw counts/values and don't need scaling.
+#     For energy values (x-axis), use signal.axes_manager.signal_axes[0].axis which already includes
+#     calibration (offset and scale).
 
-    Args:
-        signal: The hyperspy signal object containing the spectrum data
+#     Args:
+#         signal: The hyperspy signal object containing the spectrum data
         
-    Returns:
-        numpy.ndarray: The signal data summed over all navigation dimensions.
-                      For a spectrum, this would be a 1D array of intensities (raw counts).
-    """
-    return signal.sum().data.tolist()
+#     Returns:
+#         numpy.ndarray: The signal data summed over all navigation dimensions.
+#                       For a spectrum, this would be a 1D array of intensities (raw counts).
+#     """
+#     return signal.sum().data.tolist()
 
 def get_spectrum_data(signal):
     """
