@@ -5,8 +5,8 @@
  * This component analyzes and displays emission line data for selected elements from the periodic table.
  * It allows users to:
  * 1. View emission line energies range sums for selected elements
- * 2. Set custom energy ranges around emission lines (start and end ranges)
- * 4. Toggle visibility of ranges on both spectrum and 2D map visualizations (2D MAP NOT IMPLEMENTED YET)
+ * 2. Set individual custom energy ranges for each emission line (start and end ranges)
+ * 3. Toggle visibility of ranges on both spectrum and 2D map visualizations (2D MAP NOT IMPLEMENTED YET)
  * 
  * Data Flow:
  * - Receives selected element data from EmissionLineContext (Originally from PeriodicTable component)
@@ -68,12 +68,14 @@ interface ButtonStates {
 }
 
 export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIndex }: EmissionSpectraWidthSumProps) {
-  // Replace single width with start and end ranges - will be updated by useEffect with zeroPeakWidth
+  // Global default ranges - set by zero peak width API, used as defaults for new emission lines
   const [startRange, setStartRange] = useState<number>(0.1); // Default range of 0.1 keV before the line
   const [endRange, setEndRange] = useState<number>(0.1); // Default range of 0.1 keV after the line
   const [sums, setSums] = useState<Record<string, number | string>>({});
   // Add state for tracking button toggles for each emission line
   const [buttonStates, setButtonStates] = useState<Record<string, ButtonStates>>({});
+  // Add state for individual ranges for each emission line
+  const [individualRanges, setIndividualRanges] = useState<Record<string, {start: number, end: number}>>({});
   
   /*##########################################################################################################
    * Data Reception Section
@@ -97,16 +99,21 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     setSignalIndex: setEmissionImageSignalIndex 
   } = useEmissionRangeToImageContext();
 
-  // Initialize button states when emission line changes
+  // Initialize button states and individual ranges when emission line changes
   useEffect(() => {
     if (selectedEmissionLine) { //Code inside () doesn't run until selectedEmissionLine changes
       const initialStates: Record<string, ButtonStates> = {};
+      const initialRanges: Record<string, {start: number, end: number}> = {};
+      
       Object.keys(selectedEmissionLine.EmissionLines).forEach(lineName => { //For each emission line, create new entry in initialStates
         initialStates[lineName] = { spectrum: false, map: false, mapRangeId: null }; //Initialize button states to false
+        initialRanges[lineName] = { start: startRange, end: endRange }; //Initialize individual ranges with global defaults
       });
+      
       setButtonStates(initialStates); //Set the button states to the initial states
+      setIndividualRanges(initialRanges); //Set the individual ranges to the initial ranges
     }
-  }, [selectedEmissionLine]);
+  }, [selectedEmissionLine, startRange, endRange]);
 
   /*##########################################################################################################
    * Default Range Setting Section
@@ -174,14 +181,17 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
       for (const [lineName, energy] of Object.entries(selectedEmissionLine.EmissionLines)) {
         if (energy !== null) {
           try {
-            // Calculate range using start and end ranges
-            const start = Math.max(0, energy - startRange);
-            const end = energy + endRange;
+            // Use individual ranges if available, otherwise fall back to global ranges
+            const lineRanges = individualRanges[lineName] || { start: startRange, end: endRange };
+            
+            // Calculate range using individual start and end ranges
+            const start = Math.max(0, energy - lineRanges.start);
+            const end = energy + lineRanges.end;
             
             console.log(`Calculating range for ${lineName}:`, {
               energy,
-              startRange,
-              endRange,
+              startRange: lineRanges.start,
+              endRange: lineRanges.end,
               start,
               end,
               unit: 'keV'
@@ -208,20 +218,23 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     }
 
     fetchSums();
-    //Code inside () doesn't run until selectedEmissionLine, selectedFile, selectedSignalIndex, startRange, or endRange changes
-  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startRange, endRange]); 
+    //Code inside () doesn't run until selectedEmissionLine, selectedFile, selectedSignalIndex, or individualRanges changes
+    //startRange and endRange are still dependencies as they provide defaults for individual ranges
+  }, [selectedEmissionLine, selectedFile, selectedSignalIndex, startRange, endRange, individualRanges]); 
 
-  const handleStartRangeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newRange = parseFloat(event.target.value);
-    if (!isNaN(newRange) && newRange >= 0) {
-      setStartRange(newRange);
-    }
-  };
 
-  const handleEndRangeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newRange = parseFloat(event.target.value);
-    if (!isNaN(newRange) && newRange >= 0) {
-      setEndRange(newRange);
+
+  // Handler for individual emission line range changes
+  const handleIndividualRangeChange = (lineName: string, type: 'start' | 'end', value: string) => {
+    const newValue = parseFloat(value);
+    if (!isNaN(newValue) && newValue >= 0) {
+      setIndividualRanges(prev => ({
+        ...prev,
+        [lineName]: {
+          ...prev[lineName],
+          [type]: newValue
+        }
+      }));
     }
   };
 
@@ -243,8 +256,10 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
 
     // If turning on, add to spectrum ranges
     if (newButtonStates[lineName].spectrum) {
-      const start = Math.max(0, energy - startRange);
-      const end = energy + endRange;
+      // Use individual ranges if available, otherwise fall back to global ranges
+      const lineRanges = individualRanges[lineName] || { start: startRange, end: endRange };
+      const start = Math.max(0, energy - lineRanges.start);
+      const end = energy + lineRanges.end;
       addToSpectrum({
         lineName,
         energy,
@@ -266,8 +281,10 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
 
     // If turning on, add to emission range collection
     if (newMapState) {
-      const start = Math.max(0, energy - startRange);
-      const end = energy + endRange;
+      // Use individual ranges if available, otherwise fall back to global ranges
+      const lineRanges = individualRanges[lineName] || { start: startRange, end: endRange };
+      const start = Math.max(0, energy - lineRanges.start);
+      const end = energy + lineRanges.end;
       
 
 
@@ -346,12 +363,14 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
     // Update ranges for all displayed lines
     Object.entries(selectedEmissionLine.EmissionLines).forEach(([lineName, energy]) => {
       if (energy !== null && buttonStates[lineName]?.spectrum) {
-        const start = Math.max(0, energy - startRange);  // energy is emission line value in keV
-        const end = energy + endRange;
+        // Use individual ranges if available, otherwise fall back to global ranges
+        const lineRanges = individualRanges[lineName] || { start: startRange, end: endRange };
+        const start = Math.max(0, energy - lineRanges.start);  // energy is emission line value in keV
+        const end = energy + lineRanges.end;
         console.log('Updating spectrum ranges for', lineName, { start, end });
       }
     });
-  }, [selectedEmissionLine, startRange, endRange, buttonStates]);
+  }, [selectedEmissionLine, startRange, endRange, buttonStates, individualRanges]);
 
   if (!selectedEmissionLine) {
     return (
@@ -366,38 +385,20 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
   */
 
   return (
-    // Main container with padding and margin
-    <Paper sx={{ p: 2, m: 2 }}>
-      {/* Header section with element name and range controls */}
-      <Box sx={{ mb: 2 }}>
+    // Main container with padding and margin - let parent handle scrolling
+    <Paper sx={{ 
+      p: 2, 
+      m: 2, 
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%' // Fill the allocated grid space
+    }}>
+      {/* Header section with element name */}
+      <Box sx={{ mb: 2, flexShrink: 0 }}>
         {/* Display selected element name */}
         <Typography variant="h6">
           {selectedEmissionLine.Element} Emission Line Sums
         </Typography>
-        
-        {/* Range input controls arranged horizontally */}
-        <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-          {/* Start range input field */}
-          <TextField
-            label="Start Range (keV)"
-            type="number"
-            value={startRange}
-            onChange={handleStartRangeChange}
-            inputProps={{ step: 0.1, min: 0 }}
-            size="small"
-            helperText="Distance before emission line"
-          />
-          {/* End range input field */}
-          <TextField
-            label="End Range (keV)"
-            type="number"
-            value={endRange}
-            onChange={handleEndRangeChange}
-            inputProps={{ step: 0.1, min: 0 }}
-            size="small"
-            helperText="Distance after emission line"
-          />
-        </Stack>
       </Box>
       
       {/* Emission lines list container */}
@@ -407,38 +408,59 @@ export default function EmissionSpectraWidthSum({ selectedFile, selectedSignalIn
           if (energy === null) return null; // Skip null energy values
           
           const sum = sums[lineName];
-          const start = Math.max(0, energy - startRange);
-          const end = energy + endRange;
+          // Use individual ranges if available, otherwise fall back to global ranges
+          const lineRanges = individualRanges[lineName] || { start: startRange, end: endRange };
+          const start = Math.max(0, energy - lineRanges.start);
+          const end = energy + lineRanges.end;
           
           return (
             // Individual emission line row with flex layout
             <Box 
               key={lineName} 
               sx={{ 
-                mb: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2
+                mb: 2,
+                p: 2,
+                border: '1px solid #e0e0e0',
+                borderRadius: 1,
+                backgroundColor: '#fafafa'
               }}
             >
-              {/* Left side: Line information display */}
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography>
-                  {/* Emission line name and energy */}
-                  {lineName.toUpperCase()}: {energy.toFixed(2)} keV
-                  {/* Range display */}
-                  <Box component="span" sx={{ ml: 2 }}>
-                    Range: {start.toFixed(2)} - {end.toFixed(2)} keV
-                  </Box>
-                  {/* Sum display with loading state handling */}
-                  <Box component="span" sx={{ ml: 2, fontWeight: 'bold' }}>
-                    Sum: {typeof sum === 'number' ? sum.toLocaleString() : sum || 'Loading...'}
-                  </Box>
-                </Typography>
-              </Box>
+              {/* Emission line header */}
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                {lineName.toUpperCase()}: {energy.toFixed(2)} keV
+              </Typography>
               
-              {/* Right side: Action buttons */}
+              {/* Individual range controls for this emission line */}
+              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                <TextField
+                  label="Start Range (keV)"
+                  type="number"
+                  value={lineRanges.start}
+                  onChange={(e) => handleIndividualRangeChange(lineName, 'start', e.target.value)}
+                  inputProps={{ step: 0.01, min: 0 }}
+                  size="small"
+                  sx={{ minWidth: 120 }}
+                />
+                <TextField
+                  label="End Range (keV)"
+                  type="number" 
+                  value={lineRanges.end}
+                  onChange={(e) => handleIndividualRangeChange(lineName, 'end', e.target.value)}
+                  inputProps={{ step: 0.01, min: 0 }}
+                  size="small"
+                  sx={{ minWidth: 120 }}
+                />
+              </Stack>
+              
+              {/* Range and sum information */}
+              <Typography variant="body2" sx={{ mb: 1 }}>
+                Range: {start.toFixed(2)} - {end.toFixed(2)} keV
+              </Typography>
+              <Typography variant="body2" sx={{ mb: 2, fontWeight: 'bold' }}>
+                Sum: {typeof sum === 'number' ? sum.toLocaleString() : sum || 'Loading...'}
+              </Typography>
+              
+              {/* Action buttons */}
               <Stack direction="row" spacing={1}>
                 {/* Spectrum display toggle button */}
                 <Button
