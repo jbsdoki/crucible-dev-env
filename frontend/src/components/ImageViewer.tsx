@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
-import { getImageData, getRegionSpectrum } from '../services/api';
+// Switched from standard image data to HAADF data
+// import { getImageData, getRegionSpectrum } from '../services/api';
+import { getHAADFData, getRegionSpectrum } from '../services/api';
 import type { SpectrumData } from './SpectrumViewer/types';
 import Plot from 'react-plotly.js';
 
@@ -47,9 +49,12 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageData, setImageData] = useState<ImageData | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [selectionLoading, setSelectionLoading] = useState(false);
+  // selectedRegion was unused
+  // const [selectedRegion, setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
+  const [,setSelectedRegion] = useState<{x1: number, y1: number, x2: number, y2: number} | null>(null);
+  //
 
   // Effect to fetch image data when file or signal changes
   useEffect(() => {
@@ -79,7 +84,9 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
           shape: selectedSignal.shape
         }); */
         
-        const data = await getImageData(selectedFile, selectedSignal.index);
+        // const data = await getImageData(selectedFile, selectedSignal.index);
+        const data = await getHAADFData(selectedFile);
+        
         
         if (!data || !data.image_data || !data.data_shape) {
           console.error('Invalid data received:', data);
@@ -183,7 +190,8 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
           );
           /* console.log('Received spectrum data:', spectrumData); */
           
-          // Pass both region and spectrum data to parent
+          // Pass both region and spectrum data to parent (App.tsx) which passes it to 
+          // SpectrumViewer.tsx as prop (Passed in App.tsx)
           if (onRegionSelected) {
             onRegionSelected(region, spectrumData);
           }
@@ -260,13 +268,7 @@ function ImageViewer({ selectedFile, selectedSignal, onRegionSelected }: ImageVi
                 z: imageData.data,
                 type: 'heatmap',
                 colorscale: 'Viridis',
-                showscale: true,
-                colorbar: {
-                  title: {
-                    text: 'Count',
-                    side: 'right'
-                  }
-                },
+                showscale: false,
                 zsmooth: 'best'
               }
             ]}

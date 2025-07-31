@@ -2,7 +2,9 @@
 import Plot from 'react-plotly.js';
 import type { PlotData, Layout } from 'plotly.js';
 import { useSpectrumContext } from '../contexts/SpectrumViewerContext';
-import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
+// SignalCapabilities was unused
+// import type { SignalCapabilities, SignalInfo, SpectrumData } from '../types';
+import type { SignalInfo, SpectrumData } from '../types';
 import EmissionLineRangeDisplay from './EmissionLineRangeDisplay';
 
 // Props needed for the Plot component
@@ -23,7 +25,8 @@ interface SpectrumPlotProps {
 function SpectrumPlot({
   spectrumData,
   selectedSignal,
-  selectedFile,
+  // selectedFile was unused
+  // selectedFile,
   regionSpectrumData,
   selectedRange,
   isSelectingRange,

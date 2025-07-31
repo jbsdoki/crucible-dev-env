@@ -49,8 +49,10 @@ def get_cached_file(file_path, signal_idx=None):
         print("Filepath match found in cache")
         if constants.CURRENT_FILE["data"] is not None:
             if signal_idx is not None:
+                print(f"=== Returning signal at index {signal_idx} from cache ===")
                 return constants.CURRENT_FILE["data"][signal_idx] # Most frontend functions call this function with signal_idx
             else:
+                print(f"=== Returning all signals from cache ===")
                 return constants.CURRENT_FILE["data"] # For get signal list return all signals
         else:
             print("Cache entry exists but data is None")

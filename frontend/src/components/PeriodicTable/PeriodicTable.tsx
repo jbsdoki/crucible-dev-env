@@ -7,8 +7,9 @@ import {
   categoryColors 
 } from './utils/periodicTableUtils';
 import ElementDetails from './ElementDetails';
-import * as api from '../../services/api';
-import { useEmissionLineContext } from '../../contexts/EmissionLineFromTableContext';
+// api and useEmissionLineContext were unused
+// import * as api from '../../services/api';
+// import { useEmissionLineContext } from '../../contexts/EmissionLineFromTableContext';
 
 interface PeriodicElement {
   AtomicNumber: number;
@@ -80,7 +81,8 @@ const PeriodicTable: React.FC<PeriodicTableProps> = ({ onElementClick, displayMo
   // This state tracks the selected emission lines, allowing the
   // PeriodicTable component to keep track of which are selected
   const [selectedLinesState, setSelectedLinesState] = useState<SelectedLinesState>({});
-  const { setSelectedEmissionLine } = useEmissionLineContext();
+  // setSelectedEmissionLine was unused
+  // const { setSelectedEmissionLine } = useEmissionLineContext();
 
   const handleElementClick = (element: PeriodicElement) => {
     const isCurrentlySelected = selectedElements.has(element.AtomicNumber);

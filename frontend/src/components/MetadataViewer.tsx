@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+// Divider was unused
+// import { Box, Paper, Typography, CircularProgress, Divider, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { getMetadata } from '../services/api';
 

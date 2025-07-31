@@ -9,8 +9,8 @@ from typing import List, Dict, Any, Tuple, Union
 # FileService is a class that handles file operations
 
 class SignalService:
-    def __init__(self):
-        self.file_service = FileService()
+    def __init__(self, file_service):
+        self.file_service = file_service
 
     #############################################################################
     #                              Signal List Methods                            #
@@ -83,14 +83,6 @@ class SignalService:
 
             # Get the spectrum data with indices
             spectrum_data = data_functions.get_spectrum_data(signal)
-            
-            print("\nSpectrum Data Analysis:")
-            print(f"X-axis length: {len(spectrum_data['x'])}")
-            print(f"Y-axis length: {len(spectrum_data['y'])}")
-            print(f"First 5 X values (keV): {spectrum_data['x'][:5]}")
-            print(f"X-axis range: {min(spectrum_data['x'])} to {max(spectrum_data['x'])} {spectrum_data['x_units']}")
-            print(f"Zero index: {spectrum_data['zero_index']}")
-            print(f"FWHM index: {spectrum_data['fwhm_index']}")
                 
             return spectrum_data
             
@@ -100,7 +92,7 @@ class SignalService:
             traceback.print_exc()
             raise
 
-    def get_spectrum_from_2d(self, filename: str, signal_idx: int, region: dict):
+    def get_spectrum_from_2d_range(self, filename: str, signal_idx: int, region: dict):
         """
         Gets spectrum data from a specific region of a 3D signal.
         Args:
@@ -115,7 +107,7 @@ class SignalService:
                 - x_units: units for x-axis
                 - y_label: label for y-axis
         """
-        print(f"\n=== Starting get_spectrum_from_2d() in SignalService ===")
+        print(f"\n=== Starting get_spectrum_from_2d_range() in SignalService ===")
         try:
             # Get signal from cache or load it
             signals = self.file_service.get_or_load_file(filename, signal_idx)
@@ -123,13 +115,6 @@ class SignalService:
             # Extract the specific signal if we got a list
             signal = signals[0] if isinstance(signals, list) else signals
             
-            # Print some stats about the original signal data
-            print(f"Original signal data stats:")
-            print(f"  Shape: {signal.data.shape}")
-            print(f"  Total sum: {signal.data.sum()}")
-            print(f"  Max value: {signal.data.max()}")
-            print(f"  Min value: {signal.data.min()}")
-            print(f"  Mean value: {signal.data.mean()}")
 
             # Ensure we have a 3D signal
             if len(signal.data.shape) != 3:
@@ -154,40 +139,21 @@ class SignalService:
             x1, x2 = min(x1, x2), max(x1, x2)
             y1, y2 = min(y1, y2), max(y1, y2)
             
-            print(f"Adjusted region - X: {x1} to {x2}, Y: {y1} to {y2}")
-            
             # Extract the region directly from the numpy array
             region_data = signal.data[y1:y2, x1:x2, :]
-            print(f"Extracted region shape: {region_data.shape}")
-            print(f"Region data stats:")
-            print(f"  Total sum: {region_data.sum()}")
-            print(f"  Max value: {region_data.max()}")
-            print(f"  Min value: {region_data.min()}")
-            print(f"  Mean value: {region_data.mean()}")
             
             # Sum over the spatial dimensions (height, width)
             summed_spectrum = region_data.sum(axis=(0, 1))
-            print(f"Summed spectrum shape: {summed_spectrum.shape}")
-            print(f"Summed spectrum stats:")
-            print(f"  Total sum: {summed_spectrum.sum()}")
-            print(f"  Max value: {summed_spectrum.max()}")
-            print(f"  Min value: {summed_spectrum.min()}")
-            print(f"  Number of non-zero values: {(summed_spectrum != 0).sum()}")
-            
-            print("Successfully extracted region spectrum")
             
             # Get the x-axis values and labels from the signal's axes manager
-            axes_info = data_functions.load_spectrum_axes(signal)
+            axes_info = data_functions.load_axes_manager(signal)
             if not axes_info:
                 raise ValueError("Could not load axes information")
             
-            # Get the energy axis (should be the only signal axis)
-            energy_axis = axes_info[0]
-            
             # Generate x values using axis parameters
-            x_values = np.arange(energy_axis['size']) * energy_axis['scale'] + energy_axis['offset']
-            x_label = energy_axis['name'] or "Energy"
-            x_units = energy_axis['units'] or "keV"
+            x_values = np.arange(axes_info['size']) * axes_info['scale'] + axes_info['offset']
+            x_label = axes_info['name'] or "Energy"
+            x_units = axes_info['units'] or "keV"
             y_label = "Intensity"
             
             # Return both x and y values along with axis information
@@ -336,16 +302,26 @@ class SignalService:
             print(f"Image shape after processing: {image_data.shape}")
             print(f"Data range after processing: min={image_data.min()}, max={image_data.max()}")
             
+            # Store original data range before normalization
+            data_min = float(image_data.min())
+            data_max = float(image_data.max())
+            
             # Normalize the image data for display
             if image_data.size > 0:
-                image_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
-                image_data = (image_data * 255).astype(np.uint8)
-                print(f"After normalization - range: min={image_data.min()}, max={image_data.max()}")
-                print(f"Final data type: {image_data.dtype}")
+                normalized_data = (image_data - image_data.min()) / (image_data.max() - image_data.min())
+                normalized_data = (normalized_data * 255).astype(np.uint8)
+                print(f"After normalization - range: min={normalized_data.min()}, max={normalized_data.max()}")
+                print(f"Final data type: {normalized_data.dtype}")
+            else:
+                normalized_data = image_data
             
             result = {
                 "data_shape": data_shape,
-                "image_data": image_data.tolist()
+                "image_data": normalized_data.tolist(),
+                "data_range": {
+                    "min": data_min,
+                    "max": data_max
+                }
             }
             
             print("=== Ending get_haadf_data() successfully ===\n")

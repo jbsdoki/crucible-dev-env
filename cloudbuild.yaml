@@ -1,0 +1,49 @@
+steps:
+  # Step 1: Try to pull the existing image for build cache (optional)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}:latest || exit 0
+
+  # Step 2: Build the Docker image with cache + secrets
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        docker build \
+          --build-arg orcid_client_secret=$$ORCID_CLIENT_SECRET \
+          --build-arg propdb_apikey=$$PROPDB_APIKEY \
+          --build-arg pyoidc_secret=$$PYOIDC_SECRET \
+          --build-arg gpat=$$GPAT \
+          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}:latest \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}:latest \
+          .
+
+    secretEnv:
+      - ORCID_CLIENT_SECRET
+      - PROPDB_APIKEY
+      - PYOIDC_SECRET
+      - GPAT
+
+  # Step 3: Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}:latest
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/776258882599/secrets/orcid_client_secret/versions/2
+      env: ORCID_CLIENT_SECRET
+    - versionName: projects/776258882599/secrets/propdb-apikey/versions/1
+      env: PROPDB_APIKEY
+    - versionName: projects/776258882599/secrets/pyoidc_secret_key/versions/1
+      env: PYOIDC_SECRET
+    - versionName: projects/776258882599/secrets/git_pat_cloud_schedulers/versions/4
+      env: GPAT
+
+# Optional: extend timeout if builds are large
+timeout: 700s

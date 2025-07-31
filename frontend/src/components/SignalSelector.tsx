@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// React was unused
+// import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, Stack } from '@mui/material';
 import { getSignals } from '../services/api';
 
