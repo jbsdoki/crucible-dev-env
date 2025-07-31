@@ -49,7 +49,7 @@ app = FastAPI()
 # Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # More permissive for development
+    allow_origins=["http://localhost:5173"],  # More permissive for development
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
