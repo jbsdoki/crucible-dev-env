@@ -32,6 +32,7 @@ the frontend and backend services. Here's the architecture:
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles #Allows displaying of Crucible Data Explorer App
 import hyperspy.api as hs
 import os
 import time
@@ -49,13 +50,32 @@ app = FastAPI()
 # Configure CORS (Cross-Origin Resource Sharing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # More permissive for development
+    allow_origins=["*"],  # More permissive for development
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
     max_age=3600,
 )
+
+# Mount static files directory to serve React build files
+# Mount assets directory so /assets/... requests work directly (React build expects this)
+# This directory should be built during docker deployment
+app.mount("/assets", StaticFiles(directory="static/assets"), name="assets")
+
+# Mount main static files for favicon and other root-level static files
+# This allows /2020LBL_Favicon.ico to be served directly
+
+# Create a custom static file handler for root-level files
+@app.get("/2020LBL_Favicon.ico")
+async def favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/2020LBL_Favicon.ico")
+
+@app.get("/2020-Favicon-Template-228x228_v3.png")  
+async def favicon_png():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/2020-Favicon-Template-228x228_v3.png")
 
 # Track last call times to detect React StrictMode double-invocations
 last_calls = {}
@@ -410,3 +430,23 @@ async def emission_spectra_width_sum(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# Catch-all route to serve React app for any non-API routes
+# This MUST be the last route defined in FastAPI
+# It enables React Router to handle client-side routing properly
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    """
+    Serves the React application for any route that doesn't match API endpoints.
+    This allows React Router to handle client-side routing properly.
+    
+    Args:
+        path: The requested path (automatically captured by FastAPI)
+    
+    Returns:
+        The React app's index.html file for all non-API routes
+    """
+    from fastapi.responses import FileResponse
+    
+    # Always return the React app's main HTML file
+    # React Router will handle the client-side routing
+    return FileResponse("static/index.html")
