@@ -14,3 +14,7 @@
 
 # Ignore files made as backups, development files, etc.
 backup_files/
+
+# Ignore the backend static files, these should be build during google cloud / docker deployment 
+# by the Dockerfile file at root of the project
+backend/static/
