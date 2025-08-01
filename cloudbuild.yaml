@@ -5,7 +5,7 @@ steps:
     args:
       - -c
       - |
-        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}/${BRANCH_NAME}:latest || exit 0
+        docker pull us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest || exit 0
 
   # Step 2: Build the Docker image with cache + secrets
   - name: 'gcr.io/cloud-builders/docker'
@@ -14,15 +14,15 @@ steps:
       - -c
       - |
         docker build \
-          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}/${BRANCH_NAME}:latest \
-          -t us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}/${BRANCH_NAME}:latest \
+          --cache-from=us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest \
+          -t us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest \
           .
 
   # Step 3: Push the image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - push
-      - us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}/${BRANCH_NAME}:latest
+      - us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest
 
 
 
