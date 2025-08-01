@@ -32,7 +32,7 @@ COPY backend/ ./
 
 # Copy backend and built frontend
 COPY backend/ ./backend/
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+COPY --from=frontend-builder /app/frontend/dist ./static
 
 # Expose port 8080 (Google Cloud Run standard)
 EXPOSE 8080
