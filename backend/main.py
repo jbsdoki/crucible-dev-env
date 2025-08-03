@@ -40,6 +40,16 @@ from service_handlers import file_service, signal_service, data_service
 from operations import periodic_table_functions
 
 
+
+######################## Begin FastAPI server block ##############################
+
+# This section of code creates the FastAPI instance and configures it
+# This FastAPI instance presents the user with the Crucible Data Explorer App
+# Calls to retrieve data from the user/webpage/frontend are also made to
+# and returned from this FastAPI instance
+
+
+
 # Create FastAPI instance
 app = FastAPI()
 
@@ -77,6 +87,37 @@ async def favicon_png():
     from fastapi.responses import FileResponse
     return FileResponse("static/2020-Favicon-Template-228x228_v3.png")
 
+
+
+
+# Catch-all route to serve React app for any non-API routes
+# This MUST be the last route defined in FastAPI
+# It enables React Router to handle client-side routing properly
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    """
+    Serves the React application for any route that doesn't match API endpoints.
+    This allows React Router to handle client-side routing properly.
+    
+    Args:
+        path: The requested path (automatically captured by FastAPI)
+    
+    Returns:
+        The React app's index.html file for all non-API routes
+    """
+    from fastapi.responses import FileResponse
+    
+    # Always return the React app's main HTML file
+    # React Router will handle the client-side routing
+    return FileResponse("static/index.html")
+
+######################## End FastAPI server block ##############################
+
+
+
+
+
+
 # Track last call times to detect React StrictMode double-invocations
 last_calls = {}
 
@@ -104,6 +145,9 @@ def log_call(endpoint: str, params: dict = None) -> None:
     
     last_calls[call_key] = current_time
     print("=== Ending log_call() in main.py ===\n")
+
+
+
 
 ################################################################################
 #################### API Endpoints for getting data ############################
@@ -430,23 +474,15 @@ async def emission_spectra_width_sum(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# Catch-all route to serve React app for any non-API routes
-# This MUST be the last route defined in FastAPI
-# It enables React Router to handle client-side routing properly
-@app.get("/{path:path}")
-async def serve_react_app(path: str):
-    """
-    Serves the React application for any route that doesn't match API endpoints.
-    This allows React Router to handle client-side routing properly.
-    
-    Args:
-        path: The requested path (automatically captured by FastAPI)
-    
-    Returns:
-        The React app's index.html file for all non-API routes
-    """
-    from fastapi.responses import FileResponse
-    
-    # Always return the React app's main HTML file
-    # React Router will handle the client-side routing
-    return FileResponse("static/index.html")
+
+
+################################################################################
+#################### Calls to LBNL database ####################################
+################################################################################
+
+
+
+
+
+
+

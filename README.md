@@ -148,10 +148,12 @@ This is development only, deactivate StrictMode in main.tsx while if in producti
 
 In backend/main.py any source or credential is allowed to connect. This is a development only setting, remove for production. 
 
-## Application Workflow
+## Application Workflow in Development Environment
 
 ```
-This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations. 
+This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations.
+This diagram is only accurate for the development environment.
+During development the Vite environment acts as the frontend web server. 
 Frontend:
 
 main.tsx (Starts app)
@@ -190,7 +192,8 @@ main.tsx (Starts app)
                           |
 Backend:                  |   
                           v
-                     main.py (Routes requests and returns data)
+                     main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
+                          |    to container)
                           |
                           v
                Service Handlers (Organize and process requests)
@@ -208,3 +211,37 @@ Backend:                  |
                   - spectrum_functions.py
 ```
 
+## Application Workflow in Production Environment
+
+```
+This diagram shows the high-level flow of function calls in the application once it has been deployed. Search Dockerfile in this directory to view the commands that are run when the
+app is being deployed
+During production the backend FastAPI server in main.py acts 
+as the web server. Only necessary files from the frontend are kept and placed in backend/static/
+Frontend:
+
+                  User Requests (Main Webpage)
+Backend:                  |   
+                          v
+                     main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
+                          |    to container)
+                          |
+                          |
+                          |-> /static/ (Directory where the webpage files are stored stored)
+                          |
+                          v
+               Service Handlers (Organize and process requests)
+                  - data_service.py
+                  - file_service.py
+                  - signal_service.py
+                          |
+                          v     
+               Operations (Core data processing functions)
+                  - data_functions.py
+                  - file_functions.py
+                  - image_viewer_functions.py
+                  - periodic_table_functions.py
+                  - signal_functions.py
+                  - spectrum_functions.py
+                  (Not all components shown)
+```
