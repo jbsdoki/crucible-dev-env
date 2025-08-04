@@ -90,26 +90,7 @@ async def favicon_png():
 
 
 
-# Catch-all route to serve React app for any non-API routes
-# This MUST be the last route defined in FastAPI
-# It enables React Router to handle client-side routing properly
-@app.get("/{path:path}")
-async def serve_react_app(path: str):
-    """
-    Serves the React application for any route that doesn't match API endpoints.
-    This allows React Router to handle client-side routing properly.
-    
-    Args:
-        path: The requested path (automatically captured by FastAPI)
-    
-    Returns:
-        The React app's index.html file for all non-API routes
-    """
-    from fastapi.responses import FileResponse
-    
-    # Always return the React app's main HTML file
-    # React Router will handle the client-side routing
-    return FileResponse("static/index.html")
+
 
 ######################## End FastAPI server block ##############################
 
@@ -483,6 +464,30 @@ async def emission_spectra_width_sum(
 
 
 
+################################################################################
+#################### Catch-all route to serve React app ########################
+################!!!!  MUST BE LAST ROUTE DEFINED IN FASTAPI !!!!!###############
+################!!!!       MUST BE AT BOTTOM OF FILE        !!!!!###############
+################################################################################
 
 
-
+# Catch-all route to serve React app for any non-API routes
+# This MUST be the last route defined in FastAPI
+# It enables React Router to handle client-side routing properly
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    """
+    Serves the React application for any route that doesn't match API endpoints.
+    This allows React Router to handle client-side routing properly.
+    
+    Args:
+        path: The requested path (automatically captured by FastAPI)
+    
+    Returns:
+        The React app's index.html file for all non-API routes
+    """
+    from fastapi.responses import FileResponse
+    
+    # Always return the React app's main HTML file
+    # React Router will handle the client-side routing
+    return FileResponse("static/index.html")
