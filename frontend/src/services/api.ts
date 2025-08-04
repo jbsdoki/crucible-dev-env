@@ -1,6 +1,6 @@
 /**
- * Frontend API Service Architecture
- * -------------------------------
+ * Frontend API Service Architecture (Multi-User Enabled)
+ * -------------------------------------------------------
  * This file serves as the central API client for the React frontend, managing all HTTP communications 
  * with the FastAPI backend (main.py). Here's how the data flows through the application:
  * 
@@ -15,13 +15,21 @@
  *    - Requests are made to http://localhost:8000 (the FastAPI server)
  *    - Example: getSpectrum() calls GET /spectrum, which maps to @app.get("/spectrum") in main.py
  * 
- * 3. Error Handling:
+ * 3. Multi-User Context:
+ *    - Request interceptor automatically adds user-id header to all requests
+ *    - User ID is retrieved from AuthContext/localStorage (e.g., "user_a1b2c3d4e5f6")
+ *    - Backend uses this to isolate data between different users
+ *    - No component changes needed - user context is handled transparently
+ * 
+ * 4. Error Handling:
  *    - Each function includes try/catch blocks to handle network errors
+ *    - Response interceptor provides enhanced logging for multi-user debugging
+ *    - Graceful fallbacks prevent app crashes during backend transitions
  *    - Errors are logged to console and propagated back to the calling component
- *    - Components can then handle these errors appropriately (e.g., showing error messages)
  */
 
 import axios from 'axios';
+import type { UserInfo } from '../components/Auth/types';
 
 /**
  * API Client Setup
@@ -39,6 +47,87 @@ const api = axios.create({
   withCredentials: false
 });
 
+/**
+ * Request Interceptor for User Context
+ * Automatically adds user ID to all API requests for multi-user support
+ */
+api.interceptors.request.use(
+  (config) => {
+    console.log(`\n🔍 [API INTERCEPTOR] === Processing ${config.method?.toUpperCase()} request ===`);
+    console.log(`🔍 [API INTERCEPTOR] URL: ${config.url}`);
+    console.log(`🔍 [API INTERCEPTOR] Base URL: ${config.baseURL}`);
+    console.log(`🔍 [API INTERCEPTOR] Full URL: ${config.baseURL}${config.url}`);
+    
+    try {
+      // Get current user from localStorage (where AuthContext stores it)
+      const savedUser = localStorage.getItem('crucible_user');
+      console.log(`🔍 [API INTERCEPTOR] localStorage 'crucible_user':`, savedUser ? 'Found' : 'Not found');
+      
+      if (savedUser) {
+        const userInfo: UserInfo = JSON.parse(savedUser);
+        console.log(`🔍 [API INTERCEPTOR] Parsed user info:`, userInfo);
+        
+        // Add user ID to request headers for backend processing
+        config.headers['user-id'] = userInfo.userId;
+        console.log(`🔍 [API INTERCEPTOR] Added header: user-id = ${userInfo.userId}`);
+        
+        console.log(`🔍 [API INTERCEPTOR] All headers after adding user-id:`, config.headers);
+        console.log(`✅ [API INTERCEPTOR] Adding user context to ${config.method?.toUpperCase()} ${config.url}: ${userInfo.userId}`);
+      } else {
+        console.log(`⚠️  [API INTERCEPTOR] No user context available for ${config.method?.toUpperCase()} ${config.url}`);
+      }
+    } catch (error) {
+      console.error('❌ [API INTERCEPTOR] Error adding user context to request:', error);
+    }
+    
+    console.log(`🔍 [API INTERCEPTOR] === Final config for ${config.method?.toUpperCase()} ${config.url} ===`);
+    console.log(`🔍 [API INTERCEPTOR] Final headers:`, config.headers);
+    console.log(`🔍 [API INTERCEPTOR] ===============================================\n`);
+    
+    return config;
+  },
+  (error) => {
+    console.error('❌ [API INTERCEPTOR] Request interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Response Interceptor for Error Handling
+ * Handles common error patterns and multi-user related issues
+ */
+api.interceptors.response.use(
+  (response) => {
+    // Log successful responses for debugging multi-user functionality
+    console.log(`\n🔍 [API RESPONSE] === Received response ===`);
+    console.log(`🔍 [API RESPONSE] ${response.config.method?.toUpperCase()} ${response.config.url} → ${response.status}`);
+    console.log(`🔍 [API RESPONSE] Status: ${response.status} ${response.statusText}`);
+    console.log(`🔍 [API RESPONSE] Headers:`, response.headers);
+    console.log(`🔍 [API RESPONSE] Data type:`, typeof response.data);
+    console.log(`🔍 [API RESPONSE] Data preview:`, JSON.stringify(response.data).substring(0, 100) + '...');
+    console.log(`🔍 [API RESPONSE] ==========================================\n`);
+    return response;
+  },
+  (error) => {
+    // Enhanced error logging for multi-user debugging
+    console.log(`\n❌ [API RESPONSE ERROR] === Error occurred ===`);
+    
+    if (error.response) {
+      console.error(`❌ [API RESPONSE ERROR] Backend error ${error.response.status} for ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+      console.error(`🔍 [API RESPONSE ERROR] Response data:`, error.response.data);
+      console.error(`🔍 [API RESPONSE ERROR] Response headers:`, error.response.headers);
+      console.error(`🔍 [API RESPONSE ERROR] Response status:`, error.response.status);
+    } else if (error.request) {
+      console.error('❌ [API RESPONSE ERROR] Network error - no response received:', error.request);
+    } else {
+      console.error('❌ [API RESPONSE ERROR] Request setup error:', error.message);
+    }
+    
+    console.log(`❌ [API RESPONSE ERROR] ==========================================\n`);
+    return Promise.reject(error);
+  }
+);
+
 /**************************************************************************/
 /********************** API Endpoint Functions ****************************/
  // These functions make HTTP requests to the FastAPI backend endpoints.
@@ -51,17 +140,68 @@ const api = axios.create({
 /**************************************************************************/
 
 /**
- * Fetches list of all .emd files from the backend
+ * Fetches list of all .emd files from the backend for the current user
  * Calls: GET http://localhost:8000/files
+ * Headers: user-id (automatically added by request interceptor)
  * Returns: Array of filenames
  */
-export const getFiles = async () => {
+export const getFiles = async (): Promise<string[]> => {
+  console.log('\n🔍 [API] === STARTING getFiles() ===');
+  
   try {
+    console.log('🔍 [API] About to make GET request to /files');
+    console.log('🔍 [API] Expected URL: http://localhost:8000/files');
+    
     const response = await api.get('/files');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching files:', error);
-    throw error;
+    
+    console.log('🔍 [API] Raw response received:');
+    console.log('🔍 [API] - Status:', response.status);
+    console.log('🔍 [API] - Status Text:', response.statusText);
+    console.log('🔍 [API] - Headers:', response.headers);
+    console.log('🔍 [API] - Config URL:', response.config?.url);
+    console.log('🔍 [API] - Config Base URL:', response.config?.baseURL);
+    console.log('🔍 [API] - Full URL:', (response.config?.baseURL || '') + (response.config?.url || ''));
+    
+    // Handle different response formats for better error handling
+    const data = response.data;
+    console.log('🔍 [API] Response data type:', typeof data);
+    console.log('🔍 [API] Response data preview:', JSON.stringify(data).substring(0, 200) + '...');
+    
+    // If backend returns an error object instead of array
+    if (data && typeof data === 'object' && data.error) {
+      console.error('❌ [API] Backend returned error:', data.error);
+      console.log('🔍 [API] === ENDING getFiles() with backend error ===\n');
+      return [];
+    }
+    
+    // If backend returns array of files (expected case)
+    if (Array.isArray(data)) {
+      console.log(`✅ [API] Successfully fetched ${data.length} files for user`);
+      console.log('🔍 [API] Files:', data);
+      console.log('🔍 [API] === ENDING getFiles() successfully ===\n');
+      return data;
+    }
+    
+    // If backend returns unexpected format
+    console.warn('⚠️ [API] Unexpected response format from /files:', data);
+    console.log('🔍 [API] === ENDING getFiles() with unexpected format ===\n');
+    return [];
+    
+  } catch (error: any) {
+    console.error('❌ [API] Error fetching files:', error);
+    console.log('🔍 [API] Error details:');
+    if (error?.response) {
+      console.log('🔍 [API] - Error response status:', error.response.status);
+      console.log('🔍 [API] - Error response data:', error.response.data);
+      console.log('🔍 [API] - Error response headers:', error.response.headers);
+    }
+    if (error?.request) {
+      console.log('🔍 [API] - Error request:', error.request);
+    }
+    console.log('🔍 [API] - Error message:', error?.message || 'Unknown error');
+    console.log('🔍 [API] === ENDING getFiles() with exception ===\n');
+    // Return empty array instead of throwing to prevent app crash
+    return [];
   }
 };
 

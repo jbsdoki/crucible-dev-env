@@ -70,8 +70,9 @@ npm install axios react-plotly.js plotly.js
 npm run dev
 ```
 
-The application will be available at:
-- Frontend: http://localhost:5173 (Vite + React default)
+
+The application will be available at: 
+- Frontend: http://localhost:5173 (Vite + React default) (DEVELOPMENT ONLY)
 - Backend: http://localhost:8000  (FastAPI default)
 
 ### Frontend Components

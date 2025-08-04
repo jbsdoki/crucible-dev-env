@@ -65,7 +65,7 @@
 
 
 import { useState } from 'react';
-import { Button, Box } from '@mui/material';
+import { Box } from '@mui/material';
 import MainLayout from './WebPageLayouts/MainLayout';
 import { SpectrumProvider } from './contexts/SpectrumViewerToSpectrumRangeVisualizer';
 import { EmissionLineProvider } from './contexts/EmissionLineFromTableContext';
@@ -82,7 +82,8 @@ import EmissionSpectraWidthSum from './components/EmissionLineAnalysis';
 import EmissionLineRangeVisualizer from './components/EmissionLineRangeVisualizer/EmissionLineRangeVisualizer';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
-import LoginPreview from './components/Auth/LoginPreview';
+import { useAuth } from './contexts/AuthContext';
+import { LoginPage } from './components/Auth';
 
 /**
  * App Component
@@ -95,8 +96,8 @@ import LoginPreview from './components/Auth/LoginPreview';
  * - EmissionLineProvider: Provides selected emission line data for periodic table integration
  */
 function App() {
-  // State for test mode toggle (temporary)
-  const [showTest, setShowTest] = useState(false);
+  // Authentication state
+  const { isAuthenticated, login } = useAuth();
   
   // File and signal selection state
   const [selectedFile, setSelectedFile] = useState<string>('');
@@ -115,21 +116,11 @@ function App() {
     setRegionSpectrumData(spectrumData);
   };
 
-  // Show test view if enabled
-  if (showTest) { // FOR TESTING ONLY, MIGHT ADD MORE FUNCTIONALITY TO THIS LATER
-    return (
-      <Box>
-        <Button 
-          variant="contained" 
-          onClick={() => setShowTest(false)}
-          sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}
-        >
-          Show Main App
-        </Button>
-      </Box>
-    );
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={login} />;
   }
-  //return <LoginPreview />; //FOR TESTING ONLY
+  // Show main application if authenticated
   return (
     <Box 
       className="App" 
@@ -141,15 +132,6 @@ function App() {
         overflow: 'hidden'
       }}
     >
-      {/* Test toggle button */}
-      <Button 
-        variant="contained" 
-        onClick={() => setShowTest(true)}
-        sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}
-      >
-        Test Context
-      </Button>
-
       {/* Main application layout with context providers */}
       <SpectrumProvider>        {/* Provides spectrum range data to SpectrumViewer and SpectrumToImage */}
         <EmissionLineProvider>  {/* Provides emission line data between PeriodicTable and SpectrumViewer */}

@@ -16,20 +16,21 @@ class SignalService:
     #                              Signal List Methods                            #
     #############################################################################
     
-    def get_signal_list(self, filename: str):
+    def get_signal_list(self, filename: str, user_id: str = None):
         """
         Gets a list of signals from a file.
         Args:
             filename (str): Name of the file to get signals from
+            user_id (str, optional): User identifier for multi-user support
         Returns:
             list: List of signals from the file
         """
         try:
-            print("\n=== Starting get_signal_list in SignalService ===")
+            print(f"\n=== Starting get_signal_list in SignalService (user_id: {user_id}) ===")
             print(f"Input filename: {filename}")
             
-            #Get all signals from file
-            signals = self.file_service.get_or_load_file(filename)
+            #Get all signals from file (user-aware)
+            signals = self.file_service.get_or_load_file(filename, user_id=user_id)
             
             print("\nGetting signal titles...")
             # Get signal list
@@ -57,7 +58,7 @@ class SignalService:
     #                              Spectrum Methods                             #
     #############################################################################
 
-    def get_spectrum_data(self, filename, signal_idx):
+    def get_spectrum_data(self, filename, signal_idx, user_id: str = None):
         """
         Gets spectrum data in the new format that includes both x and y values with units.
         The data includes zero peak and FWHM indices for frontend visualization.
@@ -65,6 +66,7 @@ class SignalService:
         Args:
             filename (str): Name of the file to get spectrum data from
             signal_idx (int): Index of the signal to get spectrum data from
+            user_id (str, optional): User identifier for multi-user support
         Returns:
             dict: Dictionary containing:
                 - x: array of energy values
@@ -75,11 +77,11 @@ class SignalService:
                 - zero_index: index where energy = 0 (or None if not found)
                 - fwhm_index: index at FWHM point after zero peak (or None if not found)
         """
-        print(f"\n=== Starting get_spectrum_data() in SignalService ===")
+        print(f"\n=== Starting get_spectrum_data() in SignalService (user_id: {user_id}) ===")
         
         try:
-            # Get signal from cache or load it
-            signal = self.file_service.get_or_load_file(filename, signal_idx)
+            # Get signal from cache or load it (user-aware)
+            signal = self.file_service.get_or_load_file(filename, signal_idx, user_id)
 
             # Get the spectrum data with indices
             spectrum_data = data_functions.get_spectrum_data(signal)
@@ -179,19 +181,20 @@ class SignalService:
     #                               Image Methods                                 #
     #############################################################################
 
-    def get_image_data(self, filename, signal_idx):
+    def get_image_data(self, filename, signal_idx, user_id: str = None):
         """
         Gets the image data from a file.
         Args:
             filename (str): Name of the file to get image data from
             signal_idx (int): Index of the signal to get image data from
+            user_id (str, optional): User identifier for multi-user support
         Returns:
             dict: Dictionary containing the image data
         """
-        print(f"\n=== Starting get_image_data() from signal_service.py ===")
+        print(f"\n=== Starting get_image_data() from signal_service.py (user_id: {user_id}) ===")
         try:
-            # Get signal from cache or load it
-            signal = self.file_service.get_or_load_file(filename, signal_idx)
+            # Get signal from cache or load it (user-aware)
+            signal = self.file_service.get_or_load_file(filename, signal_idx, user_id)
                 
             return image_viewer_functions.extract_image_data(signal)
             
@@ -338,19 +341,20 @@ class SignalService:
     #                             Data Methods                                  #
     #############################################################################
 
-    def get_metadata(self, filename, signal_idx):
+    def get_metadata(self, filename, signal_idx, user_id: str = None):
         """
         Gets metadata from a file.
         Args:
             filename (str): Name of the file to get metadata from
             signal_idx (int): Index of the signal to get metadata from
+            user_id (str, optional): User identifier for multi-user support
         Returns:
             dict: Dictionary containing metadata
         """
-        print(f"\n=== Starting get_metadata() in SignalService ===")
+        print(f"\n=== Starting get_metadata() in SignalService (user_id: {user_id}) ===")
         try:
-            # Get signal from cache or load it
-            signal = self.file_service.get_or_load_file(filename, signal_idx)
+            # Get signal from cache or load it (user-aware)
+            signal = self.file_service.get_or_load_file(filename, signal_idx, user_id)
             
             # Get the metadata
             if hasattr(signal, 'metadata'):

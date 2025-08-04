@@ -7,9 +7,9 @@ from typing import Any
 
 
 
-def list_files():
+def list_files(user_id: str = None):
     """
-Lists all supported microscopy files in the sample_data directory.
+Lists all supported microscopy files in the sample_data directory or user-specific directory.
 
 Supported formats:
 https://hyperspy.org/hyperspy-doc/v1.0/user_guide/io.html#supported-formats
@@ -21,14 +21,33 @@ Includes:
 - .ser (TIA Series)
 - .emi (FEI EMI)
 
+Args:
+    user_id (str, optional): User identifier for multi-user support. If provided,
+                           lists files from user-specific directory instead of sample_data.
+
 Returns:
     list: List of filenames with supported extensions
 """
-    print(f"\n=== Starting list_files() in file_functions.py ===")
+    print(f"\n=== Starting list_files() in file_functions.py (user_id: {user_id}) ===")
+    
+    # Multi-user mode: use user_manager for user-specific files
+    if user_id:
+        try:
+            from utils import user_manager
+            print(f"Multi-user mode: Getting files for user {user_id}")
+            files = user_manager.get_files_for_user(user_id)
+            print(f"=== Ending list_files() - returned {len(files)} user-specific files ===\n")
+            return files
+        except Exception as e:
+            print(f"Error accessing user files for {user_id}: {str(e)}")
+            print("=== Ending list_files() with error (user mode) ===\n")
+            return []
+    
+    # Legacy mode: use existing sample_data logic (unchanged)
     try: # below is not full list of supported extensions
          # all supported extensions: https://hyperspy.org/hyperspy-doc/v1.0/user_guide/io.html#supported-formats
         supported_extensions = ('.emd', '.tif', '.dm3', '.dm4', '.ser', '.emi') 
-        print("\nReturning list from list_files() in file_functions.py")
+        print("Legacy mode: Returning list from sample_data directory")
         files = [f for f in os.listdir(constants.DATA_DIR) if f.lower().endswith(supported_extensions)]
         print("=== Ending list_files() in file_functions.py ===\n")
         return files

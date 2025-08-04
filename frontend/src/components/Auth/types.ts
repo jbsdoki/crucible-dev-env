@@ -31,11 +31,12 @@ export interface AuthGuardProps {
 
 /**
  * User information stored in authentication context
+ * Note: email and orcidId are stored as SHA-256 hashes for privacy
  */
 export interface UserInfo {
-  email: string;
-  orcidId: string;
-  userId: string;        // Generated unique ID for backend
+  email: string;         // SHA-256 hash of actual email (for privacy)
+  orcidId: string;       // SHA-256 hash of actual ORCID ID (for privacy)
+  userId: string;        // Generated unique ID for backend (e.g., "user_a1b2c3d4e5f6")
   sessionToken?: string; // Future: session token from backend
 }
 

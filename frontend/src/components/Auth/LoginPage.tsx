@@ -8,7 +8,7 @@ import {
   Container,
   Alert
 } from '@mui/material';
-import type { LoginCredentials, LoginPageProps } from './types';
+import type { LoginPageProps } from './types';
 
 /**
  * LoginPage Component
@@ -152,11 +152,48 @@ function LoginPage({ onLogin }: LoginPageProps) {
             <Typography 
               variant="caption" 
               sx={{ 
-                color: 'text.secondary'
+                color: 'text.secondary',
+                mb: 2
               }}
             >
               No validation is performed at this time
             </Typography>
+            
+            {/* TEST CREDENTIALS BOX - REMOVE BEFORE DEPLOYMENT */}
+            <Box 
+              sx={{ 
+                mt: 3,
+                p: 2,
+                bgcolor: 'warning.light',
+                borderRadius: 1,
+                border: '2px solid',
+                borderColor: 'warning.main'
+              }}
+            >
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'warning.contrastText',
+                  fontWeight: 'bold',
+                  display: 'block',
+                  mb: 1
+                }}
+              >
+                🚨 DEVELOPMENT MODE - TEST CREDENTIALS 🚨
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: 'warning.contrastText',
+                  display: 'block',
+                  fontFamily: 'monospace'
+                }}
+              >
+                Email: test.user@example.com<br/>
+                ORCID: 0000-0000-0000-1234<br/>
+                (Leave fields empty to auto-use these)
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Box>
