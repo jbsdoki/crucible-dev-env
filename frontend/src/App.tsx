@@ -82,6 +82,7 @@ import EmissionSpectraWidthSum from './components/EmissionLineAnalysis';
 import EmissionLineRangeVisualizer from './components/EmissionLineRangeVisualizer/EmissionLineRangeVisualizer';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
+import LoginPreview from './components/Auth/LoginPreview';
 
 /**
  * App Component
@@ -115,7 +116,7 @@ function App() {
   };
 
   // Show test view if enabled
-  if (showTest) {
+  if (showTest) { // FOR TESTING ONLY, MIGHT ADD MORE FUNCTIONALITY TO THIS LATER
     return (
       <Box>
         <Button 
@@ -128,7 +129,7 @@ function App() {
       </Box>
     );
   }
-
+  //return <LoginPreview />; //FOR TESTING ONLY
   return (
     <Box 
       className="App" 
