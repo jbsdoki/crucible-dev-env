@@ -214,11 +214,14 @@ Backend:                  |
 ## Application Workflow in Production Environment
 
 ```
-This diagram shows the high-level flow of function calls in the application once it has been deployed. Search Dockerfile in this directory to view the commands that are run when the
-app is being deployed
-During production the backend FastAPI server in main.py acts 
-as the web server. Only necessary files from the frontend are kept and placed in backend/static/
-Frontend:
+This diagram shows the high-level flow of function calls in the application once it has been deployed. Search for the file "Dockerfile" in this directory to view the commands that are run when the app is being deployed.
+During production the backend FastAPI server in main.py acts as the web server. Only necessary files from the frontend are kept and placed in backend/static/, the webserver pages are built using "npm run build" command
+
+
+
+Frontend No longer exists
+
+
 
                   User Requests (Main Webpage)
 Backend:                  |   
@@ -227,7 +230,10 @@ Backend:                  |
                           |    to container)
                           |
                           |
-                          |-> /static/ (Directory where the webpage files are stored stored)
+                          |----> /static/ (Directory where the webpage files are stored stored,
+                          |                Once the server is built all frontend webpages are 
+                          |                Condensed into only necessary files)
+                          |                
                           |
                           v
                Service Handlers (Organize and process requests)
