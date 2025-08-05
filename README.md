@@ -97,7 +97,7 @@ The FastAPI backend (running on http://localhost:8000) is organized into two mai
 1. `backend/main.py`
    - Acts as the entry point for all frontend requests
    - Receives HTTP requests from the frontend and directs them to the right place
-   - Allows the frontend (running on port 5173) to talk to the backend (running on port 8000)
+   - Allows the frontend (running on port 5173) to talk to the backend (FastAPI running on port 8000)
    - Routes requests to appropriate backend functions
 
 2. `backend/file_service.py`
@@ -112,7 +112,7 @@ General calling flow
 1. React frontend uses functions in `frontend/src/services/api.ts` to make API calls.
 2. These send HTTP requests to FastAPI server on port 8000
 3. FastAPI routes the request to matching functions defined in `main.py`.
-4. These call Hyperspy logic in `file_service.py`.
+4. These call Hyperspy logic in service handlers like `file_service.py`.
 5. A response (e.g. file list or spectrum array) is returned to the frontend.
 6. React receives and renders the result.
 
@@ -163,7 +163,7 @@ main.tsx (Starts app)
             |
             -> MainLayout (WebPageLayouts/MainLayout.tsx)
             |    Handles responsive grid-based layout of the application
-            |    Organizes components into structured dashboard sections:
+            |    Organizes components into structured dashboard sections
             |
             -> Contexts (Provide data sharing between components)
             |    - EmissionLineContext
@@ -195,11 +195,19 @@ Backend:                  |
                      main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
                           |    to container)
                           |
+                          |
+                          |----> /utils/ (Directory that stores functions used by entire backend
+                          |               Directory paths, retrieved cached files, etc )
+                          |
+                          |----> requirements.txt (list of installed libraries in the backend)
+                          |             
                           v
                Service Handlers (Organize and process requests)
                   - data_service.py
                   - file_service.py
                   - signal_service.py
+                          ^
+                          |
                           |
                           v     
                Operations (Core data processing functions)
@@ -223,7 +231,9 @@ Frontend No longer exists
 
 
 
-                  User Requests (Main Webpage)
+            Main Webpage Displayed to User
+                          |
+                  User Requests/Actions              
 Backend:                  |   
                           v
                      main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
@@ -235,11 +245,19 @@ Backend:                  |
                           |                Condensed into only necessary files)
                           |                
                           |
+                          |----> /utils/ (Directory that stores functions used by entire backend
+                          |               Directory paths, retrieved cached files, etc )                
+                          |
+                          |
+                          |----> requirements.txt (list of installed libraries in the backend)                                       
+                          |
                           v
                Service Handlers (Organize and process requests)
                   - data_service.py
                   - file_service.py
                   - signal_service.py
+                          ^
+                          |
                           |
                           v     
                Operations (Core data processing functions)
@@ -249,5 +267,3 @@ Backend:                  |
                   - periodic_table_functions.py
                   - signal_functions.py
                   - spectrum_functions.py
-                  (Not all components shown)
-```
