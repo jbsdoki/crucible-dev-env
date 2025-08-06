@@ -82,6 +82,7 @@ import EmissionSpectraWidthSum from './components/EmissionLineAnalysis';
 import EmissionLineRangeVisualizer from './components/EmissionLineRangeVisualizer/EmissionLineRangeVisualizer';
 import type { SignalInfo } from './types/shared';
 import type { SpectrumData } from './components/SpectrumViewer/types';
+import RemoteDataTest from './components/RemoteDataTest';
 
 /**
  * App Component
@@ -96,6 +97,9 @@ import type { SpectrumData } from './components/SpectrumViewer/types';
 function App() {
   // State for test mode toggle (temporary)
   const [showTest, setShowTest] = useState(false);
+  
+  // ORCID ID for remote data testing (can be set here for development/testing)
+  const [orcidId, setOrcidId] = useState<string>('');
   
   // File and signal selection state
   const [selectedFile, setSelectedFile] = useState<string>('');
@@ -125,6 +129,10 @@ function App() {
         >
           Show Main App
         </Button>
+        <RemoteDataTest 
+          orcidId={orcidId}
+          onOrcidChange={setOrcidId}
+        />
       </Box>
     );
   }

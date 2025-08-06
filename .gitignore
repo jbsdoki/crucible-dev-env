@@ -12,6 +12,15 @@
 # Ignore Cursor Files, used for development only
 .cursor/
 
+# Ignore env Files, used for development only, stores sensitive information
+.env
+
+# Ignore this credentials file
+gcs-service-account.json
+
+# Ignore the secrets folder
+secrets/
+
 # Ignore files made as backups, development files, etc.
 backup_files/
 

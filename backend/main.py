@@ -459,8 +459,14 @@ async def emission_spectra_width_sum(
 
 ################################################################################
 #################### Calls to LBNL database ####################################
+#################### Remote Data Router ########################################
 ################################################################################
 
+# Import remote data router
+from remote_data_router import router as remote_data_router
+
+# Register the remote data router with the existing app instance
+app.include_router(remote_data_router)
 
 
 
