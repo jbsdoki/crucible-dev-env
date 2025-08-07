@@ -34,3 +34,8 @@ backup_files/
 # Exclude any build artifacts that might exist locally
 frontend/dist/
 frontend/build/ 
+
+# Ignore the secrets folder or any files storing credentials
+secrets/
+.env
+.secrets

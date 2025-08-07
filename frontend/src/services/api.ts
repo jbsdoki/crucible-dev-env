@@ -30,7 +30,7 @@ import axios from 'axios';
  * headers: Sets default headers for all requests
  */
 const api = axios.create({
-  baseURL: 'http://localhost:8000',  // FastAPI default port
+  baseURL: import.meta.env.DEV ? 'http://localhost:8000' : '',  // Use localhost in dev, relative URLs in production
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
