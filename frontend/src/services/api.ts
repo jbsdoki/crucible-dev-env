@@ -30,7 +30,7 @@ import axios from 'axios';
  * headers: Sets default headers for all requests
  */
 const api = axios.create({
-  baseURL: import.meta.env.DEV ? 'http://localhost:8000' : '',  // Use localhost in dev, relative URLs in production
+  baseURL: import.meta.env.MODE === 'development' ? 'http://localhost:8000' : '',  // Use localhost in dev, relative URLs in production
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
