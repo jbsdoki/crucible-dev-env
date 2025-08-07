@@ -29,9 +29,6 @@ import axios from 'axios';
  * baseURL: Points to the FastAPI backend server in backend/main.py
  * headers: Sets default headers for all requests
  */
-// Debug log to verify deployment - REMOVE AFTER TESTING
-console.log('API CLIENT UPDATED - Using baseURL:', import.meta.env.MODE === 'development' ? 'http://localhost:8000' : '(relative URLs)');
-console.log('Environment MODE:', import.meta.env.MODE);
 
 const api = axios.create({
   baseURL: import.meta.env.MODE === 'development' ? 'http://localhost:8000' : '',  // Use localhost in dev, relative URLs in production
