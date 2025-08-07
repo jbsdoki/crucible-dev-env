@@ -97,7 +97,7 @@ The FastAPI backend (running on http://localhost:8000) is organized into two mai
 1. `backend/main.py`
    - Acts as the entry point for all frontend requests
    - Receives HTTP requests from the frontend and directs them to the right place
-   - Allows the frontend (running on port 5173) to talk to the backend (running on port 8000)
+   - Allows the frontend (running on port 5173) to talk to the backend (FastAPI running on port 8000)
    - Routes requests to appropriate backend functions
 
 2. `backend/file_service.py`
@@ -112,7 +112,7 @@ General calling flow
 1. React frontend uses functions in `frontend/src/services/api.ts` to make API calls.
 2. These send HTTP requests to FastAPI server on port 8000
 3. FastAPI routes the request to matching functions defined in `main.py`.
-4. These call Hyperspy logic in `file_service.py`.
+4. These call Hyperspy logic in service handlers like `file_service.py`.
 5. A response (e.g. file list or spectrum array) is returned to the frontend.
 6. React receives and renders the result.
 
@@ -148,10 +148,12 @@ This is development only, deactivate StrictMode in main.tsx while if in producti
 
 In backend/main.py any source or credential is allowed to connect. This is a development only setting, remove for production. 
 
-## Application Workflow
+## Application Workflow in Development Environment
 
 ```
-This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations. 
+This diagram shows the high-level flow of function calls in the application, from the frontend React components through the API layer to the backend Python services and operations.
+This diagram is only accurate for the development environment.
+During development the Vite environment acts as the frontend web server. 
 Frontend:
 
 main.tsx (Starts app)
@@ -161,7 +163,7 @@ main.tsx (Starts app)
             |
             -> MainLayout (WebPageLayouts/MainLayout.tsx)
             |    Handles responsive grid-based layout of the application
-            |    Organizes components into structured dashboard sections:
+            |    Organizes components into structured dashboard sections
             |
             -> Contexts (Provide data sharing between components)
             |    - EmissionLineContext
@@ -190,13 +192,22 @@ main.tsx (Starts app)
                           |
 Backend:                  |   
                           v
-                     main.py (Routes requests and returns data)
+                     main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
+                          |    to container)
                           |
+                          |
+                          |----> /utils/ (Directory that stores functions used by entire backend
+                          |               Directory paths, retrieved cached files, etc )
+                          |
+                          |----> requirements.txt (list of installed libraries in the backend)
+                          |             
                           v
                Service Handlers (Organize and process requests)
                   - data_service.py
                   - file_service.py
                   - signal_service.py
+                          ^
+                          |
                           |
                           v     
                Operations (Core data processing functions)
@@ -208,3 +219,51 @@ Backend:                  |
                   - spectrum_functions.py
 ```
 
+## Application Workflow in Production Environment
+
+```
+This diagram shows the high-level flow of function calls in the application once it has been deployed. Search for the file "Dockerfile" in this directory to view the commands that are run when the app is being deployed.
+During production the backend FastAPI server in main.py acts as the web server. Only necessary files from the frontend are kept and placed in backend/static/, the webserver pages are built using "npm run build" command
+
+
+
+Frontend No longer exists
+
+
+
+            Main Webpage Displayed to User
+                          |
+                  User Requests/Actions              
+Backend:                  |   
+                          v
+                     main.py (FastAPI Server, returns all data requests, hosts webpage when deployed
+                          |    to container)
+                          |
+                          |
+                          |----> /static/ (Directory where the webpage files are stored stored,
+                          |                Once the server is built all frontend webpages are 
+                          |                Condensed into only necessary files)
+                          |                
+                          |
+                          |----> /utils/ (Directory that stores functions used by entire backend
+                          |               Directory paths, retrieved cached files, etc )                
+                          |
+                          |
+                          |----> requirements.txt (list of installed libraries in the backend)                                       
+                          |
+                          v
+               Service Handlers (Organize and process requests)
+                  - data_service.py
+                  - file_service.py
+                  - signal_service.py
+                          ^
+                          |
+                          |
+                          v     
+               Operations (Core data processing functions)
+                  - data_functions.py
+                  - file_functions.py
+                  - image_viewer_functions.py
+                  - periodic_table_functions.py
+                  - signal_functions.py
+                  - spectrum_functions.py
