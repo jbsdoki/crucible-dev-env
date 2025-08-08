@@ -166,19 +166,19 @@ class ORCIDService:
         logger.error("from orcid_service.py - " + "=" * 80)
         logger.error("from orcid_service.py - DETAILED TOKEN EXCHANGE REQUEST DEBUG - TEST")
         logger.error("from orcid_service.py - " + "=" * 80)
-        logger.info(f"from orcid_service.py - Token URL: {self.token_url}")
-        logger.info(f"from orcid_service.py - Authorization Code (first 10 chars): {authorization_code[:10]}...")
-        logger.info(f"from orcid_service.py - Client ID: {self.client_id}")
-        logger.info(f"from orcid_service.py - Client Secret (first 10 chars): {self.client_secret[:10] if self.client_secret else 'NONE'}...")
-        logger.info(f"from orcid_service.py - Redirect URI: {self.redirect_uri}")
-        logger.info(f"from orcid_service.py - Grant Type: {token_data['grant_type']}")
-        logger.info(f"from orcid_service.py - Request Headers: {headers}")
-        logger.info("from orcid_service.py - " + "=" * 80)
+        logger.error(f"from orcid_service.py - Token URL: {self.token_url}")
+        logger.error(f"from orcid_service.py - Authorization Code (first 10 chars): {authorization_code[:10]}...")
+        logger.error(f"from orcid_service.py - Client ID: {self.client_id}")
+        logger.error(f"from orcid_service.py - Client Secret (first 10 chars): {self.client_secret[:10] if self.client_secret else 'NONE'}...")
+        logger.error(f"from orcid_service.py - Redirect URI: {self.redirect_uri}")
+        logger.error(f"from orcid_service.py - Grant Type: {token_data['grant_type']}")
+        logger.error(f"from orcid_service.py - Request Headers: {headers}")
+        logger.error("from orcid_service.py - " + "=" * 80)
         
         # Make the HTTP request to exchange the code for a token
         async with httpx.AsyncClient() as client:
             try:
-                logger.info("from orcid_service.py - Sending POST request to ORCID token endpoint...")
+                logger.error("from orcid_service.py - Sending POST request to ORCID token endpoint...")
                 response = await client.post(
                     self.token_url,
                     data=token_data,
@@ -186,13 +186,13 @@ class ORCIDService:
                 )
                 
                 # DETAILED RESPONSE LOGGING
-                logger.info("from orcid_service.py - " + "=" * 80)
-                logger.info("from orcid_service.py - ORCID TOKEN ENDPOINT RESPONSE")
-                logger.info("from orcid_service.py - " + "=" * 80)
-                logger.info(f"from orcid_service.py - Response Status Code: {response.status_code}")
-                logger.info(f"from orcid_service.py - Response Headers: {dict(response.headers)}")
-                logger.info(f"from orcid_service.py - Response Body: {response.text}")
-                logger.info("from orcid_service.py - " + "=" * 80)
+                logger.error("from orcid_service.py - " + "=" * 80)
+                logger.error("from orcid_service.py - ORCID TOKEN ENDPOINT RESPONSE")
+                logger.error("from orcid_service.py - " + "=" * 80)
+                logger.error(f"from orcid_service.py - Response Status Code: {response.status_code}")
+                logger.error(f"from orcid_service.py - Response Headers: {dict(response.headers)}")
+                logger.error(f"from orcid_service.py - Response Body: {response.text}")
+                logger.error("from orcid_service.py - " + "=" * 80)
                 
                 # Check if the request was successful
                 if response.status_code != 200:
