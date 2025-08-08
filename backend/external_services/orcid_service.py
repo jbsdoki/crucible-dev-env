@@ -38,9 +38,9 @@ logger = logging.getLogger(__name__)
 is_cloud_environment = os.getenv("GOOGLE_CLOUD_PROJECT") is not None
 
 if is_cloud_environment:
-    logger.info("Production: Using Google Cloud environment variables")
+            logger.info("from orcid_service.py - Production: Using Google Cloud environment variables")
 else:
-    logger.info("Development: Local environment detected")
+    logger.info("from orcid_service.py - Development: Local environment detected")
     
     # Try to load .env file if it exists (optional for development)
     current_dir = Path(__file__).parent
@@ -56,13 +56,13 @@ else:
     for env_path in env_locations:
         if env_path.exists():
             load_dotenv(env_path)
-            logger.info(f"Loaded environment variables from: {env_path}")
+            logger.info(f"from orcid_service.py - Loaded environment variables from: {env_path}")
             env_loaded = True
             break
     
     if not env_loaded:
-        logger.info("No .env file found - ORCID authentication will not work locally")
-        logger.info("This is normal: ORCID requires HTTPS, use development mode for local testing")
+        logger.info("from orcid_service.py - No .env file found - ORCID authentication will not work locally")
+        logger.info("from orcid_service.py - This is normal: ORCID requires HTTPS, use development mode for local testing")
 
 class ORCIDService:
     """
@@ -85,9 +85,9 @@ class ORCIDService:
         self.token_url = os.getenv("ORCID_TOKEN_URL", "https://orcid.org/oauth/token")
         
         # Debug logging to see what values we got
-        logger.info(f"ORCID_CLIENT_ID: {'SET' if self.client_id else 'NOT SET'}")
-        logger.info(f"ORCID_CLIENT_SECRET: {'SET' if self.client_secret else 'NOT SET'}")
-        logger.info(f"ORCID_REDIRECT_URI: {'SET' if self.redirect_uri else 'NOT SET'}")
+        logger.info(f"from orcid_service.py - ORCID_CLIENT_ID: {'SET' if self.client_id else 'NOT SET'}")
+        logger.info(f"from orcid_service.py - ORCID_CLIENT_SECRET: {'SET' if self.client_secret else 'NOT SET'}")
+        logger.info(f"from orcid_service.py - ORCID_REDIRECT_URI: {'SET' if self.redirect_uri else 'NOT SET'}")
         
         # Validate that all required configuration is present
         # In development, we'll allow missing credentials but log a warning
@@ -102,10 +102,10 @@ class ORCIDService:
             
             # Set a flag to indicate ORCID is not configured
             self.is_configured = False
-            logger.warning(f"ORCID service not configured - missing: {', '.join(missing)}. ORCID endpoints will not work.")
+            logger.warning(f"from orcid_service.py - ORCID service not configured - missing: {', '.join(missing)}. ORCID endpoints will not work.")
         else:
             self.is_configured = True
-            logger.info("ORCID service successfully configured")
+            logger.info("from orcid_service.py - ORCID service successfully configured")
     
     async def exchange_code_for_token(self, authorization_code: str) -> Dict:
         """
@@ -160,25 +160,25 @@ class ORCIDService:
             "Content-Type": "application/x-www-form-urlencoded"  # Send as form data
         }
         
-        logger.info(f"Exchanging authorization code for token with ORCID...")
+        logger.info(f"from orcid_service.py - Exchanging authorization code for token with ORCID...")
         
         # DETAILED DEBUG LOGGING - what we're sending to ORCID
-        logger.error("=" * 80)
-        logger.error("DETAILED TOKEN EXCHANGE REQUEST DEBUG - TEST")
-        logger.error("=" * 80)
-        logger.info(f"Token URL: {self.token_url}")
-        logger.info(f"Authorization Code (first 10 chars): {authorization_code[:10]}...")
-        logger.info(f"Client ID: {self.client_id}")
-        logger.info(f"Client Secret (first 10 chars): {self.client_secret[:10] if self.client_secret else 'NONE'}...")
-        logger.info(f"Redirect URI: {self.redirect_uri}")
-        logger.info(f"Grant Type: {token_data['grant_type']}")
-        logger.info(f"Request Headers: {headers}")
-        logger.info("=" * 80)
+        logger.error("from orcid_service.py - " + "=" * 80)
+        logger.error("from orcid_service.py - DETAILED TOKEN EXCHANGE REQUEST DEBUG - TEST")
+        logger.error("from orcid_service.py - " + "=" * 80)
+        logger.info(f"from orcid_service.py - Token URL: {self.token_url}")
+        logger.info(f"from orcid_service.py - Authorization Code (first 10 chars): {authorization_code[:10]}...")
+        logger.info(f"from orcid_service.py - Client ID: {self.client_id}")
+        logger.info(f"from orcid_service.py - Client Secret (first 10 chars): {self.client_secret[:10] if self.client_secret else 'NONE'}...")
+        logger.info(f"from orcid_service.py - Redirect URI: {self.redirect_uri}")
+        logger.info(f"from orcid_service.py - Grant Type: {token_data['grant_type']}")
+        logger.info(f"from orcid_service.py - Request Headers: {headers}")
+        logger.info("from orcid_service.py - " + "=" * 80)
         
         # Make the HTTP request to exchange the code for a token
         async with httpx.AsyncClient() as client:
             try:
-                logger.info("Sending POST request to ORCID token endpoint...")
+                logger.info("from orcid_service.py - Sending POST request to ORCID token endpoint...")
                 response = await client.post(
                     self.token_url,
                     data=token_data,
@@ -186,19 +186,19 @@ class ORCIDService:
                 )
                 
                 # DETAILED RESPONSE LOGGING
-                logger.info("=" * 80)
-                logger.info("ORCID TOKEN ENDPOINT RESPONSE")
-                logger.info("=" * 80)
-                logger.info(f"Response Status Code: {response.status_code}")
-                logger.info(f"Response Headers: {dict(response.headers)}")
-                logger.info(f"Response Body: {response.text}")
-                logger.info("=" * 80)
+                logger.info("from orcid_service.py - " + "=" * 80)
+                logger.info("from orcid_service.py - ORCID TOKEN ENDPOINT RESPONSE")
+                logger.info("from orcid_service.py - " + "=" * 80)
+                logger.info(f"from orcid_service.py - Response Status Code: {response.status_code}")
+                logger.info(f"from orcid_service.py - Response Headers: {dict(response.headers)}")
+                logger.info(f"from orcid_service.py - Response Body: {response.text}")
+                logger.info("from orcid_service.py - " + "=" * 80)
                 
                 # Check if the request was successful
                 if response.status_code != 200:
-                    logger.error(f"ORCID token exchange failed with status {response.status_code}")
-                    logger.error(f"Full response text: {response.text}")
-                    logger.error(f"Response headers: {dict(response.headers)}")
+                    logger.error(f"from orcid_service.py - ORCID token exchange failed with status {response.status_code}")
+                    logger.error(f"from orcid_service.py - Full response text: {response.text}")
+                    logger.error(f"from orcid_service.py - Response headers: {dict(response.headers)}")
                     raise ValueError(f"ORCID token exchange failed: {response.text}")
                 
                 # Parse the JSON response
@@ -214,27 +214,27 @@ class ORCIDService:
                     "token_type": token_response.get("token_type")
                 }
                 
-                logger.info(f"Successfully authenticated user with ORCID iD: {result['orcid_id']}")
+                logger.info(f"from orcid_service.py - Successfully authenticated user with ORCID iD: {result['orcid_id']}")
                 
                 # Enhanced logging for debugging
-                logger.info("=" * 60)
-                logger.info("ORCID AUTHENTICATION SUCCESS!")
-                logger.info("=" * 60)
-                logger.info(f"ORCID iD: {result['orcid_id']}")
-                logger.info(f"User Name: {result.get('name', 'Not provided')}")
-                logger.info(f"Access Token: {result['access_token'][:20]}..." if result.get('access_token') else "No access token")
-                logger.info(f"Token Expires In: {result.get('expires_in', 'Unknown')} seconds")
-                logger.info(f"Token Type: {result.get('token_type', 'Unknown')}")
-                logger.info(f"Scope: {result.get('scope', 'Unknown')}")
-                logger.info("=" * 60)
+                logger.info("from orcid_service.py - " + "=" * 60)
+                logger.info("from orcid_service.py - ORCID AUTHENTICATION SUCCESS!")
+                logger.info("from orcid_service.py - " + "=" * 60)
+                logger.info(f"from orcid_service.py - ORCID iD: {result['orcid_id']}")
+                logger.info(f"from orcid_service.py - User Name: {result.get('name', 'Not provided')}")
+                logger.info(f"from orcid_service.py - Access Token: {result['access_token'][:20]}..." if result.get('access_token') else "from orcid_service.py - No access token")
+                logger.info(f"from orcid_service.py - Token Expires In: {result.get('expires_in', 'Unknown')} seconds")
+                logger.info(f"from orcid_service.py - Token Type: {result.get('token_type', 'Unknown')}")
+                logger.info(f"from orcid_service.py - Scope: {result.get('scope', 'Unknown')}")
+                logger.info("from orcid_service.py - " + "=" * 60)
                 
                 return result
                 
             except httpx.HTTPError as e:
-                logger.error(f"HTTP error during ORCID token exchange: {str(e)}")
+                logger.error(f"from orcid_service.py - HTTP error during ORCID token exchange: {str(e)}")
                 raise
             except Exception as e:
-                logger.error(f"Unexpected error during ORCID token exchange: {str(e)}")
+                logger.error(f"from orcid_service.py - Unexpected error during ORCID token exchange: {str(e)}")
                 raise
     
     def get_authorization_url(self) -> str:
@@ -282,16 +282,16 @@ class ORCIDService:
         query_params = "&".join([f"{key}={value}" for key, value in params.items()])
         full_url = f"{authorize_url}?{query_params}"
         
-        logger.info("=" * 80)
-        logger.info("GENERATED ORCID AUTHORIZATION URL - DETAILED DEBUG")
-        logger.info("=" * 80)
-        logger.info(f"Authorize URL Base: {authorize_url}")
-        logger.info(f"Client ID: {self.client_id}")
-        logger.info(f"Response Type: {params['response_type']}")
-        logger.info(f"Scope: {params['scope']}")
-        logger.info(f"Redirect URI: {self.redirect_uri}")
-        logger.info(f"Full Generated URL: {full_url}")
-        logger.info("=" * 80)
+        logger.info("from orcid_service.py - " + "=" * 80)
+        logger.info("from orcid_service.py - GENERATED ORCID AUTHORIZATION URL - DETAILED DEBUG")
+        logger.info("from orcid_service.py - " + "=" * 80)
+        logger.info(f"from orcid_service.py - Authorize URL Base: {authorize_url}")
+        logger.info(f"from orcid_service.py - Client ID: {self.client_id}")
+        logger.info(f"from orcid_service.py - Response Type: {params['response_type']}")
+        logger.info(f"from orcid_service.py - Scope: {params['scope']}")
+        logger.info(f"from orcid_service.py - Redirect URI: {self.redirect_uri}")
+        logger.info(f"from orcid_service.py - Full Generated URL: {full_url}")
+        logger.info("from orcid_service.py - " + "=" * 80)
         
         return full_url
 
