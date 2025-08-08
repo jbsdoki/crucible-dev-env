@@ -36,6 +36,7 @@ function ORCIDCallback() {
   const { handleORCIDCallback } = useAuth();
   const [error, setError] = useState<string>('');
   const [, setIsProcessing] = useState(true);
+  const [codeProcessed, setCodeProcessed] = useState<string | null>(null);
 
   useEffect(() => {
     const processCallback = async () => {
@@ -73,12 +74,23 @@ function ORCIDCallback() {
           throw new Error('No authorization code received from ORCID');
         }
 
+        // PREVENT CODE REUSE:
+        // If we've already processed this exact code, don't process it again
+        if (codeProcessed === code) {
+          console.log('This authorization code has already been processed, skipping...');
+          return;
+        }
+
         console.log('Valid authorization code received, calling handleORCIDCallback...');
         
         // SUCCESS! PROCESS THE CODE:
         // Call AuthContext to exchange code for token
         // This will: send code to backend → get user data → store user → login complete
         await handleORCIDCallback(code);
+        
+        // MARK CODE AS PROCESSED:
+        // This prevents the same code from being processed multiple times
+        setCodeProcessed(code);
         
         console.log('ORCID callback handling completed successfully!');
 
