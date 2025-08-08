@@ -37,7 +37,9 @@ import hyperspy.api as hs
 import os
 import time
 from service_handlers import file_service, signal_service, data_service
+from external_services import orcid_service
 from operations import periodic_table_functions
+from pydantic import BaseModel
 
 
 
@@ -462,6 +464,95 @@ async def emission_spectra_width_sum(
 ################################################################################
 
 
+
+
+################################################################################
+######################## ORCID Authentication Endpoints ########################
+################################################################################
+
+# Pydantic models for ORCID authentication requests and responses
+class ORCIDCodeRequest(BaseModel):
+    """
+    Request model for ORCID authorization code exchange.
+    
+    Attributes:
+        code: The authorization code received from ORCID after user authentication
+    """
+    code: str
+
+class ORCIDTokenResponse(BaseModel):
+    """
+    Response model for successful ORCID authentication.
+    
+    Attributes:
+        orcid_id: The user's ORCID identifier (e.g., "0000-0000-0000-0000")
+        access_token: The access token for making API calls to ORCID
+        name: The user's name (if available)
+        expires_in: Token expiration time in seconds
+    """
+    orcid_id: str
+    access_token: str
+    name: str = None
+    expires_in: int = None
+
+@app.get("/api/auth/orcid/login-url")
+async def get_orcid_login_url():
+    """
+    Get the ORCID authorization URL for user authentication.
+    
+    This endpoint returns the URL that the frontend should redirect users to
+    for ORCID authentication. After authentication, ORCID will redirect back
+    to the configured redirect URI.
+    
+    Returns:
+        Dict containing the ORCID authorization URL
+    
+    Raises:
+        HTTPException: If ORCID service configuration is invalid
+    """
+    try:
+        authorization_url = orcid_service.get_authorization_url()
+        return {"authorization_url": authorization_url}
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=f"ORCID configuration error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate ORCID login URL: {str(e)}")
+
+@app.post("/api/auth/orcid/exchange", response_model=ORCIDTokenResponse)
+async def exchange_orcid_code(request: ORCIDCodeRequest):
+    """
+    Exchange an ORCID authorization code for an access token.
+    
+    This endpoint handles the OAuth 2.0 authorization code flow by:
+    1. Receiving the authorization code from the frontend
+    2. Exchanging it with ORCID for an access token
+    3. Returning the user's ORCID iD and authentication details
+    
+    Args:
+        request: Contains the authorization code from ORCID
+    
+    Returns:
+        ORCIDTokenResponse: Contains the user's ORCID iD, access token, and profile info
+    
+    Raises:
+        HTTPException: If the code exchange fails or ORCID returns an error
+    """
+    try:
+        # Exchange the authorization code for a token using the ORCID service
+        token_data = await orcid_service.exchange_code_for_token(request.code)
+        
+        # Return the authentication data to the frontend
+        return ORCIDTokenResponse(
+            orcid_id=token_data["orcid_id"],
+            access_token=token_data["access_token"],
+            name=token_data.get("name"),
+            expires_in=token_data.get("expires_in")
+        )
+    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid authorization code: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Token exchange failed: {str(e)}")
 
 
 ################################################################################

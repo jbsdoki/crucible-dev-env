@@ -60,13 +60,13 @@ $ npm run lint
 Frontend npm library list: (automatically installed with bash npm "install" command)
 Displayed with "npm list" command
 
-frontend@0.0.0 C:\Users\MF\LBNL_git_repos\react-explorers\frontend
+$ npm list
+frontend@0.0.0 C:\Users\MF\LBNL_git_repos\crucible_development\frontend
 ├── @emotion/react@11.14.0
 ├── @emotion/styled@11.14.0
 ├── @eslint/js@9.28.0
 ├── @mui/icons-material@7.1.1
 ├── @mui/material@7.1.1
-├── @types/lodash@4.17.20 extraneous
 ├── @types/plotly.js@3.0.2
 ├── @types/react-dom@19.1.6
 ├── @types/react@19.1.7
@@ -79,12 +79,12 @@ frontend@0.0.0 C:\Users\MF\LBNL_git_repos\react-explorers\frontend
 ├── plotly.js@3.0.1
 ├── react-dom@19.1.0
 ├── react-plotly.js@2.6.0
+├── react-router-dom@7.8.0
 ├── react@19.1.0
 ├── recharts@2.15.3
 ├── typescript-eslint@8.34.0
 ├── typescript@5.8.3
 └── vite@6.3.5
-
    
 Specific build type should not matter for npm
 These package names are stored in frontend/package.json for easy install using npm
