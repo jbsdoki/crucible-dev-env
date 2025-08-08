@@ -40,29 +40,47 @@ function ORCIDCallback() {
   useEffect(() => {
     const processCallback = async () => {
       try {
+        console.log('=== ORCID CALLBACK: Processing redirect from ORCID ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Search params:', window.location.search);
+        
         // EXTRACT DATA FROM URL:
         // ORCID redirected user back with URL like:
         // /orcid/callback?code=abc123 (success)
         // /orcid/callback?error=access_denied (user cancelled)
         const code = searchParams.get('code');
         const errorParam = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
+        const state = searchParams.get('state');
+
+        console.log('URL Parameters extracted:');
+        console.log('- code:', code ? code.substring(0, 20) + '...' : 'NOT PRESENT');
+        console.log('- error:', errorParam || 'NOT PRESENT');
+        console.log('- error_description:', errorDescription || 'NOT PRESENT');
+        console.log('- state:', state || 'NOT PRESENT');
 
         // HANDLE ORCID ERRORS:
         // User cancelled login or ORCID had an issue
         if (errorParam) {
+          console.error('ORCID returned error:', errorParam, errorDescription);
           throw new Error(`ORCID authentication failed: ${errorParam}`);
         }
 
         // NO CODE = SOMETHING WENT WRONG:
         // Should always have either 'code' or 'error' parameter
         if (!code) {
+          console.error('No authorization code in URL parameters');
           throw new Error('No authorization code received from ORCID');
         }
 
+        console.log('Valid authorization code received, calling handleORCIDCallback...');
+        
         // SUCCESS! PROCESS THE CODE:
         // Call AuthContext to exchange code for token
         // This will: send code to backend → get user data → store user → login complete
         await handleORCIDCallback(code);
+        
+        console.log('ORCID callback handling completed successfully!');
 
         // AuthContext handles redirect to main app after success
       } catch (err) {

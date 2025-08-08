@@ -162,18 +162,43 @@ class ORCIDService:
         
         logger.info(f"Exchanging authorization code for token with ORCID...")
         
+        # DETAILED DEBUG LOGGING - what we're sending to ORCID
+        logger.info("=" * 80)
+        logger.info("DETAILED TOKEN EXCHANGE REQUEST DEBUG")
+        logger.info("=" * 80)
+        logger.info(f"Token URL: {self.token_url}")
+        logger.info(f"Authorization Code (first 10 chars): {authorization_code[:10]}...")
+        logger.info(f"Client ID: {self.client_id}")
+        logger.info(f"Client Secret (first 10 chars): {self.client_secret[:10] if self.client_secret else 'NONE'}...")
+        logger.info(f"Redirect URI: {self.redirect_uri}")
+        logger.info(f"Grant Type: {token_data['grant_type']}")
+        logger.info(f"Request Headers: {headers}")
+        logger.info("=" * 80)
+        
         # Make the HTTP request to exchange the code for a token
         async with httpx.AsyncClient() as client:
             try:
+                logger.info("Sending POST request to ORCID token endpoint...")
                 response = await client.post(
                     self.token_url,
                     data=token_data,
                     headers=headers
                 )
                 
+                # DETAILED RESPONSE LOGGING
+                logger.info("=" * 80)
+                logger.info("ORCID TOKEN ENDPOINT RESPONSE")
+                logger.info("=" * 80)
+                logger.info(f"Response Status Code: {response.status_code}")
+                logger.info(f"Response Headers: {dict(response.headers)}")
+                logger.info(f"Response Body: {response.text}")
+                logger.info("=" * 80)
+                
                 # Check if the request was successful
                 if response.status_code != 200:
-                    logger.error(f"ORCID token exchange failed with status {response.status_code}: {response.text}")
+                    logger.error(f"ORCID token exchange failed with status {response.status_code}")
+                    logger.error(f"Full response text: {response.text}")
+                    logger.error(f"Response headers: {dict(response.headers)}")
                     raise ValueError(f"ORCID token exchange failed: {response.text}")
                 
                 # Parse the JSON response
@@ -257,13 +282,16 @@ class ORCIDService:
         query_params = "&".join([f"{key}={value}" for key, value in params.items()])
         full_url = f"{authorize_url}?{query_params}"
         
-        logger.info("=" * 50)
-        logger.info("GENERATED ORCID AUTHORIZATION URL")
-        logger.info("=" * 50)
-        logger.info(f"Full URL: {full_url}")
+        logger.info("=" * 80)
+        logger.info("GENERATED ORCID AUTHORIZATION URL - DETAILED DEBUG")
+        logger.info("=" * 80)
+        logger.info(f"Authorize URL Base: {authorize_url}")
         logger.info(f"Client ID: {self.client_id}")
+        logger.info(f"Response Type: {params['response_type']}")
+        logger.info(f"Scope: {params['scope']}")
         logger.info(f"Redirect URI: {self.redirect_uri}")
-        logger.info("=" * 50)
+        logger.info(f"Full Generated URL: {full_url}")
+        logger.info("=" * 80)
         
         return full_url
 
