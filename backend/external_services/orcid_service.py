@@ -192,7 +192,7 @@ class ORCIDService:
                 logger.info(f"Successfully authenticated user with ORCID iD: {result['orcid_id']}")
                 
                 # Enhanced logging for debugging
-                        logger.info("=" * 60)
+                logger.info("=" * 60)
                 logger.info("ORCID AUTHENTICATION SUCCESS!")
                 logger.info("=" * 60)
                 logger.info(f"ORCID iD: {result['orcid_id']}")
