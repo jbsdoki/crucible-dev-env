@@ -163,9 +163,9 @@ class ORCIDService:
         logger.info(f"Exchanging authorization code for token with ORCID...")
         
         # DETAILED DEBUG LOGGING - what we're sending to ORCID
-        logger.info("=" * 80)
-        logger.info("DETAILED TOKEN EXCHANGE REQUEST DEBUG")
-        logger.info("=" * 80)
+        logger.error("=" * 80)
+        logger.error("DETAILED TOKEN EXCHANGE REQUEST DEBUG - TEST")
+        logger.error("=" * 80)
         logger.info(f"Token URL: {self.token_url}")
         logger.info(f"Authorization Code (first 10 chars): {authorization_code[:10]}...")
         logger.info(f"Client ID: {self.client_id}")
