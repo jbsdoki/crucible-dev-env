@@ -19,10 +19,17 @@
 
 // import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
-// Create and render the React root
+import { AuthProvider } from './contexts/AuthContext'
+
+// Create and render the React root with authentication context
 // The '!' tells TypeScript that we're certain the element exists
 createRoot(document.getElementById('root')!).render(
-    <App />
+  <BrowserRouter>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </BrowserRouter>
 )

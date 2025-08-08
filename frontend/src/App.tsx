@@ -65,8 +65,11 @@
 
 
 import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Button, Box } from '@mui/material';
 import MainLayout from './WebPageLayouts/MainLayout';
+import { useAuth } from './contexts/AuthContext';
+import { AuthGuard, LoginPage, ORCIDCallback } from './components/Authentication';
 import { SpectrumProvider } from './contexts/SpectrumViewerToSpectrumRangeVisualizer';
 import { EmissionLineProvider } from './contexts/EmissionLineFromTableContext';
 import { EmissionRangeProvider } from './contexts/EmissionRangeSelectionContext';
@@ -94,6 +97,9 @@ import type { SpectrumData } from './components/SpectrumViewer/types';
  * - EmissionLineProvider: Provides selected emission line data for periodic table integration
  */
 function App() {
+  // Get authentication state
+  const { isAuthenticated, isLoading, loginWithCredentials, loginWithORCID } = useAuth();
+  
   // State for test mode toggle (temporary)
   const [showTest, setShowTest] = useState(false);
   
@@ -114,6 +120,85 @@ function App() {
     setRegionSpectrumData(spectrumData);
   };
 
+  // Show test view if enabled
+  if (showTest) {
+    return (
+      <Box>
+        <Button 
+          variant="contained" 
+          onClick={() => setShowTest(false)}
+          sx={{ position: 'fixed', top: 10, right: 10, zIndex: 1000 }}
+        >
+          Show Main App
+        </Button>
+      </Box>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* ORCID Callback Route */}
+      <Route path="/orcid/callback" element={<ORCIDCallback />} />
+      
+      {/* Main Application Route */}
+      <Route path="/*" element={
+        <AuthGuard 
+          isAuthenticated={isAuthenticated} 
+          isLoading={isLoading}
+          fallback={
+            <LoginPage 
+              onLogin={loginWithCredentials}
+              onORCIDLogin={loginWithORCID}
+              isLoading={isLoading}
+            />
+          }
+        >
+          <MainApplication 
+            showTest={showTest}
+            setShowTest={setShowTest}
+            selectedFile={selectedFile}
+            setSelectedFile={setSelectedFile}
+            selectedSignal={selectedSignal}
+            setSelectedSignal={setSelectedSignal}
+            regionSpectrumData={regionSpectrumData}
+            selectedRegion={selectedRegion}
+            handleRegionSelected={handleRegionSelected}
+          />
+        </AuthGuard>
+      } />
+    </Routes>
+  );
+}
+
+/**
+ * Main Application Component
+ * 
+ * Contains the main application UI that's shown after authentication.
+ * This is separated to keep the App component clean and focused on routing.
+ */
+interface MainApplicationProps {
+  showTest: boolean;
+  setShowTest: (show: boolean) => void;
+  selectedFile: string;
+  setSelectedFile: (file: string) => void;
+  selectedSignal: SignalInfo | null;
+  setSelectedSignal: (signal: SignalInfo | null) => void;
+  regionSpectrumData: SpectrumData | null;
+  selectedRegion: {x1: number, y1: number, x2: number, y2: number} | null;
+  handleRegionSelected: (region: {x1: number, y1: number, x2: number, y2: number}, spectrumData: SpectrumData) => void;
+}
+
+function MainApplication({
+  showTest,
+  setShowTest,
+  selectedFile,
+  setSelectedFile,
+  selectedSignal,
+  setSelectedSignal,
+  regionSpectrumData,
+  selectedRegion,
+  handleRegionSelected
+}: MainApplicationProps) {
   // Show test view if enabled
   if (showTest) {
     return (

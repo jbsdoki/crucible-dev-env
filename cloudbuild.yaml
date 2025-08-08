@@ -24,7 +24,18 @@ steps:
       - push
       - us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest
 
-
+  # Step 4: Deploy to Cloud Run with environment variables for ORCID authentication
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - app-${BRANCH_NAME}
+      - --image=us-central1-docker.pkg.dev/$PROJECT_ID/${REPO_NAME}-${BRANCH_NAME}/app:latest
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-env-vars=ORCID_REDIRECT_URI=https://app-2-776258882599.us-central1.run.app/orcid/callback
+      - --set-secrets=ORCID_CLIENT_ID=ORCID-CLIENT-ID:latest,ORCID_CLIENT_SECRET=ORCID-CLIENT-SECRET:latest
 
 # Optional: extend timeout if builds are large
 timeout: 700s

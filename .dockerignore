@@ -38,4 +38,6 @@ frontend/build/
 # Ignore the secrets folder or any files storing credentials
 secrets/
 .env
+.env.production
+.secret
 .secrets
