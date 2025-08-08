@@ -37,7 +37,9 @@ import hyperspy.api as hs
 import os
 import time
 from service_handlers import file_service, signal_service, data_service
+print("=== IMPORTING ORCID SERVICE ===")
 from external_services import orcid_service
+print("=== ORCID SERVICE IMPORTED SUCCESSFULLY ===")
 from operations import periodic_table_functions
 from pydantic import BaseModel
 
@@ -511,6 +513,8 @@ async def get_orcid_login_url():
         HTTPException: If ORCID service configuration is invalid
     """
     print("\n=== BACKEND: /api/auth/orcid/login-url endpoint called ===")
+    print(f"ORCID service object: {orcid_service}")
+    print(f"ORCID service configured: {getattr(orcid_service, 'is_configured', 'UNKNOWN')}")
     try:
         print("Calling orcid_service.get_authorization_url()...")
         authorization_url = orcid_service.get_authorization_url()
@@ -544,6 +548,8 @@ async def exchange_orcid_code(request: ORCIDCodeRequest):
     """
     print("\n=== BACKEND: /api/auth/orcid/exchange endpoint called ===")
     print(f"Authorization code received (first 20 chars): {request.code[:20]}...")
+    print(f"ORCID service object: {orcid_service}")
+    print(f"ORCID service configured: {getattr(orcid_service, 'is_configured', 'UNKNOWN')}")
     try:
         print("Calling orcid_service.exchange_code_for_token()...")
         # Exchange the authorization code for a token using the ORCID service
