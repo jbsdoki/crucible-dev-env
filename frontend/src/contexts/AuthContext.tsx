@@ -165,9 +165,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const handleORCIDCallback = async (code: string): Promise<void> => {
     setIsLoading(true);
     try {
+      console.log('=== FRONTEND: Starting ORCID callback handling ===');
+      console.log('Authorization code received:', code.substring(0, 20) + '...');
+      
       // SEND CODE TO BACKEND:
       // Our backend will use this code + our client_secret 
       // to get an access token from ORCID
+      console.log('Sending POST request to /api/auth/orcid/exchange');
       const response = await fetch('/api/auth/orcid/exchange', {
         method: 'POST',
         headers: {
@@ -176,12 +180,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ code }),  // Send the authorization code
       });
 
+      console.log('Backend response status:', response.status);
+      console.log('Backend response ok:', response.ok);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend error response:', errorText);
         throw new Error('Failed to exchange ORCID authorization code');
       }
 
       // SUCCESS: Backend returns user data from ORCID
       const authData: ORCIDAuthResponse = await response.json();
+      console.log('Received auth data from backend:', {
+        orcid_id: authData.orcid_id,
+        name: authData.name,
+        hasAccessToken: !!authData.access_token
+      });
 
       // Create user info from ORCID's real response
       const userInfo: UserInfo = {

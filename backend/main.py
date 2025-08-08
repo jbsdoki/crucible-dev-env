@@ -510,12 +510,17 @@ async def get_orcid_login_url():
     Raises:
         HTTPException: If ORCID service configuration is invalid
     """
+    print("\n=== BACKEND: /api/auth/orcid/login-url endpoint called ===")
     try:
+        print("Calling orcid_service.get_authorization_url()...")
         authorization_url = orcid_service.get_authorization_url()
+        print(f"Successfully generated authorization URL (length: {len(authorization_url)})")
         return {"authorization_url": authorization_url}
     except ValueError as e:
+        print(f"ValueError in get_orcid_login_url: {str(e)}")
         raise HTTPException(status_code=500, detail=f"ORCID configuration error: {str(e)}")
     except Exception as e:
+        print(f"Unexpected error in get_orcid_login_url: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate ORCID login URL: {str(e)}")
 
 @app.post("/api/auth/orcid/exchange", response_model=ORCIDTokenResponse)
@@ -537,21 +542,32 @@ async def exchange_orcid_code(request: ORCIDCodeRequest):
     Raises:
         HTTPException: If the code exchange fails or ORCID returns an error
     """
+    print("\n=== BACKEND: /api/auth/orcid/exchange endpoint called ===")
+    print(f"Authorization code received (first 20 chars): {request.code[:20]}...")
     try:
+        print("Calling orcid_service.exchange_code_for_token()...")
         # Exchange the authorization code for a token using the ORCID service
         token_data = await orcid_service.exchange_code_for_token(request.code)
         
+        print("Token exchange successful! Creating response...")
+        print(f"Received ORCID iD: {token_data['orcid_id']}")
+        print(f"User name: {token_data.get('name', 'Not provided')}")
+        
         # Return the authentication data to the frontend
-        return ORCIDTokenResponse(
+        response = ORCIDTokenResponse(
             orcid_id=token_data["orcid_id"],
             access_token=token_data["access_token"],
             name=token_data.get("name"),
             expires_in=token_data.get("expires_in")
         )
+        print("Returning successful response to frontend")
+        return response
     
     except ValueError as e:
+        print(f"ValueError in exchange_orcid_code: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Invalid authorization code: {str(e)}")
     except Exception as e:
+        print(f"Unexpected error in exchange_orcid_code: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Token exchange failed: {str(e)}")
 
 
